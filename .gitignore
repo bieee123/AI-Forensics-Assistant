@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Node
+node_modules/
+.next/
+.env.local
+
+# Model files (jangan commit model GGUF yang besar)
+*.gguf
+*.bin
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & uploads (data forensik sensitif - JANGAN pernah ke-commit)
+uploads/
+*.log
