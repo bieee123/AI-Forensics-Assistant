@@ -1,0 +1,21 @@
+RUNBOOK: SSH Brute Force Attack Response
+
+Indicators:
+- Multiple failed login attempts from the same IP address within a short time window
+- Failed password entries in auth.log with pattern "Failed password for [user] from [IP]"
+- Sudden spike in authentication failures outside business hours
+
+Immediate Actions:
+1. Identify the source IP(s) generating failed login attempts
+2. Check if any login attempt eventually succeeded (indicates possible compromise)
+3. Block the source IP at the firewall level if attack is ongoing
+4. Review successful logins from the same IP in the preceding 24 hours
+
+Severity Classification:
+- Low: Fewer than 10 failed attempts, no successful login
+- Medium: 10-50 failed attempts, no successful login
+- High: Successful login following multiple failed attempts (possible compromise)
+- Critical: Successful login with subsequent privilege escalation or lateral movement
+
+Escalation:
+If severity is High or Critical, escalate immediately to the security lead and isolate the affected host from the network pending investigation.
