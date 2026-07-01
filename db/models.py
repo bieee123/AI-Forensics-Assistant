@@ -43,3 +43,15 @@ class ParsedLogEntryDB(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+
+class ParsedTelemetryEntryDB(Base):
+    __tablename__ = "parsed_telemetry_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    upload_id = Column(Integer, nullable=False)
+    timestamp = Column(String)
+    event_type = Column(String)
+    source = Column(String)
+    details = Column(Text)
+    raw_line = Column(Text)

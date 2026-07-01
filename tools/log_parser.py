@@ -76,3 +76,63 @@ def parse_auth_log_text(raw_text: str) -> list[ParsedLogEntry]:
         if parsed:
             entries.append(parsed)
     return entries
+
+
+# --- JSON API Telemetry Parsing ---
+
+import json
+from typing import Any
+
+
+class ParsedTelemetryEntry(TypedDict):
+    timestamp: str
+    event_type: str
+    source: str
+    details: str
+    raw_line: str
+
+
+def parse_json_telemetry_text(raw_text: str) -> list[ParsedTelemetryEntry]:
+    """
+    Parse JSON API telemetry. Supports either:
+    - A JSON array of event objects
+    - Newline-delimited JSON (NDJSON), one object per line
+
+    Expected (flexible) fields per event: timestamp, event_type/type, source/service, and
+    any additional fields are captured under 'details'.
+    """
+    entries: list[ParsedTelemetryEntry] = []
+    raw_text = raw_text.strip()
+
+    if not raw_text:
+        return entries
+
+    # Try parsing as a single JSON array first
+    events: list[dict[str, Any]] = []
+    try:
+        parsed = json.loads(raw_text)
+        if isinstance(parsed, list):
+            events = parsed
+        elif isinstance(parsed, dict):
+            events = [parsed]
+    except json.JSONDecodeError:
+        # Fall back to NDJSON: one JSON object per line
+        for line in raw_text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue  # skip malformed lines
+
+    for event in events:
+        entries.append(ParsedTelemetryEntry(
+            timestamp=str(event.get("timestamp", event.get("time", ""))),
+            event_type=str(event.get("event_type", event.get("type", "unknown"))),
+            source=str(event.get("source", event.get("service", "unknown"))),
+            details=json.dumps(event, ensure_ascii=False),
+            raw_line=json.dumps(event, ensure_ascii=False),
+        ))
+
+    return entries
