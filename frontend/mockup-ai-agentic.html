@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DETECT.AI - Digital Forensics Assistant</title>
+    <style>
+        /* BASE RESET & GLOBAL STYLING */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-main: #0B111E;         
+            --bg-surface: #0E1626;      
+            --bg-card: #131B2E;         
+            --border-color: #1E293B;    
+            
+            --text-primary: #F1F5F9;    
+            --text-secondary: #94A3B8;  
+            --text-muted: #475569;      
+
+            --severity-critical: #EF4444; 
+            --severity-high: #F97316;     
+            --severity-medium: #FBBF24;   
+            --severity-low: #38BDF8;      
+            --status-active: #10B981;     
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: #0E1626;
+            border-bottom: 1px solid #1E293B;
+            padding: 0 24px;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14pt;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-logo span {
+            color: #38BDF8;
+            font-weight: 400;
+            font-size: 11pt;
+            border-left: 1px solid #334155;
+            padding-left: 12px;
+            margin-left: 4px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 4px;
+        }
+
+        .nav-link {
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 10.5pt;
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .nav-link:hover {
+            color: #F1F5F9;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-link.active {
+            color: #FFFFFF;
+            background-color: #1E293B;
+            font-weight: 600;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            font-size: 10pt;
+            color: #94A3B8;
+            gap: 6px;
+        }
+
+        .system-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #10B981;
+        }
+
+        /* TELEMETRY STRIP */
+        .telemetry-strip {
+            background-color: #090D1A;
+            border-bottom: 1px solid #1E293B;
+            padding: 10px 24px;
+            font-size: 9pt;
+            color: #94A3B8;
+            display: flex;
+            gap: 40px;
+        }
+
+        .telemetry-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* MAIN CONTENT HOLDER */
+        .main-container {
+            padding: 32px 24px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* TITLES & HEADINGS */
+        .page-title {
+            font-size: 16pt;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 4px;
+        }
+
+        .page-desc {
+            font-size: 10pt;
+            color: #94A3B8;
+            margin-bottom: 24px;
+        }
+
+        /* LAYOUT STRUCTURES */
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: 3.2fr 1fr;
+            gap: 24px;
+        }
+
+        /* CARDS COMPONENTS */
+        .card {
+            background-color: #0E1626;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header-title {
+            font-size: 10.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #FFFFFF;
+        }
+        .blue-line { border-left: 3px solid #38BDF8; padding-left: 8px; }
+
+        /* BUTTONS */
+        .btn {
+            background-color: #2563EB;
+            color: #FFFFFF;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn:hover { background-color: #1D4ED8; }
+        .btn-secondary { background-color: #1E293B; color: #F1F5F9; border: 1px solid #334155; }
+        .btn-secondary:hover { background-color: #334155; }
+        .btn-sian { background-color: #00A3E0; color: #000000; font-weight: 700; }
+        .btn-sian:hover { background-color: #0082B4; }
+        .btn-danger { background-color: #EF4444; color: #FFFFFF; }
+        .btn-danger:hover { background-color: #DC2626; }
+
+        /* STATS GRID */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background-color: #0E1626;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .stat-box .label {
+            font-size: 8.5pt;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box .value {
+            font-size: 24pt;
+            font-weight: 700;
+            color: #FFFFFF;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .subtext {
+            font-size: 8.5pt;
+            color: #475569;
+        }
+
+        .pill-container {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .pill-badge {
+            font-size: 8pt;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .pill-badge.c { background-color: rgba(239, 68, 68, 0.15); color: #EF4444; }
+        .pill-badge.h { background-color: rgba(249, 115, 22, 0.15); color: #F97316; }
+        .pill-badge.m { background-color: rgba(251, 191, 36, 0.15); color: #FBBF24; }
+        .pill-badge.l { background-color: rgba(56, 189, 248, 0.15); color: #38BDF8; }
+
+        /* TABLES DATA GENERAL */
+        .table-responsive {
+            background-color: #0E1626;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .table-responsive-title {
+            padding: 16px 20px;
+            font-size: 11pt;
+            font-weight: 600;
+            border-bottom: 1px solid #1E293B;
+            background-color: #11192A;
+        }
+        .table-base {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .table-base th {
+            background-color: #090F1C;
+            color: #64748B;
+            font-size: 8.5pt;
+            font-weight: 600;
+            padding: 14px 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table-base td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #1E293B;
+            font-size: 10pt;
+            color: #CBD5E1;
+        }
+
+        /* SEVERITY & STATUS BADGES */
+        .badge-ui, .badge {
+            font-size: 8.5pt;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .badge-ui.crit, .badge.ui.crit { background-color: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid #EF4444; }
+        .badge-ui.high, .badge.ui.high { background-color: rgba(249, 115, 22, 0.2); color: #FB923C; border: 1px solid #F97316; }
+        .badge-ui.med, .badge.ui.med { background-color: rgba(251, 191, 36, 0.2); color: #FBBF24; border: 1px solid #FBBF24; }
+        .badge-ui.low, .badge.ui.low { background-color: rgba(56, 189, 248, 0.2); color: #38BDF8; border: 1px solid #38BDF8; }
+
+        .badge-state, .badge.state {
+            font-size: 8.5pt;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .badge-state.new, .badge.state.new { background-color: #1E293B; color: #94A3B8; }
+        .badge-state.analyzing, .badge.state.analyzing { background-color: #1E3A8A; color: #60A5FA; }
+        .badge-state.done, .badge.state.done { background-color: rgba(16, 185, 129, 0.15); color: #10B981; }
+        .badge-state.fail, .badge.state.fail { background-color: rgba(239, 68, 68, 0.15); color: #EF4444; }
+
+        /* INGEST PAGE SUB TABS */
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            background-color: #131B2E;
+            border: 1px solid #1E293B;
+            color: #64748B;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 9.5pt;
+            font-weight: 500;
+        }
+        .filter-btn.active {
+            background-color: #2563EB;
+            color: #FFFFFF;
+            border-color: #2563EB;
+        }
+
+        .drop-zone-box {
+            border: 2px dashed #1E3A8A;
+            background-color: #0A101D;
+            border-radius: 6px;
+            padding: 48px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .ingest-view-panel { display: none; }
+        .ingest-view-panel.active { display: block; }
+
+        /* WARNING NOTES BOX */
+        .note-box {
+            background-color: rgba(251, 191, 36, 0.03);
+            border: 1px dashed rgba(251, 191, 36, 0.3);
+            border-radius: 6px;
+            padding: 14px 16px;
+            font-size: 9.5pt;
+            color: #94A3B8;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* TERMINAL LOG SIMULATOR */
+        .terminal-container {
+            background-color: #050811;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            padding: 20px;
+            height: 220px;
+            overflow-y: auto;
+            color: #38BDF8;
+            font-size: 9.5pt;
+            line-height: 1.6;
+        }
+
+        /* FIX & UPDATE: TIMELINE GRAPHIC COMPONENTS */
+        .timeline-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            background-color: #0E1626;
+            border: 1px solid #1E293B;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .control-group label {
+            font-size: 8.5pt;
+            color: #64748B;
+            font-weight: 600;
+        }
+        .selector-input {
+            background-color: #090F1C;
+            border: 1px solid #1E293B;
+            color: #F1F5F9;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+            outline: none;
+        }
+        .selector-input:focus {
+            border-color: #2563EB;
+        }
+
+        .timeline-container-scroll {
+            position: relative;
+            padding-left: 24px;
+            margin-top: 10px;
+        }
+        .timeline-container-scroll::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #1E293B;
+        }
+        .timeline-item-block {
+            position: relative;
+            margin-bottom: 32px;
+        }
+        .severity-dot {
+            position: absolute;
+            left: -24px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            z-index: 2;
+            border: 2px solid var(--bg-main);
+        }
+        .dot-critical { background-color: var(--severity-critical); box-shadow: 0 0 8px var(--severity-critical); }
+        .dot-high { background-color: var(--severity-high); box-shadow: 0 0 8px var(--severity-high); }
+        .dot-medium { background-color: var(--severity-medium); box-shadow: 0 0 8px var(--severity-medium); }
+        .dot-low { background-color: var(--severity-low); box-shadow: 0 0 8px var(--severity-low); }
+
+        .timeline-meta-info {
+            font-size: 9pt;
+            color: #64748B;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .timeline-card {
+            background-color: #0E1626;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        .timeline-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .timeline-title {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        .timeline-desc {
+            font-size: 10pt;
+            color: #94A3B8;
+            margin-bottom: 12px;
+        }
+        .timeline-raw-box {
+            background-color: #060A13;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 9pt;
+            color: #94A3B8;
+            border-left: 2px solid #475569;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* AI TRANS-BOX */
+        .ai-alert-banner {
+            background: linear-gradient(135deg, #131A2E 0%, #0B101D 100%);
+            border-left: 4px solid #A78BFA;
+            padding: 20px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 24px;
+        }
+        .ai-alert-banner p {
+            font-size: 10.5pt;
+            line-height: 1.6;
+            color: #CBD5E1;
+            margin-bottom: 12px;
+        }
+        .tag-chip {
+            display: inline-block;
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 9pt;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        /* DOCUMENT WHITE CANVAS PREVIEW */
+        .white-paper-preview {
+            background-color: #FFFFFF;
+            color: #1E293B;
+            padding: 48px;
+            border-radius: 4px;
+            max-width: 840px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+            line-height: 1.6;
+            margin-top: 24px;
+        }
+        .white-paper-preview h2 {
+            font-family: -apple-system, sans-serif;
+            font-size: 16pt;
+            font-weight: 800;
+            border-bottom: 2px solid #1E293B;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        /* DETAIL PAGE STYLING */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .meta-item {
+            background-color: #090F1C;
+            border: 1px solid #1E293B;
+            padding: 12px 16px;
+            border-radius: 4px;
+        }
+        .meta-item .meta-label {
+            font-size: 8pt;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .meta-item .meta-val {
+            font-size: 10pt;
+            color: #F1F5F9;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-brand">
+                🛡️ DETECT.AI <span class="sub-title">Digital Forensics</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a id="nav-dashboard" class="nav-link active" onclick="switchTab('dashboard')">Dashboard</a></li>
+                <li><a id="nav-upload" class="nav-link" onclick="switchTab('upload')">Upload & Ingestion</a></li>
+                <li><a id="nav-artifact" class="nav-link" onclick="switchTab('artifact')">Artifact Acquisition</a></li>
+                <li><a id="nav-timeline" class="nav-link" onclick="switchTab('timeline')">Timeline</a></li>
+                <li><a id="nav-analysis" class="nav-link" onclick="switchTab('analysis')">Hasil Analisis</a></li>
+                <li><a id="nav-report" class="nav-link" onclick="switchTab('report')">Report</a></li>
+            </ul>
+        </div>
+        <div class="nav-right">
+            <span class="dot green"></span>
+            <span class="mono">AI Model: Active (Llama3-Local)</span>
+        </div>
+    </nav>
+
+    <div class="telemetry-strip">
+        <div class="telemetry-item">🟢 Ollama Status: <strong class="mono" style="color:white; font-size:8.5pt;">READY</strong></div>
+        <div class="telemetry-item">📦 ChromaDB Store: <strong class="mono" style="color:white; font-size:8.5pt;">CONNECTED</strong></div>
+        <div class="telemetry-item">⚡ Active Tasks: <strong class="mono" style="color:white; font-size:8.5pt;">0 Idle</strong></div>
+    </div>
+
+    <div class="main-container">
+
+        <div id="dashboard" class="tab-content active">
+            <div class="grid-dashboard">
+                <div>
+                    <h1 class="page-title">Security Incident Triage Dashboard</h1>
+                    <p class="page-desc">Ikhtisar real-time log sistem, status ancaman, dan pipeline analisis otomatis berbasis AI untuk system programmer.</p>
+                    
+                    <div class="stats-container">
+                        <div class="stat-box">
+                            <div class="label">Total Log Di-Ingest</div>
+                            <div class="value mono">148</div>
+                            <div class="subtext">24 log diunggah dalam 24 jam terakhir</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Insiden Terdeteksi</div>
+                            <div class="value mono" style="color:#FB923C;">26</div>
+                            <div class="pill-container">
+                                <span class="pill-badge c">3 C</span>
+                                <span class="pill-badge h">7 H</span>
+                                <span class="pill-badge m">11 M</span>
+                                <span class="pill-badge l">5 L</span>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Investigasi Aktif</div>
+                            <div class="value mono" style="color:#60A5FA;">02</div>
+                            <div class="subtext">Sedang dianalisis oleh agen LLM lokal</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">SSH Artifacts Extracted</div>
+                            <div class="value mono">09</div>
+                            <div class="subtext">Dari target host terhubung otomatis</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="background-color:#11192A; border: 1px dashed #2563EB; text-align:center; padding:20px;">
+                        <span style="font-size:10pt; color:#94A3B8; margin-right:16px;">Terjadi insiden mendadak atau anomali pada server?</span>
+                        <button class="btn" onclick="switchTab('upload')">+ Upload Log Baru Untuk Triage Cepat</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <div class="table-responsive-title">🚨 Triage Insiden Terbaru (Aktivitas Mencurigakan Terdeteksi)</div>
+                        <table class="table-base">
+                            <thead>
+                                <tr>
+                                    <th>Waktu Terdeteksi</th>
+                                    <th>Sumber Log</th>
+                                    <th>Tipe Event</th>
+                                    <th>Severity</th>
+                                    <th>Status Investigasi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="mono">2026-06-27<br>00:01:14</td>
+                                    <td class="mono">auth.log</td>
+                                    <td>SSH Brute Force Attempt</td>
+                                    <td><span class="badge ui crit">Critical</span></td>
+                                    <td><span class="badge state new">New</span></td>
+                                    <td><a href="#" style="color:#38BDF8; text-decoration:none; font-size:9.5pt;" onclick="openIncidentDetail('SSH Brute Force Attempt', 'auth.log', '2026-06-27 00:01:14', 'Critical', 'New', '185.220.101.5', 'Multiple failed password attempts for user root from external IP.')">Lihat Detail →</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">2026-06-26<br>23:46:50</td>
+                                    <td class="mono">nginx_access.log</td>
+                                    <td>SQL Injection Pattern</td>
+                                    <td><span class="badge ui high">High</span></td>
+                                    <td><span class="badge state analyzing">Analyzing</span></td>
+                                    <td><a href="#" style="color:#38BDF8; text-decoration:none; font-size:9.5pt;" onclick="openIncidentDetail('SQL Injection Pattern', 'nginx_access.log', '2026-06-26 23:46:50', 'High', 'Analyzing', '192.168.1.45', 'Detected union select statements injection inside the dynamic HTTP URI query parameters.')">Lihat Detail →</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">2026-06-26<br>22:15:32</td>
+                                    <td class="mono">syslog</td>
+                                    <td>Unprivileged User sudo execution</td>
+                                    <td><span class="badge ui med">Medium</span></td>
+                                    <td><span class="badge state done">Done</span></td>
+                                    <td><a href="#" style="color:#38BDF8; text-decoration:none; font-size:9.5pt;" onclick="openIncidentDetail('Unprivileged User sudo execution', 'syslog', '2026-06-26 22:15:32', 'Medium', 'Done', 'Localhost', 'User www-data triggered system binary execution bypassing sudo validation parameters.')">Lihat Detail →</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">2026-06-26<br>19:30:11</td>
+                                    <td class="mono">api_telemetry.json</td>
+                                    <td>Rate Limit Exceeded (Anomali)</td>
+                                    <td><span class="badge ui low">Low</span></td>
+                                    <td><span class="badge state done">Done</span></td>
+                                    <td><a href="#" style="color:#38BDF8; text-decoration:none; font-size:9.5pt;" onclick="openIncidentDetail('Rate Limit Exceeded (Anomali)', 'api_telemetry.json', '2026-06-26 19:30:11', 'Low', 'Done', '10.20.40.5', 'API key token utilization rate abnormally spike up to 400% above normal threshold baseline.')">Lihat Detail →</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">2026-06-26<br>14:02:45</td>
+                                    <td class="mono">auth.log</td>
+                                    <td>Multiple Failed Password Reset</td>
+                                    <td><span class="badge ui med">Medium</span></td>
+                                    <td><span class="badge state done">Done</span></td>
+                                    <td><a href="#" style="color:#38BDF8; text-decoration:none; font-size:9.5pt;" onclick="openIncidentDetail('Multiple Failed Password Reset', 'auth.log', '2026-06-26 14:02:45', 'Medium', 'Done', '172.16.254.1', 'Repeated failure token generating sequences for authorization modules.')">Lihat Detail →</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card" style="padding:16px;">
+                        <div class="card-header-title">Tren Insiden (7 Hari Terakhir)</div>
+                        <div style="display:flex; align-items:flex-end; height:100px; gap:10px; background:#090F1C; padding:10px; border-radius:4px; border:1px solid #1E293B;">
+                            <div style="flex:1; background:#1E293B; height:35%;"></div>
+                            <div style="flex:1; background:#1E293B; height:55%;"></div>
+                            <div style="flex:1; background:#1E293B; height:45%;"></div>
+                            <div style="flex:1; background:#1E293B; height:70%;"></div>
+                            <div style="flex:1; background:#1E293B; height:60%;"></div>
+                            <div style="flex:1; background:#EF4444; height:90%;"></div>
+                            <div style="flex:1; background:#1E293B; height:50%;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:7.5pt; color:#475569; margin-top:6px;" class="mono">
+                            <span>20/06</span><span>22/06</span><span>24/06</span><span>26/06</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title blue-line">Riwayat Ingest Log Terakhir</div>
+                        <div style="font-size:9.5pt; display:flex; flex-direction:column; gap:14px;">
+                            <div>
+                                <div style="color:#475569; font-size:8.5pt;">Hari Ini, 23:58 WIB • 12.4 MB</div>
+                                <div class="mono" style="font-weight:600; margin:2px 0;">auth.log</div>
+                                <div style="color:#10B981; font-size:8.5pt;">✓ Parsed & Indexed</div>
+                            </div>
+                            <div>
+                                <div style="color:#475569; font-size:8.5pt;">Hari Ini, 23:44 WIB • 45.1 MB</div>
+                                <div class="mono" style="font-weight:600; margin:2px 0;">nginx_access.log</div>
+                                <div style="color:#10B981; font-size:8.5pt;">✓ Parsed & Indexed</div>
+                            </div>
+                            <div>
+                                <div style="color:#475569; font-size:8.5pt;">Kemarin, 18:12 WIB • 4.2 MB</div>
+                                <div class="mono" style="font-weight:600; margin:2px 0;">syslog.0</div>
+                                <div style="color:#10B981; font-size:8.5pt;">✓ Parsed & Indexed</div>
+                            </div>
+                            <div>
+                                <div style="color:#475569; font-size:8.5pt;">25 Juni, 11:05 WIB • 120 KB</div>
+                                <div class="mono" style="font-weight:600; margin:2px 0;">ssh_compromise_hash.txt</div>
+                                <div style="color:#EF4444; font-size:8.5pt;">⚠️ Parsing Failed (Bad Format)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title blue-line">Model Context Info</div>
+                        <ul class="mono" style="font-size:9pt; color:#94A3B8; list-style:none; display:flex; flex-direction:column; gap:6px;">
+                            <li>• Embeddings: <span style="color:white;">nomic-embed-text</span></li>
+                            <li>• Vector Distance: <span style="color:white;">Cosine Similarity</span></li>
+                            <li>• Local Temp Dir: <span style="color:white;">/var/forensics/tmp/</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="incident-detail" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="switchTab('dashboard')">← Kembali ke Dashboard</button>
+            </div>
+            
+            <h1 class="page-title" id="det-event-title">Incident Event Triage</h1>
+            <p class="page-desc">Detail komprehensif penemuan log, forensik meta, dan kontrol aksi isolasi insiden.</p>
+
+            <div class="grid-dashboard">
+                <div>
+                    <div class="card">
+                        <div class="card-header-title blue-line">Metadata Kasus & Pelacakan Artefak</div>
+                        <div class="meta-grid">
+                            <div class="meta-item">
+                                <div class="meta-label">Sumber Berkas Log</div>
+                                <div class="meta-val mono" id="det-log-source">-</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Waktu Timestamp</div>
+                                <div class="meta-val mono" id="det-timestamp">-</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Tingkat Ancaman</div>
+                                <div id="det-severity-badge">-</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Status Penanganan</div>
+                                <div id="det-status-badge">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title blue-line">Kutipan Bukti Mentah Log Target (Raw Payload)</div>
+                        <div class="terminal-container mono" id="det-raw-payload" style="height: 140px; color: #F87171;">
+                            </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title">🤖 Evaluasi Diagnosis Otomatis AI (Model: Llama3)</div>
+                        <div class="ai-alert-banner" style="margin-bottom: 0;">
+                            <p id="det-ai-summary">Menganalisis indikator insiden yang dikirimkan...</p>
+                            <div style="margin-top: 15px;">
+                                <div class="tag-chip"><span style="color:#A78BFA; font-weight:700;">Engine:</span> VectorRAG Context Engine</div>
+                                <div class="tag-chip"><span style="color:#10B981; font-weight:700;">Status:</span> Validated Evidence</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-header-title blue-line">Respon Cepat Korban</div>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <button class="btn btn-danger" style="width:100%; justify-content:center;" onclick="alert('Melakukan Karantina/Isolasi Server Host Target...')">🔒 Isolasi Server Host</button>
+                            <button class="btn" style="width:100%; justify-content:center; background-color:#10B981;" onclick="switchTab('analysis')">🧠 Terjemahkan dengan AI</button>
+                            <button class="btn btn-secondary" style="width:100%; justify-content:center;" onclick="alert('Skrip eskalasi dikirim ke tim SOC (Security Operations Center).')">📨 Eskalasi Tiket Insiden</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title blue-line">Identitas Penyerang</div>
+                        <div class="mono" style="font-size:9.5pt; color:#94A3B8;">
+                            <p style="margin-bottom: 6px;"><strong style="color: white;">IP Asal:</strong> <span id="det-attacker-ip">-</span></p>
+                            <p style="margin-bottom:6px;"><strong style="color: white;">Domain/Host:</strong> Unknown Reverse DNS</p>
+                            <p><strong style="color: white;">Geolokasi GeoIP:</strong> External Threat Actor Subnet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="upload" class="tab-content">
+            <h1 class="page-title">Log & Artifact Ingestion</h1>
+            <p class="page-desc">Unggah file teks log sistem secara manual atau berkas image biner mentah dari memori fisik / disk.</p>
+            
+            <div class="filter-tabs">
+                <button id="btn-sub-sys" class="filter-btn active" onclick="toggleIngestSubView('syslog')">System Log (.log, .txt, .json)</button>
+                <button id="btn-sub-mem" class="filter-btn" onclick="toggleIngestSubView('memory')">Disk/Memory Artifact (.raw, .dd, .mem)</button>
+            </div>
+
+            <div id="panel-ingest-syslog" class="ingest-view-panel active">
+                <div class="drop-zone-box">
+                    <p style="font-size:12pt; color:#FFFFFF; margin-bottom:6px;">📋 Drag & Drop berkas teks log Anda di sini</p>
+                    <p style="font-size:9.5pt; color:#64748B; margin-bottom:16px;">Mendukung auth.log, syslog, nginx access, atau JSON API telemetry</p>
+                    <button class="btn">Pilih File Teks</button>
+                </div>
+
+                <div class="table-responsive">
+                    <div class="table-responsive-title">PREVIEW PARSING TERAKHIR (SYSTEM LOG)</div>
+                    <table class="table-base">
+                        <thead>
+                            <tr>
+                                <th>Nama File</th>
+                                <th>Ukuran</th>
+                                <th>Tipe Parsing</th>
+                                <th>Status Pipeline AI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="mono">auth.log</td>
+                                <td>12.4 MB</td>
+                                <td>Regex Linux Auth Parser</td>
+                                <td><span class="badge-state done">PARSED & CHUNKED</span></td>
+                            </tr>
+                            <tr>
+                                <td class="mono">nginx_access.log</td>
+                                <td>45.1 MB</td>
+                                <td>Nginx Access Combined Parser</td>
+                                <td><span class="badge-state done">PARSED & CHUNKED</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn" style="margin-top:20px;" onclick="switchTab('timeline')">Mulai Analisis Sekarang →</button>
+            </div>
+
+            <div id="panel-ingest-memory" class="ingest-view-panel">
+                <div class="drop-zone-box" style="border-color:#38BDF8;">
+                    <p style="font-size:12pt; color:#FFFFFF; margin-bottom:6px;">💾 Drag & Drop Berkas Forensik Binary/Image</p>
+                    <p style="font-size:9.5pt; color:#64748B; margin-bottom:16px;">Mendukung RAW dump image (.raw, .dd), LiME Memory file (.mem), atau Core Crash Dump</p>
+                    <button class="btn btn-sian">Pilih File Forensik Biner</button>
+                </div>
+
+                <div class="table-responsive">
+                    <div class="table-responsive-title">STATUS EKSTRAKSI VOLATILITY / SLEUTHKIT AGENT</div>
+                    <table class="table-base">
+                        <thead>
+                            <tr>
+                                <th>Nama Berkas Image</th>
+                                <th>Ukuran</th>
+                                <th>Deteksi Modul Artefak</th>
+                                <th>Hasil Analisis Sektor / RAM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="mono">physmem_dump.mem</td>
+                                <td>4.0 GB</td>
+                                <td>Linux Volatility Profile (Ubuntu 22.04)</td>
+                                <td><span class="badge-state analyzing">EXTRACTING NETWORK SOCKETS...</span></td>
+                            </tr>
+                            <tr>
+                                <td class="mono">sda3_root_mirror.dd</td>
+                                <td>20.5 GB</td>
+                                <td>Ext4 File System Walker</td>
+                                <td><span class="badge-state done">SUCCESS (12 DELETED INODES FOUND)</span></td>
+                            </tr>
+                            <tr>
+                                <td class="mono">core_dump_nginx.11052</td>
+                                <td>850 MB</td>
+                                <td>Elf64 Memory Segment Crash Parser</td>
+                                <td><span class="badge-state fail">PARSING FAILED (MEMORY CORRUPTED)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="note-box">
+                    💡 <strong>Catatan Pengembang Sistem:</strong> Analisis biner membutuhkan waktu inferensi *Local Embeddings* yang lebih lama (rata-rata 2-3 minute per gigabyte data RAM).
+                </div>
+                <button class="btn" style="margin-top:20px; background-color:#FBBF24; color:#000000;" onclick="switchTab('analysis')">Kirim Artefak Memori ke Agen AI →</button>
+            </div>
+        </div>
+
+        <div id="artifact" class="tab-content">
+            <h1 class="page-title">Automated SSH Artifact Acquisition</h1>
+            <p class="page-desc">Koneksikan agen AI langsung ke server target via SSH terenkripsi untuk menarik log otomatis.</p>
+            
+            <div class="grid-dashboard">
+                <div>
+                    <div class="card">
+                        <div class="card-header-title blue-line">Form Koneksi Target Server</div>
+                        <div style="display:flex; flex-direction:column; gap:16px;">
+                            <div>
+                                <label style="display:block; font-size:9pt; color:#64748B; margin-bottom:6px;">Host / IP Address</label>
+                                <input type="text" class="mono" style="width:100%; background:#090F1C; border:1px solid #1E293B; padding:10px; color:white; border-radius:4px;" value="10.100.42.15">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:9pt; color:#64748B; margin-bottom:6px;">SSH Port</label>
+                                <input type="text" class="mono" style="width:100%; background:#090F1C; border:1px solid #1E293B; padding:10px; color:white; border-radius:4px;" value="22">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:9pt; color:#64748B; margin-bottom:6px;">Username</label>
+                                <input type="text" class="mono" style="width:100%; background:#090F1C; border:1px solid #1E293B; padding:10px; color:white; border-radius:4px;" value="root_audit">
+                            </div>
+                            <div>
+                                <button class="btn">Hubungkan & Ambil Log</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title blue-line">Log Proses Akuisisi (Real-time Terminal)</div>
+                        <div class="terminal-container mono">
+                            [+] Connecting to 10.100.42.15:22...<br>
+                            [+] Authentication successful (SSH Key Used).<br>
+                            [+] Pulling remote resource: /var/log/auth.log -> Local temporary buffer.<br>
+                            [+] Hashing Artifact using SHA-256...<br>
+                            [+] Hash Generated: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855<br>
+                            [+] Done. Ready for pipeline ingestion.
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-header-title blue-line">Chain of Custody Record</div>
+                        <div style="font-size:9.5pt; color:#94A3B8;">
+                            <p style="color:#FFFFFF; font-weight:600; margin-bottom:4px;">File: auth.log_remote</p>
+                            <p style="margin-bottom:4px;">Origin: Server_Prod_01</p>
+                            <p class="mono" style="color:#38BDF8; word-break:break-all; font-size:8.5pt; margin-bottom:12px;">SHA-256: e3b0c44298fc1c149b...</p>
+                            <p style="font-size:8.5pt; color:#475569; font-style:italic;">*Record ini bersifat read-only untuk integritas forensik hukum.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="timeline" class="tab-content">
+            <h1 class="page-title">Construct Attack Timelines</h1>
+            <p class="page-desc">Kronologis urutan insiden keamanan siber yang disusun otomatis dari hasil korelasi kluster log.</p>
+
+            <div class="timeline-controls">
+                <div class="control-group">
+                    <label for="filter-severity">Filter Kategori Keparahan</label>
+                    <select id="filter-severity" class="selector-input" onchange="filterTimelineData()">
+                        <option value="all">-- Semua Severity --</option>
+                        <option value="critical">🔴 Critical Only</option>
+                        <option value="high">🟠 High Only</option>
+                        <option value="medium">🟡 Medium Only</option>
+                        <option value="low">🔵 Low Only</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="filter-source">Selector Sumber Log</label>
+                    <select id="filter-source" class="selector-input" onchange="filterTimelineData()">
+                        <option value="all">-- Semua File Log --</option>
+                        <option value="auth.log">auth.log</option>
+                        <option value="nginx_access.log">nginx_access.log</option>
+                        <option value="syslog">syslog</option>
+                    </select>
+                </div>
+
+                <div class="control-group" style="flex-grow: 1;">
+                    <label for="search-keyword">Cari Kata Kunci (IP / Event / Payload)</label>
+                    <input type="text" id="search-keyword" class="selector-input" placeholder="Contoh: 185.220, root, exploit..." onkeyup="filterTimelineData()" style="min-width: 240px; width: 100%;">
+                </div>
+            </div>
+
+            <div class="timeline-container-scroll" id="timeline-list">
+
+                <div class="timeline-item-block" data-severity="critical" data-source="auth.log">
+                    <span class="severity-dot dot-critical"></span>
+                    <div class="timeline-meta-info mono">
+                        <span>📅 2026-06-27 00:01:14</span> • <span>📂 auth.log</span> • <span>🌐 IP: 185.220.101.5</span>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-header-flex">
+                            <div class="timeline-title">Privilege Escalation via Sudo Exploitation</div>
+                            <span class="badge ui crit">Critical</span>
+                        </div>
+                        <p class="timeline-desc">User tidak sah 'www-data' berhasil melompati pembatasan lingkungan lokal dan mengeksekusi biner eskalasi hak akses untuk memicu Root Shell.</p>
+                        <div class="timeline-raw-box mono">RAW LOG: sudo: www-data : TTY=unknown ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/pkexec_exploit</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item-block" data-severity="high" data-source="nginx_access.log">
+                    <span class="severity-dot dot-high"></span>
+                    <div class="timeline-meta-info mono">
+                        <span>📅 2026-06-26 23:58:02</span> • <span>📂 nginx_access.log</span> • <span>🌐 IP: 185.220.101.5</span>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-header-flex">
+                            <div class="timeline-title">Malicious Webshell Upload Execution</div>
+                            <span class="badge ui high">High</span>
+                        </div>
+                        <p class="timeline-desc">Ditemukan anomali request HTTP POST multipart ke endpoint unggah berkas publik. Aktor menyisipkan payload shell backdoor (.php).</p>
+                        <div class="timeline-raw-box mono">RAW LOG: 185.220.101.5 - - [26/Jun/2026:23:58:02 +0700] "POST /v1/user/upload_avatar HTTP/1.1" 200 4210 "shell.php"</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item-block" data-severity="medium" data-source="nginx_access.log">
+                    <span class="severity-dot dot-medium"></span>
+                    <div class="timeline-meta-info mono">
+                        <span>📅 2026-06-26 23:45:10</span> • <span>📂 nginx_access.log</span> • <span>🌐 IP: 185.220.101.5</span>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-header-flex">
+                            <div class="timeline-title">Web Vulnerability Path Scanning Detected</div>
+                            <span class="badge ui med">Medium</span>
+                        </div>
+                        <p class="timeline-desc">IP penyerang memicu pemindaian otomatis (automated scan) mencari endpoint sensitif tersembunyi seperti direktori admin, backup berkas config, dan upload root.</p>
+                        <div class="timeline-raw-box mono">RAW LOG: 185.220.101.5 - - [26/Jun/2026:23:45:10] "GET /wp-admin/includes/ HTTP/1.1" 404 134</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item-block" data-severity="low" data-source="syslog">
+                    <span class="severity-dot dot-low"></span>
+                    <div class="timeline-meta-info mono">
+                        <span>📅 2026-06-26 22:10:15</span> • <span>📂 syslog</span> • <span>🌐 IP: Localhost</span>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-header-flex">
+                            <div class="timeline-title">System Daemon Configuration Reload</div>
+                            <span class="badge ui low">Low</span>
+                        </div>
+                        <p class="timeline-desc">Layanan internal logrotate atau cron service melakukan pembaruan berkas rutin berkala. Tidak ada indikasi bahaya langsung terikat.</p>
+                        <div class="timeline-raw-box mono">RAW LOG: Jun 26 22:10:15 server-prod systemd[1]: Reloaded Security Log Rotation Service.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="analysis" class="tab-content">
+            <h1 class="page-title">AI Translation & IoC Analysis</h1>
+            <p class="page-desc">Penjelasan komprehensif dari kecerdasan buatan LLM lokal yang diterjemahkan ke bahasa sehari-hari.</p>
+            
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; border-bottom:1px solid #1E293B; padding-bottom:16px;">
+                    <div style="flex-grow:1;">
+                        <h2 style="font-size:14pt; font-weight:700; color:#FFFFFF;">Insiden Eksploitasi Hak Akses & Shell Injeksi</h2>
+                        <span style="font-size:9.5pt; color:#475569;">Target: Server_Web_Cluster_A</span>
+                    </div>
+                    <span class="badge-ui crit" style="font-size:9pt; padding:6px 12px; border-radius:4px;">CRITICAL SEVERITY</span>
+                </div>
+
+                <div class="ai-alert-banner">
+                    <h4 style="color:#C084FC; font-size:10pt; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">🤖 Ringkasan Narasi Eksekutif (AI Generated):</h4>
+                    <p>Pada tanggal 27 Juni pukul 00:01, sistem Anda mengalami serangan terarah. Penyerang awalnya memanfaatkan celah pada aplikasi web Nginx untuk mengunggah berkas berbahaya (Webshell). Melalui akses tersebut, penyerang masuk sebagai user sistem biasa (<code>www-data</code>), lalu memanfaatkan kerentanan skrip lokal untuk menaikkan hak aksesnya menjadi **Root Administrator** (Privilege Escalation).</p>
+                    <p><strong>Kesimpulan:</strong> Server saat ini berada di bawah kendali penuh pihak luar. Segera lakukan isolasi jaringan.</p>
+                </div>
+
+                <div class="card-header-title">Indicators of Compromise (IoC) Terdeteksi</div>
+                <div style="margin-bottom:24px;">
+                    <div class="tag-chip"><span style="color:#EF4444; font-weight:700;">IP:</span> <span class="mono" style="color:#F1F5F9;">185.220.101.5 (Tor Exit Node)</span></div>
+                    <div class="tag-chip"><span style="color:#EF4444; font-weight:700;">MD5:</span> <span class="mono" style="color:#F1F5F9;">d8e8fca2dc0f896fd7cb4cb0031ba249</span></div>
+                    <div class="tag-chip"><span style="color:#F97316; font-weight:700;">File:</span> <span class="mono" style="color:#F1F5F9;">/var/www/html/uploads/shell.php</span></div>
+                </div>
+
+                <div class="card-header-title">Rekomendasi Tindakan Remediasi Pasca Insiden</div>
+                <ul style="padding-left:16px; font-size:10pt; color:#94A3B8; display:flex; flex-direction:column; gap:8px;">
+                    <li><strong>Blokir Jaringan:</strong> Masukkan IP <span style="color:#FBBF24;" class="mono">185.220.101.5</span> ke dalam blacklist iptables/firewall cloud Anda segera.</li>
+                    <li><strong>Isolasi Sesi:</strong> Matikan atau restart service Nginx untuk memutus koneksi webshell aktif pencuri data.</li>
+                    <li><strong>Audit Histori:</strong> Periksa runbook keamanan tanggal 12 Mei lalu terkait insiden serupa di repositori internal Anda.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="report" class="tab-content">
+            <h1 class="page-title">Compliance & Executive Report Export</h1>
+            <p class="page-desc">Ekspor dokumen analisis teknis formal yang siap dikirimkan kepada manajemen, auditor, atau regulator.</p>
+            
+            <div style="display: grid; grid-template-columns: 3.2fr 1fr; gap: 24px; align-items: start;">
+                
+                <div class="white-paper-preview" style="margin-top: 0; max-width: 100%;">
+                    <h2>LAPORAN PEMERIKSAAN INSIDEN SIBER (FORMAL)</h2>
+                    <div style="font-size:10pt; color:#64748B; margin-bottom:24px; font-family:-apple-system, sans-serif; line-height:1.4;">
+                        ID Dokumen: DETECT-AI-2026-0627-01<br>
+                        Klasifikasi: Rahasia / Terbatas
+                    </div>
+                    
+                    <p style="margin-bottom:16px;"><strong>1. RINGKASAN EKSEKUTIF</strong><br>
+                    Telah teridentifikasi aktivitas anomali berbahaya berisiko tinggi pada Server Cluster Web yang mengakibatkan kebocoran hak akses administrator lokal (Root Control) melalui eksploitasi parameter log.</p>
+                    
+                    <p style="margin-bottom:16px;"><strong>2. KRONOLOGI DAMPAK</strong><br>
+                    Analisis forensik digital otomatis mengonfirmasi runtunan serangan terjadi dalam rentang waktu kurang dari 5 menit, dimulai dari injeksi skrip eksternal hingga eksekusi eksploitasi biner sistem internal.</p>
+                    
+                    <div style="border-top:1px dashed #CBD5E1; margin-top:40px; padding-top:12px; font-size:9.5pt; color:#64748B; font-style:italic;">
+                        * Catatan: Laporan ini dihasilkan secara otomatis oleh Intelijen AI Forensik Lokal dan telah divalidasi berdasarkan bukti kriptografi berkas log asli.
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header-title blue-line" style="margin-bottom: 16px;">Opsi Ekspor Dokumen</div>
+                    <p style="font-size: 9.5pt; color: #94A3B8; margin-bottom: 20px;">Silakan pilih format dokumen resmi yang ingin Anda unduh untuk kebutuhan audit atau kepatuhan.</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="btn" style="width: 100%; justify-content: center;">📥 Download PDF Resmi</button>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;">📥 Export Word (.docx)</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. TAB SWITCHER UTAMA
+        // ==========================================
+        function switchTab(tabId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(l => l.classList.remove('active'));
+
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            const dynamicNav = document.getElementById('nav-' + tabId);
+            if (dynamicNav) {
+                dynamicNav.classList.add('active');
+            }
+            
+            window.scrollTo(0, 0);
+        }
+
+        // ==========================================
+        // 2. SUB-TAB SWITCHER (Halaman Upload)
+        // ==========================================
+        function toggleIngestSubView(type) {
+            document.getElementById('panel-ingest-syslog').classList.remove('active');
+            document.getElementById('panel-ingest-memory').classList.remove('active');
+            document.getElementById('btn-sub-sys').classList.remove('active');
+            document.getElementById('btn-sub-mem').classList.remove('active');
+
+            if (type === 'syslog') {
+                document.getElementById('panel-ingest-syslog').classList.add('active');
+                document.getElementById('btn-sub-sys').classList.add('active');
+            } else if (type === 'memory') {
+                document.getElementById('panel-ingest-memory').classList.add('active');
+                document.getElementById('btn-sub-mem').classList.add('active');
+            }
+        }
+
+        // ==========================================
+        // 3. DETAIL INSIDEN (Dinamis dari Tabel)
+        // ==========================================
+        function openIncidentDetail(eventType, logSource, timestamp, severity, status, attackerIp, logMessage) {
+            document.getElementById('det-event-title').innerText = "Detail Triage: " + eventType;
+            document.getElementById('det-log-source').innerText = logSource;
+            document.getElementById('det-timestamp').innerText = timestamp;
+            document.getElementById('det-attacker-ip').innerText = attackerIp;
+            document.getElementById('det-raw-payload').innerText = "[SECURITY EVENT DETECTION LOG]\n" + timestamp + " -> SOURCE_FILE=" + logSource + " -> DETECTED_IP=" + attackerIp + "\nMESSAGE: " + logMessage;
+            
+            document.getElementById('det-ai-summary').innerHTML = "<strong>Ringkasan Analisis Ancaman:</strong> Aktivitas <code>" + eventType + "</code> pada berkas <code>" + logSource + "</code> menunjukkan pola serangan persisten dari entitas eksternal. Sistem mendeteksi adanya kecocokan signature dengan penyerangan taktis global menggunakan kluster host beralamat IP <code>" + attackerIp + "</code>.";
+
+            let sevBadge = document.getElementById('det-severity-badge');
+            if (sevBadge) {
+                sevBadge.className = ""; 
+                if (severity.toLowerCase() === 'critical') {
+                    sevBadge.innerHTML = "<span class='badge ui crit'>Critical</span>";
+                } else if (severity.toLowerCase() === 'high') {
+                    sevBadge.innerHTML = "<span class='badge ui high'>High</span>";
+                } else if (severity.toLowerCase() === 'medium') {
+                    sevBadge.innerHTML = "<span class='badge ui med'>Medium</span>";
+                } else {
+                    sevBadge.innerHTML = "<span class='badge ui low'>Low</span>";
+                }
+            }
+
+            let statusBadge = document.getElementById('det-status-badge');
+            if (statusBadge) {
+                statusBadge.className = "";
+                if (status.toLowerCase() === 'new') {
+                    statusBadge.innerHTML = "<span class='badge state new'>New</span>";
+                } else if (status.toLowerCase() === 'analyzing') {
+                    statusBadge.innerHTML = "<span class='badge state analyzing'>Analyzing</span>";
+                } else {
+                    statusBadge.innerHTML = "<span class='badge state done'>Done</span>";
+                }
+            }
+
+            switchTab('incident-detail');
+        }
+
+        // ==========================================
+        // 4. FILTER DATA TIMELINE
+        // ==========================================
+        function filterTimelineData() {
+            const severityFilter = document.getElementById('filter-severity').value;
+            const sourceFilter = document.getElementById('filter-source').value;
+            const keywordFilter = document.getElementById('search-keyword').value.toLowerCase();
+
+            const blocks = document.querySelectorAll('.timeline-item-block');
+
+            blocks.forEach(block => {
+                const blockSeverity = block.getAttribute('data-severity');
+                const blockSource = block.getAttribute('data-source');
+                const blockText = block.innerText.toLowerCase();
+
+                const matchesSeverity = (severityFilter === 'all' || blockSeverity === severityFilter);
+                const matchesSource = (sourceFilter === 'all' || blockSource === sourceFilter);
+                const matchesKeyword = (keywordFilter === '' || blockText.includes(keywordFilter));
+
+                if (matchesSeverity && matchesSource && matchesKeyword) {
+                    block.style.display = 'block';
+                } else {
+                    block.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
