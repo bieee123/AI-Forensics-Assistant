@@ -8,7 +8,10 @@ Welcome to the official repository of Team Eight's project. This system is a loc
 3. **Local & Secure Deployment:** Runs completely on-premise/private VPS using Ollama and local vector databases (ChromaDB) to guarantee strict data sovereignty.
 
 ### Repository Structure
-* `/frontend` - React + Tailwind UI Dashboard
-* `/backend` - FastAPI application & log parsing pipelines
-* `/agent` - Core AI Agent logic, custom tools, and RAG configuration
-* `/docs` - System architecture, API contracts, and procurement documentation
+* `/frontend` - Next.js dashboard
+* `/backend` - FastAPI service
+* `/agent` - LangChain agent logic & tools
+* `/docs` -  Architecture Documentation, API contract, PRD, etc 
+
+## Tech Stack
+* `/docs/architecture.md` and PRD project.
