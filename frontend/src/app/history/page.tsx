@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Upload } from "lucide-react";
+import { Search, Upload, Brain, Eye } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { api, Upload as UploadType } from "@/lib/api";
@@ -119,6 +119,7 @@ export default function HistoryPage() {
                             onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
                           >
+                        <Eye size={12} />
                             {tr.history.view}
                           </button>
                           <button
@@ -128,6 +129,7 @@ export default function HistoryPage() {
                             onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
                           >
+                        <Brain size={12} />
                             {tr.history.analyze}
                           </button>
                         </td>

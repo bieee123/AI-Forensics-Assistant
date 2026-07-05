@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { UploadCloud, FileText, HardDrive } from "lucide-react";
+import { UploadCloud, FileText, HardDrive, Brain, Eye, Loader2 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { api, Upload as UploadType } from "@/lib/api";
@@ -172,7 +172,7 @@ export default function UploadPage() {
                 opacity: (uploading || (!file && !pasteText.trim())) ? 0.5 : 1,
               }}
             >
-              {uploading ? "Uploading..." : tr.upload.submit}
+              {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading...</> : tr.upload.submit}
             </button>
           </div>
 
@@ -221,6 +221,7 @@ export default function UploadPage() {
                           onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
                           onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
                         >
+                        <Eye size={12} />
                           {tr.upload.view}
                         </button>
                         <button
@@ -230,6 +231,7 @@ export default function UploadPage() {
                           onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
                           onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
                         >
+                        <Brain size={12} />
                           {tr.upload.analyze}
                         </button>
                       </td>

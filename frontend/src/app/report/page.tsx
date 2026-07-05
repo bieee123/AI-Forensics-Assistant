@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { getLang, t, Lang } from "@/lib/i18n";
@@ -74,6 +74,7 @@ export default function ReportPage() {
               onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
               onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
             >
+            <FileText size={14} />
               {tr.report.generateReport}
             </button>
           </div>

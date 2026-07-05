@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Brain } from "lucide-react";
+import { Brain, CheckCircle2, Circle, Hourglass } from "lucide-react";
 
 const STEPS = [
   { key: "parsing",    delay: 0 },
@@ -36,8 +36,14 @@ export default function AnalysisLoader({ steps, estimatedTime, onCancel }: Props
           const isActive = s.key === "generating" || (s.key !== "generating" && !isDone);
           return (
             <div key={s.key} className="flex items-center gap-3 text-sm">
-              <span className="w-5 text-center flex-shrink-0">
-                {isDone ? "✅" : s.key === "generating" ? "⏳" : "○"}
+              <span className="w-5 text-center flex-shrink-0 flex items-center justify-center">
+                {isDone ? (
+                  <CheckCircle2 size={18} style={{ color: "var(--severity-low)" }} />
+                ) : s.key === "generating" ? (
+                  <Hourglass size={18} style={{ color: "var(--severity-high)" }} />
+                ) : (
+                  <Circle size={18} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                )}
               </span>
               <span className={isDone ? "text-text-secondary line-through" : "text-text-primary"}>
                 {steps[s.key as keyof typeof steps]}
