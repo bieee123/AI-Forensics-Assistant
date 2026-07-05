@@ -25,6 +25,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ upload_id: uploadId }),
     }),
+  acquireArtifact: (data: AcquireRequest) =>
+    req<AcquireResponse>("/acquire/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  getArtifacts: () => req<Artifact[]>("/acquire/artifacts"),
 };
 
 // Types
@@ -61,5 +68,31 @@ export interface AnalysisResult {
 }
 export interface Health {
   status: string; ollama_connected: boolean; chromadb_connected: boolean;
+}
+export interface AcquireRequest {
+  host: string;
+  port: number;
+  username: string;
+  password?: string;
+  private_key_path?: string;
+  remote_log_path: string;
+}
+export interface AcquireResponse {
+  host: string;
+  remote_path: string;
+  local_path: string;
+  sha256_hash: string;
+  file_size_bytes: number;
+  acquired_at: string;
+  upload_id: number;
+  total_entries_parsed: number;
+  chain_of_custody: string;
+}
+export interface Artifact {
+  filename: string;
+  path: string;
+  sha256: string;
+  acquired_at: string;
+  size_bytes: number;
 }
 
