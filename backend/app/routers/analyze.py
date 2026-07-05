@@ -59,7 +59,7 @@ def classify_severity(entries: list) -> str:
 def get_rag_context(query: str) -> str:
     try:
         embeddings  = OllamaEmbeddings(model=OLLAMA_EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
-        vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
+        vectorstore = Chroma(persist_directory=CHROMA_DIR, collection_name="forensic_runbooks", embedding_function=embeddings)
         docs        = vectorstore.similarity_search(query, k=2)
         return "\n\n".join(d.page_content for d in docs) if docs else ""
     except Exception:
