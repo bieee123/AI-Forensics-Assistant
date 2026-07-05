@@ -1,0 +1,28 @@
+RUNBOOK: Data Exfiltration Detection and Response
+
+Indicators:
+- Unusually large outbound data transfers, especially to external IPs
+- Data transfer to cloud storage services (Dropbox, Google Drive, Mega) from non-standard users
+- Outbound connections on uncommon ports (4444, 8080, 8443, 9001) from internal servers
+- Compression of large file sets (tar, zip, 7z) followed by outbound transfer
+- Database dump files (mysqldump, pg_dump output) found in unexpected locations
+- DNS tunneling patterns: unusually long DNS queries, high DNS query volume from a single host
+- Access to sensitive directories (/etc, /var/lib, database data directories) outside maintenance windows
+
+Immediate Actions:
+1. Identify what data was accessed and potentially exfiltrated — check file access logs, database audit logs
+2. Identify the destination IP/domain receiving the exfiltrated data
+3. Block outbound traffic to the identified destination immediately
+4. Preserve network logs and packet captures as forensic evidence
+5. Determine the volume of data transferred — this affects legal and regulatory notification requirements
+6. Notify legal and compliance teams immediately if personal data (PII) or financial data is involved
+
+Severity Classification:
+- High: Exfiltration of internal documentation or non-sensitive configuration files
+- Critical: Exfiltration of customer data, financial records, credentials, or intellectual property
+
+Regulatory Requirements:
+If personal data of EU residents was involved, GDPR requires notification to the supervisory authority within 72 hours of becoming aware of the breach. For Indonesian data, comply with UU PDP (Undang-Undang Perlindungan Data Pribadi). Engage legal counsel before making any public statements.
+
+Evidence Preservation:
+Hash all forensic artifacts immediately (SHA-256). Maintain chain of custody documentation. Do not remediate before evidence is preserved — remediation destroys forensic value.

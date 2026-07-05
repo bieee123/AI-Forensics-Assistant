@@ -1,0 +1,46 @@
+RUNBOOK: General Incident Response Framework
+
+Phases:
+1. Detection & Identification
+2. Containment
+3. Eradication
+4. Recovery
+5. Post-Incident Review
+
+Phase 1 — Detection & Identification:
+- Confirm the incident is real and not a false positive
+- Determine incident type: intrusion, malware, insider threat, data breach, denial of service
+- Assign an incident severity level (Critical/High/Medium/Low)
+- Assign an incident commander and open an incident ticket
+- Begin timeline documentation — every action taken must be timestamped
+
+Phase 2 — Containment:
+- Short-term: isolate affected systems to prevent further spread
+- Long-term: implement network-level controls (firewall rules, VLAN isolation)
+- Preserve forensic evidence before containment actions modify system state
+- Communicate containment actions to IT operations to avoid business disruption
+
+Phase 3 — Eradication:
+- Remove malicious artifacts: malware, backdoors, unauthorized accounts, persistence mechanisms
+- Patch the vulnerability that allowed the incident to occur
+- Reset all credentials that may have been compromised
+- Verify eradication is complete before proceeding to recovery
+
+Phase 4 — Recovery:
+- Restore affected systems from known-good backups
+- Monitor restored systems closely for 72 hours for signs of re-compromise
+- Gradually restore normal operations with enhanced monitoring in place
+- Communicate recovery status to stakeholders
+
+Phase 5 — Post-Incident Review:
+- Conduct a post-mortem within 5 business days
+- Document: what happened, how it was detected, what was done, what could be improved
+- Update runbooks and detection rules based on lessons learned
+- Track remediation items to completion
+
+IoC Documentation:
+All indicators of compromise identified during the incident must be documented:
+- IP addresses involved
+- File hashes (SHA-256) of malicious artifacts
+- Domain names used by attackers
+- Attack techniques mapped to MITRE ATT&CK framework

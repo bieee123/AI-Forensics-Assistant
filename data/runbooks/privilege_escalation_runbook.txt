@@ -1,0 +1,32 @@
+RUNBOOK: Privilege Escalation Response
+
+Indicators:
+- sudo commands executed by non-privileged users
+- su or sudo with unusual flags in auth.log
+- Access to /etc/passwd, /etc/shadow, or /root directories
+- Creation of new user accounts or modification of existing ones
+- Unexpected changes to /etc/sudoers
+- Commands run as root by non-admin users
+- Processes spawned with elevated privileges outside maintenance windows
+
+Immediate Actions:
+1. Identify which user account performed the privilege escalation
+2. Check if the account was compromised or if an insider threat is involved
+3. Review all commands executed under the elevated session (bash_history, journalctl)
+4. Determine what files or services were accessed during the elevated session
+5. Revoke elevated access immediately if unauthorized
+
+Severity Classification:
+- Medium: Single sudo attempt by authorized user outside normal hours
+- High: Successful privilege escalation by non-admin account
+- Critical: Root access obtained followed by system modification or persistence mechanism installed
+
+Escalation:
+Any confirmed unauthorized privilege escalation must be treated as Critical. Isolate the host immediately, preserve a forensic image, and escalate to the security lead. Notify compliance team if sensitive data was accessible under the elevated session.
+
+Common Attack Patterns:
+- Sudo misconfiguration exploitation (NOPASSWD entries)
+- SUID/SGID binary abuse
+- Kernel exploit for local privilege escalation
+- Credential reuse from previously compromised accounts
+- PATH hijacking to execute malicious binaries as root

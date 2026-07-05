@@ -1,0 +1,27 @@
+RUNBOOK: Lateral Movement Detection and Response
+
+Indicators:
+- SSH connections between internal hosts that are unusual or undocumented
+- Authentication to multiple internal systems within a short time window from the same account
+- Use of administrative credentials (root, admin) for internal-to-internal connections
+- Accessing file shares or databases not normally used by the authenticating user
+- Tools associated with lateral movement detected: psexec, wmiexec, CrackMapExec, Mimikatz
+- Unusual port scanning activity originating from an internal host
+- Pass-the-hash or pass-the-ticket patterns in authentication logs
+
+Immediate Actions:
+1. Map the full path of lateral movement — which hosts were accessed, in what order, and what was done
+2. Identify the initial entry point (patient zero) — the first host compromised before lateral movement began
+3. Check for persistence mechanisms on each compromised host (cron jobs, systemd services, startup scripts)
+4. Isolate all confirmed compromised hosts from the network
+5. Revoke all credentials associated with the compromised account(s) — force password reset for entire affected OU if Active Directory
+
+Severity Classification:
+- High: Single lateral movement event, limited scope, no data access confirmed
+- Critical: Multiple hosts compromised, persistence mechanisms found, or sensitive data accessed
+
+Containment Strategy:
+Do not tip off the attacker by immediately blocking all connections — first capture network traffic for forensic evidence, then block. Use network segmentation to isolate the affected subnet before revoking credentials.
+
+Post-Incident:
+Conduct a full audit of all internal SSH keys and service accounts. Lateral movement often exploits overly permissive service accounts or shared credentials. Implement network segmentation and least-privilege access controls.

@@ -1,0 +1,29 @@
+RUNBOOK: Brute Force Attack Response
+
+Indicators:
+- Multiple failed authentication attempts from the same IP within a short window
+- Failed password attempts exceeding 10 per minute from a single source
+- Distributed attempts from multiple IPs targeting the same username
+- Attempts against common usernames: root, admin, administrator, guest, test
+- Attempts continuing after initial lockout (suggests bypass or distributed attack)
+- Geographic anomaly: login attempts from unexpected countries or regions
+
+Immediate Actions:
+1. Identify the source IP(s) generating failed login attempts
+2. Check whether any attempt eventually succeeded — this changes severity to Critical
+3. Block the attacking IP at the firewall level if the attack is ongoing
+4. Enforce account lockout policy if not already active
+5. Review all successful logins from the same IP range in the preceding 48 hours
+6. Check for VPN/proxy usage by the attacking IP (use threat intelligence lookup)
+
+Severity Classification:
+- Low: Fewer than 10 failed attempts, no successful login, known scanner IP
+- Medium: 10–50 failed attempts, no successful login, targeting valid usernames
+- High: Successful login following multiple failed attempts (possible compromise)
+- Critical: Successful login + subsequent commands or file access after brute force
+
+Escalation:
+If any login attempt succeeds after repeated failures, escalate immediately. Do not wait for confirmation of data exfiltration. Treat as compromise until proven otherwise.
+
+Response for Distributed Brute Force:
+If attempts come from more than 5 distinct IPs targeting the same account, this indicates a credential stuffing or botnet attack. Enable geo-blocking for regions with no legitimate business. Consider deploying CAPTCHA or MFA if not already in place.
