@@ -42,6 +42,7 @@ export const translations = {
       estimatedTime: "This may take 30–90 seconds on CPU inference",
       recommendation: "Recommendation", noResult: "No analysis yet.",
       runAnalysis: "Run Analysis", clickRow: "Click a row to expand raw_message (collapsed by default)",
+      viewFullTimeline: "View Full Timeline",
       steps: {
         parsing: "Parsing log entries",
         extracting: "Extracting IoC indicators",
@@ -54,6 +55,8 @@ export const translations = {
       filter: "Filter", allSeverities: "All Severities",
       allEventTypes: "All Event Types", allIPs: "All IPs",
       noEvents: "No events to display.",
+      selectUpload: "Select an upload to view its event timeline.",
+      pickUpload: "Choose from recent uploads",
       showRaw: "Show raw log", hideRaw: "Hide raw log",
     },
     history: {
@@ -183,6 +186,7 @@ export const translations = {
       estimatedTime: "Proses ini mungkin memakan waktu 30–90 detik",
       recommendation: "Rekomendasi", noResult: "Belum ada analisis.",
       runAnalysis: "Jalankan Analisis", clickRow: "Klik baris untuk memperluas raw_message (diciutkan secara default)",
+      viewFullTimeline: "Lihat Timeline Lengkap",
       steps: {
         parsing: "Mem-parsing entri log",
         extracting: "Mengekstrak indikator IoC",
@@ -195,6 +199,8 @@ export const translations = {
       filter: "Filter", allSeverities: "Semua Tingkat",
       allEventTypes: "Semua Jenis Kejadian", allIPs: "Semua IP",
       noEvents: "Tidak ada kejadian untuk ditampilkan.",
+      selectUpload: "Pilih unggahan untuk melihat timeline kejadiannya.",
+      pickUpload: "Pilih dari unggahan terbaru",
       showRaw: "Tampilkan raw log", hideRaw: "Sembunyikan raw log",
     },
     history: {

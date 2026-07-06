@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { RefreshCw, Download, Copy, AlertCircle } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { RefreshCw, Download, Copy, AlertCircle, Clock } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import AnalysisLoader from "@/components/ui/AnalysisLoader";
@@ -11,6 +11,7 @@ import { severityBadgeClass, eventRowClass, eventBadgeClass, formatEventType, fm
 
 function AnalysisPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const uploadId = searchParams.get("upload_id");
   const shouldRun = searchParams.get("run") === "true";
 
@@ -219,8 +220,18 @@ function AnalysisPageContent() {
 
             {/* Attack Timeline */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg">
-              <div className="px-5 py-4 border-b border-border-subtle font-semibold text-[13px] text-text-primary">
-                {tr.analysis.attackTimeline}
+              <div className="px-5 py-4 border-b border-border-subtle font-semibold text-[13px] text-text-primary flex items-center justify-between">
+                <span>{tr.analysis.attackTimeline}</span>
+                <button
+                  onClick={() => router.push(`/timeline?upload_id=${uploadId}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-md text-[12.5px] font-medium cursor-pointer border transition-all"
+                  style={{ background: "var(--accent-bg)", color: "var(--accent)", borderColor: "var(--accent)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
+                >
+                  <Clock size={13} />
+                  {tr.analysis.viewFullTimeline}
+                </button>
               </div>
               {result.attack_timeline && result.attack_timeline.length > 0 ? (
                 <>
