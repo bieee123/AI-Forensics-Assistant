@@ -13,7 +13,9 @@ from app.config import OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
-import json, os
+import json, os, logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -159,8 +161,15 @@ async def analyze_log(request: AnalyzeRequest):
         ioc_list=", ".join(ioc_list) if ioc_list else "None detected",
     )
 
-    llm        = OllamaLLM(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
-    llm_output = llm.invoke(prompt)
+    try:
+        llm        = OllamaLLM(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
+        llm_output = llm.invoke(prompt)
+    except Exception as e:
+        logger.error("LLM invocation failed: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail=f"LLM analysis failed — is Ollama running with model '{OLLAMA_MODEL}'? Error: {e}"
+        )
     parsed     = parse_llm_output(llm_output)
 
     # Step 6: Build narrative report

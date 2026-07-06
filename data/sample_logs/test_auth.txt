@@ -1,0 +1,15 @@
+Jul 01 08:15:22 db-prod sshd[2100]: Failed password for invalid user mysql from 91.240.118.100 port 35112 ssh2
+Jul 01 08:15:25 db-prod sshd[2100]: Failed password for invalid user postgres from 91.240.118.100 port 35113 ssh2
+Jul 01 08:15:28 db-prod sshd[2100]: Failed password for invalid user elasticsearch from 91.240.118.100 port 35114 ssh2
+Jul 01 08:15:31 db-prod sshd[2100]: Failed password for root from 91.240.118.100 port 35115 ssh2
+Jul 01 08:15:34 db-prod sshd[2100]: Failed password for invalid user hadoop from 91.240.118.100 port 35116 ssh2
+Jul 01 08:15:37 db-prod sshd[2100]: Failed password for invalid user spark from 91.240.118.100 port 35117 ssh2
+Jul 01 08:15:40 db-prod sshd[2100]: Failed password for invalid user airflow from 91.240.118.100 port 35118 ssh2
+Jul 01 08:15:43 db-prod sshd[2100]: Failed password for invalid user jenkins from 91.240.118.100 port 35119 ssh2
+Jul 01 08:16:01 db-prod sshd[2101]: Accepted password for app from 91.240.118.100 port 35120 ssh2
+Jul 01 08:16:30 db-prod sshd[2103]: Accepted password for dba from 10.0.1.22 port 587 ssh2
+Jul 01 08:17:45 db-prod sudo: app : TTY=pts/1 ; PWD=/opt/app ; USER=root ; COMMAND=/bin/chmod 777 /etc/shadow
+Jul 01 08:18:00 db-prod sshd[2105]: Failed password for root from 45.155.205.200 port 55001 ssh2
+Jul 01 08:18:10 db-prod sshd[2105]: Failed password for root from 45.155.205.200 port 55002 ssh2
+Jul 01 08:20:00 db-prod sshd[2107]: Failed password for invalid user admin from 45.155.205.200 port 55100 ssh2
+Jul 01 08:22:00 db-prod sudo: dba : TTY=pts/0 ; PWD=/home/dba ; USER=root ; COMMAND=/bin/systemctl status postgresql

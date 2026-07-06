@@ -12,7 +12,7 @@ git push origin main
 
 echo.
 echo [DEPLOY] Triggering deploy on VPS...
-ssh %VPS% "cd %VPS_PATH% && git pull origin main && chmod +x deploy.sh && ./deploy.sh"
+ssh %VPS% "cd %VPS_PATH% && chmod +x deploy.sh && ./deploy.sh"
 
 echo.
 echo Done.
