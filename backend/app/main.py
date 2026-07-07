@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, logs, analyze, acquire
+from app.routers import upload, logs, analyze, acquire, report
 from app.config import OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 import httpx, os, glob, logging
 
@@ -20,6 +20,7 @@ app.include_router(upload.router,   prefix="/upload",   tags=["upload"])
 app.include_router(logs.router,     prefix="/logs",     tags=["logs"])
 app.include_router(analyze.router,  prefix="/analyze",  tags=["analyze"])
 app.include_router(acquire.router,  prefix="/acquire",  tags=["acquire"])
+app.include_router(report.router,   prefix="/report",   tags=["report"])
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "../../chroma_db")
 RUNBOOKS_DIR = os.path.join(os.path.dirname(__file__), "../../data/runbooks")

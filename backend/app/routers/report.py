@@ -158,16 +158,18 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
 
     sev_data = [
         [
-            Paragraph(f"<b>Severity</b>", label_style),
-            Paragraph(f"<b>Total Incidents</b>", label_style),
+            Paragraph("<b>Severity</b>", label_style),
+            Paragraph("<b>Total Incidents</b>", label_style),
         ],
         [
-            Paragraph(f"<b><font color='#{sev_color.hexval()[1:]}'>{severity}</font></b>",
+            Paragraph(f"<b>{severity}</b>",
                 ParagraphStyle("Sev", parent=styles["Normal"],
-                    fontSize=18, fontName="Helvetica-Bold")),
+                    fontSize=18, fontName="Helvetica-Bold",
+                    textColor=sev_color)),
             Paragraph(f"<b>{total}</b>",
                 ParagraphStyle("Tot", parent=styles["Normal"],
-                    fontSize=18, fontName="Helvetica-Bold", textColor=DARK)),
+                    fontSize=18, fontName="Helvetica-Bold",
+                    textColor=DARK)),
         ],
     ]
     sev_table = Table(sev_data, colWidths=[8.5*cm, 8.5*cm])
