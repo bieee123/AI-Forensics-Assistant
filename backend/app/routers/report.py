@@ -49,7 +49,12 @@ class ReportRequest(BaseModel):
     analyst_name: str = "DFA System"
     organization: str = "PT Teknologi Nasional Indonesia Siber"
     classification: str = "CONFIDENTIAL"
-
+    # Accept pre-computed analysis results directly
+    narrative_report: str | None = None
+    severity_overall: str | None = None
+    ioc_summary: list[str] | None = None
+    attack_timeline: list[dict] | None = None
+    total_incidents: int | None = None
 
 def severity_color(s: str):
     return SEVERITY_COLORS.get(s.upper(), GRAY)
@@ -111,7 +116,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     sev_color   = severity_color(severity)
     upload_id   = analysis.get("upload_id", "N/A")
     total       = analysis.get("total_incidents", 0)
-    narrative   = analysis.get("narrative_report", "No narrative available.")
+    narrative   = analysis.get("narrative_report") or "Analysis narrative not available. Please re-run the analysis."
     ioc_list    = analysis.get("ioc_summary", [])
     timeline    = analysis.get("attack_timeline", [])
 
@@ -158,16 +163,18 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
 
     sev_data = [
         [
-            Paragraph(f"<b>Severity</b>", label_style),
-            Paragraph(f"<b>Total Incidents</b>", label_style),
+            Paragraph("<b>Severity</b>", label_style),
+            Paragraph("<b>Total Incidents</b>", label_style),
         ],
         [
-            Paragraph(f"<b><font color='#{sev_color.hexval()[1:]}'>{severity}</font></b>",
+            Paragraph(f"<b>{severity}</b>",
                 ParagraphStyle("Sev", parent=styles["Normal"],
-                    fontSize=18, fontName="Helvetica-Bold")),
+                    fontSize=18, fontName="Helvetica-Bold",
+                    textColor=sev_color)),
             Paragraph(f"<b>{total}</b>",
                 ParagraphStyle("Tot", parent=styles["Normal"],
-                    fontSize=18, fontName="Helvetica-Bold", textColor=DARK)),
+                    fontSize=18, fontName="Helvetica-Bold",
+                    textColor=DARK)),
         ],
     ]
     sev_table = Table(sev_data, colWidths=[8.5*cm, 8.5*cm])
@@ -292,24 +299,30 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
 
 @router.post("/")
 async def generate_report(req: ReportRequest):
-    """
-    Generate a professional PDF incident report from analysis results.
-    Runs analysis if not cached, then generates PDF ready for download.
-    """
-    # Run analysis to get fresh results
-    try:
-        analysis_result = await analyze_log(AnalyzeRequest(upload_id=req.upload_id))
-        analysis_dict   = analysis_result.model_dump()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+    # If analysis data already provided, use it directly
+    if req.narrative_report:
+        analysis_dict = {
+            "upload_id":       req.upload_id,
+            "narrative_report": req.narrative_report,
+            "severity_overall": req.severity_overall or "UNKNOWN",
+            "ioc_summary":     req.ioc_summary or [],
+            "attack_timeline": req.attack_timeline or [],
+            "total_incidents": req.total_incidents or 0,
+        }
+    else:
+        # Fallback: run analysis (slow path)
+        try:
+            analysis_result = await analyze_log(AnalyzeRequest(upload_id=req.upload_id))
+            analysis_dict   = analysis_result.model_dump()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-    # Build PDF
     try:
         pdf_bytes = build_pdf(analysis_dict, req)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 
-    filename = f"incident_report_upload_{req.upload_id}_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
+    filename = f"incident_report_{req.upload_id}_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
 
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
