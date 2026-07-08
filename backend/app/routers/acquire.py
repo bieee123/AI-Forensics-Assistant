@@ -63,7 +63,25 @@ async def acquire_artifact(request: AcquireRequest):
             "timeout": 30,
         }
         if request.private_key_path:
-            connect_kwargs["key_filename"] = request.private_key_path
+            if "-----BEGIN" in request.private_key_path:
+                import io
+                from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key
+                pkey = None
+                key_errors = []
+                for key_class in (RSAKey, Ed25519Key, ECDSAKey, DSSKey):
+                    try:
+                        pkey = key_class.from_private_key(io.StringIO(request.private_key_path), password=request.password)
+                        break
+                    except Exception as e:
+                        key_errors.append(f"{key_class.__name__}: {str(e)}")
+                if not pkey:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Invalid SSH private key format or passphrase. Errors: {'; '.join(key_errors)}"
+                    )
+                connect_kwargs["pkey"] = pkey
+            else:
+                connect_kwargs["key_filename"] = request.private_key_path
         elif request.password:
             connect_kwargs["password"] = request.password
         else:

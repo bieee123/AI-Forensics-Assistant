@@ -11,10 +11,10 @@ import { eventDotColor, formatEventType, eventBadgeClass, fmtTime, fmtDateShort 
 function TimelinePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialUploadId = searchParams.get("upload_id");
+  const uploadIdParam = searchParams.get("upload_id");
+  const activeUploadId = uploadIdParam ? parseInt(uploadIdParam) : null;
 
   const [lang, setLangState] = useState<Lang>("en");
-  const [activeUploadId, setActiveUploadId] = useState<number | null>(initialUploadId ? parseInt(initialUploadId) : null);
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [uploads, setUploads] = useState<UploadType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,12 +30,10 @@ function TimelinePageContent() {
 
   const tr = t(lang);
 
-  // Fetch recent uploads for the picker
+  // Fetch recent uploads unconditionally on mount
   useEffect(() => {
-    if (!initialUploadId) {
-      api.getUploads().then(setUploads).catch(() => {});
-    }
-  }, [initialUploadId]);
+    api.getUploads().then(setUploads).catch(() => {});
+  }, []);
 
   // Fetch entries when activeUploadId changes
   useEffect(() => {
@@ -51,11 +49,7 @@ function TimelinePageContent() {
   }, [activeUploadId]);
 
   const selectUpload = (id: number) => {
-    setActiveUploadId(id);
-    // Update URL without navigation
-    const url = new URL(window.location.href);
-    url.searchParams.set("upload_id", String(id));
-    window.history.replaceState({}, "", url.toString());
+    router.replace(`/timeline?upload_id=${id}`);
   };
 
   const selectedUpload = uploads.find(u => u.upload_id === activeUploadId);

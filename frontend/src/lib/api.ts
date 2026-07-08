@@ -1,4 +1,6 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE = typeof window !== "undefined"
+  ? (process.env.NEXT_PUBLIC_API_URL || window.location.origin.replace(":3000", ":8000"))
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, options);
@@ -32,6 +34,15 @@ export const api = {
       body: JSON.stringify(data),
     }),
   getArtifacts: () => req<Artifact[]>("/acquire/artifacts"),
+  generateReport: (data: { upload_id: number; analyst_name?: string; organization?: string; classification?: string }) =>
+    fetch(`${BASE}/report/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }).then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.blob();
+    }),
 };
 
 // Types

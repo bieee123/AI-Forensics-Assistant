@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw, Download, Copy, AlertCircle, Clock } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
@@ -37,7 +37,7 @@ function AnalysisPageContent() {
     }
   }, [uploadId, shouldRun]);
 
-  const runAnalysis = async () => {
+  const runAnalysis = useCallback(async () => {
     if (!uploadId) return;
     setLoading(true);
     setError("");
@@ -50,7 +50,7 @@ function AnalysisPageContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [uploadId]);
 
   const toggleRow = (id: number) => {
     setExpandedRows(prev => {
@@ -289,10 +289,17 @@ function AnalysisPageContent() {
   );
 }
 
+function AnalysisPageWrapper() {
+  const searchParams = useSearchParams();
+  const uploadId = searchParams.get("upload_id") || "";
+  const run = searchParams.get("run") || "";
+  return <AnalysisPageContent key={`${uploadId}-${run}`} />;
+}
+
 export default function AnalysisPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="empty-state"><span>Loading...</span></div></div>}>
-      <AnalysisPageContent />
+      <AnalysisPageWrapper />
     </Suspense>
   );
 }
