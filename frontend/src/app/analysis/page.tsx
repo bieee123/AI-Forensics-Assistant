@@ -45,8 +45,8 @@ function AnalysisPageContent() {
     try {
       const data = await api.analyze(parseInt(uploadId));
       setResult(data);
-    } catch (err) {
-      setError("Analysis failed. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Analysis failed. Please try again.");
     } finally {
       setLoading(false);
     }
