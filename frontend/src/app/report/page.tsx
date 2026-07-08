@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Download, FileText, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Loader2, AlertCircle, Brain } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { getLang, t, Lang } from "@/lib/i18n";
@@ -15,6 +15,7 @@ export default function ReportPage() {
   const [preparedBy, setPreparedBy] = useState("analyst01");
   const [classification, setClassification] = useState("CONFIDENTIAL");
   const [generating, setGenerating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => { setLangState(getLang()); }, []);
@@ -43,11 +44,22 @@ export default function ReportPage() {
     setGenerating(true);
     setError("");
     try {
+      // Step 1: Run analysis to get pre-computed data
+      setStatusMsg("Running forensic analysis...");
+      const analysis = await api.analyze(parseInt(selectedUploadId));
+
+      // Step 2: Pass analysis results directly to report — avoids double LLM call
+      setStatusMsg("Generating PDF report...");
       const blob = await api.generateReport({
         upload_id: parseInt(selectedUploadId),
         analyst_name: preparedBy,
         organization: "PT Teknologi Nasional Indonesia Siber",
         classification: classification,
+        narrative_report: analysis.narrative_report,
+        severity_overall: analysis.severity_overall,
+        ioc_summary: analysis.ioc_summary,
+        attack_timeline: analysis.attack_timeline,
+        total_incidents: analysis.total_incidents,
       });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -55,8 +67,11 @@ export default function ReportPage() {
       a.download = `incident_report_upload_${selectedUploadId}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
-      setError("Failed to generate PDF report.");
+      setStatusMsg("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to generate PDF report";
+      setError(msg);
+      setStatusMsg("");
     } finally {
       setGenerating(false);
     }
@@ -133,7 +148,7 @@ export default function ReportPage() {
               style={{ background: generating ? "var(--text-muted)" : "var(--accent)", color: "#fff", opacity: generating ? 0.7 : 1 }}
             >
               {generating ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
-              {generating ? "Generating..." : tr.report.generateReport}
+              {generating ? (statusMsg || "Generating...") : tr.report.generateReport}
             </button>
           </div>
 

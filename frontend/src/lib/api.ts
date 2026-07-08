@@ -34,7 +34,17 @@ export const api = {
       body: JSON.stringify(data),
     }),
   getArtifacts: () => req<Artifact[]>("/acquire/artifacts"),
-  generateReport: (data: { upload_id: number; analyst_name?: string; organization?: string; classification?: string }) =>
+  generateReport: (data: {
+    upload_id: number;
+    analyst_name?: string;
+    organization?: string;
+    classification?: string;
+    narrative_report?: string;
+    severity_overall?: string;
+    ioc_summary?: string[];
+    attack_timeline?: unknown[];
+    total_incidents?: number;
+  }) =>
     fetch(`${BASE}/report/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
