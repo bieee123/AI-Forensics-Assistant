@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import upload, logs, analyze, acquire, report
+from app.routers import upload, logs, analyze, acquire
+from app.models.schemas import init_db
 from app.config import OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 import httpx, os, glob, logging
 
@@ -27,6 +29,17 @@ RUNBOOKS_DIR = os.path.join(os.path.dirname(__file__), "../../data/runbooks")
 
 
 @app.on_event("startup")
+def on_startup():
+    """Initialize database tables on first run, then seed ChromaDB."""
+    try:
+        init_db()
+        logger.info("Database tables verified/created")
+    except Exception as e:
+        logger.warning("init_db skipped: %s", e)
+
+    seed_chromadb()
+
+
 def seed_chromadb():
     """Ingest runbook .txt files into ChromaDB on startup if collection is empty."""
     try:
