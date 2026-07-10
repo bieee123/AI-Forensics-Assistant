@@ -413,16 +413,21 @@ function AnalysisPageContent() {
                   No narrative available.
                 </p>
               )}
-            </div>
 
-            {recommendationText && (
-              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-                <div className="font-semibold text-[13px] text-text-primary mb-2.5">Recommendation</div>
-                <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
-                  {recommendationText}
-                </p>
-              </div>
-            )}
+              {recommendationText && (
+                <div className="p-3 rounded mt-4" style={{
+                  borderLeft: "3px solid var(--severity-high)",
+                  background: "rgba(255,140,66,0.08)",
+                }}>
+                  <p className="text-xs font-semibold mb-1" style={{ color: "var(--severity-high)" }}>
+                    ⚠ Recommendation
+                  </p>
+                  <p className="text-[13px] m-0" style={{ color: "var(--text-primary)" }}>
+                    {recommendationText}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* IoC Summary */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
