@@ -221,6 +221,13 @@ export default function DashboardPage() {
                 </div>
                 {data.recent_uploads && data.recent_uploads.length > 0 ? (
                   <table>
+                    <colgroup>
+                      <col style={{ width: 40 }} />
+                      <col />
+                      <col style={{ width: 80 }} />
+                      <col style={{ width: 100 }} />
+                      <col style={{ width: 200 }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>#</th>
@@ -233,12 +240,12 @@ export default function DashboardPage() {
                     <tbody>
                       {data.recent_uploads.slice(0, 5).map((u) => (
                         <tr key={u.upload_id} className="row-hover">
-                          <td className="font-mono">{u.upload_id}</td>
-                          <td>{u.filename}</td>
-                          <td className="font-mono">{u.total_entries.toLocaleString()}</td>
+                          <td className="font-mono whitespace-nowrap">{u.upload_id}</td>
+                          <td className="truncate max-w-0">{u.filename}</td>
+                          <td className="font-mono whitespace-nowrap">{u.total_entries.toLocaleString()}</td>
                           <td className="font-mono whitespace-nowrap">{new Date(u.uploaded_at).toLocaleDateString("en-GB")}</td>
                           <td>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
                               <button
                                 onClick={() => router.push(`/analysis?upload_id=${u.upload_id}&run=true`)}
                                 className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-all"
