@@ -9,7 +9,6 @@ import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { api, Summary, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
-import { fmtDateShort } from "@/lib/utils";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
 
 export default function DashboardPage() {
@@ -237,13 +236,13 @@ export default function DashboardPage() {
                           <td className="font-mono">{u.upload_id}</td>
                           <td>{u.filename}</td>
                           <td className="font-mono">{u.total_entries.toLocaleString()}</td>
-                          <td className="font-mono">{fmtDateShort(u.uploaded_at)}</td>
+                          <td className="font-mono whitespace-nowrap">{new Date(u.uploaded_at).toLocaleDateString("en-GB")}</td>
                           <td>
                             <div className="flex items-center gap-1.5">
                               <button
                                 onClick={() => router.push(`/analysis?upload_id=${u.upload_id}&run=true`)}
-                                className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-all"
-                                style={{ background: "var(--accent)", color: "#fff" }}
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none transition-all"
+                                style={{ background: "var(--accent)", color: "#fff", minWidth: 0 }}
                                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}
                                 onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.boxShadow = "none"; }}
                               >
@@ -253,7 +252,7 @@ export default function DashboardPage() {
                               <button
                                 onClick={() => handleExportPDF(u)}
                                 disabled={exportingId === u.upload_id}
-                                className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-md text-[12.5px] font-medium cursor-pointer border transition-all disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border transition-all disabled:opacity-50"
                                 style={{ background: "var(--accent-bg)", color: "var(--accent)", borderColor: "var(--accent)" }}
                                 onMouseEnter={e => { if (exportingId !== u.upload_id) { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; } }}
                                 onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
@@ -274,32 +273,69 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5 self-start">
-                <div className="font-semibold text-[13px] text-text-primary mb-3.5">{tr.dashboard.quickActions}</div>
-                <button
-                  onClick={() => router.push("/upload")}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border-none mb-2.5"
-                  style={{ background: "var(--accent)", color: "#fff" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
-                >
-                  <Upload size={14} />
-                  {tr.dashboard.uploadLog}
-                </button>
-                <button
-                  onClick={() => {
-                    const latest = data?.recent_uploads?.[0];
-                    if (latest) router.push(`/analysis?upload_id=${latest.upload_id}&run=true`);
-                    else router.push("/upload");
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border border-border-subtle"
-                  style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
-                >
-                  <Zap size={14} />
-                  {tr.dashboard.analyzeLatest}
-                </button>
+              <div className="flex flex-col gap-4 self-start">
+                <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
+                  <div className="font-semibold text-[13px] text-text-primary mb-3.5">{tr.dashboard.quickActions}</div>
+                  <button
+                    onClick={() => router.push("/upload")}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border-none mb-2.5"
+                    style={{ background: "var(--accent)", color: "#fff" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+                  >
+                    <Upload size={14} />
+                    {tr.dashboard.uploadLog}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const latest = data?.recent_uploads?.[0];
+                      if (latest) router.push(`/analysis?upload_id=${latest.upload_id}&run=true`);
+                      else router.push("/upload");
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border border-border-subtle"
+                    style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
+                  >
+                    <Zap size={14} />
+                    {tr.dashboard.analyzeLatest}
+                  </button>
+                </div>
+
+                {/* System Status */}
+                <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
+                  <div className="font-semibold text-[13px] text-text-primary mb-4">System Status</div>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ollama LLM</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>llama3:8b</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>ChromaDB RAG</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>nomic-embed-text</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>PostgreSQL</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>forensics_db</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>API Backend</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>localhost:8000</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </>
