@@ -33,10 +33,11 @@ function ReportPreview({
     )
   }
 
+  const severityLabel = (analysisData.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
   const sevColor: Record<string, string> = {
     CRITICAL: "#FF4D6A", HIGH: "#FF8C42", MEDIUM: "#c9a52e", LOW: "#06D6A0", INFO: "#4ECDC4"
   }
-  const color = sevColor[analysisData.severity_overall?.toUpperCase()] || "#8B92A9"
+  const color = sevColor[severityLabel.toUpperCase()] || "#8B92A9"
 
   const narrativeText = analysisData.narrative_report || ""
 
@@ -85,7 +86,7 @@ function ReportPreview({
         <div className="p-3 rounded border text-center"
           style={{ borderColor: "var(--border-subtle)" }}>
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Severity</p>
-          <p className="text-xl font-bold" style={{ color }}>{analysisData.severity_overall}</p>
+          <p className="text-xl font-bold" style={{ color }}>{severityLabel}</p>
         </div>
         <div className="p-3 rounded border text-center"
           style={{ borderColor: "var(--border-subtle)" }}>

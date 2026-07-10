@@ -88,6 +88,19 @@ RECOMMENDATION: [1-2 sentences on immediate actions]
 """)
 
 
+def _match_label(line: str, label: str) -> bool:
+    """Match label allowing optional underscore/space variation."""
+    no_ws = label.replace("_", "")
+    with_ws = label.replace("_", " ")
+    return line.startswith(label) or line.startswith(no_ws) or line.startswith(with_ws)
+
+def _extract_value(line: str, label: str) -> str:
+    """Extract value after a label (handles underscore/space variants)."""
+    for variant in (label, label.replace("_", ""), label.replace("_", " ")):
+        if line.startswith(variant):
+            return line[len(variant):].strip()
+    return line.strip()
+
 def parse_llm_output(text: str) -> dict:
     result = {
         "severity": "UNKNOWN",
@@ -99,28 +112,31 @@ def parse_llm_output(text: str) -> dict:
     current_value = []
 
     for line in text.strip().splitlines():
-        if line.startswith("SEVERITY:"):
+        stripped = line.strip()
+        if _match_label(line, "SEVERITY:"):
+            # Severity is always single-word — flush previous section and set immediately
             if current_key and current_value:
                 result[current_key] = " ".join(current_value).strip()
-            current_key = "severity"
-            current_value = [line.replace("SEVERITY:", "").strip()]
-        elif line.startswith("ATTACK_TIMELINE:"):
+            result["severity"] = _extract_value(line, "SEVERITY:")
+            current_key = None
+            current_value = []
+        elif _match_label(line, "ATTACK_TIMELINE:"):
             if current_key and current_value:
                 result[current_key] = " ".join(current_value).strip()
             current_key = "attack_timeline"
-            current_value = [line.replace("ATTACK_TIMELINE:", "").strip()]
-        elif line.startswith("IOC_EXPLANATION:"):
+            current_value = [_extract_value(line, "ATTACK_TIMELINE:")]
+        elif _match_label(line, "IOC_EXPLANATION:"):
             if current_key and current_value:
                 result[current_key] = " ".join(current_value).strip()
             current_key = "ioc_explanation"
-            current_value = [line.replace("IOC_EXPLANATION:", "").strip()]
-        elif line.startswith("RECOMMENDATION:"):
+            current_value = [_extract_value(line, "IOC_EXPLANATION:")]
+        elif _match_label(line, "RECOMMENDATION:"):
             if current_key and current_value:
                 result[current_key] = " ".join(current_value).strip()
             current_key = "recommendation"
-            current_value = [line.replace("RECOMMENDATION:", "").strip()]
-        elif current_key:
-            current_value.append(line.strip())
+            current_value = [_extract_value(line, "RECOMMENDATION:")]
+        elif current_key and stripped:
+            current_value.append(stripped)
 
     if current_key and current_value:
         result[current_key] = " ".join(current_value).strip()
@@ -201,8 +217,9 @@ async def analyze_log(request: AnalyzeRequest):
     try:
         upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == request.upload_id).first()
         filename = upload.filename if upload else f"upload_{request.upload_id}"
+        sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
         result_dict = {
-            "severity_overall": parsed["severity"] or severity,
+            "severity_overall": sev,
             "total_incidents": len(entries),
             "narrative_report": narrative,
             "ioc_summary": ioc_list,
@@ -214,13 +231,14 @@ async def analyze_log(request: AnalyzeRequest):
     finally:
         db_save.close()
 
+    sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
     return AnalyzeResponse(
         upload_id=request.upload_id,
         total_incidents=len(entries),
         attack_timeline=sorted_entries,
         ioc_summary=ioc_list,
         narrative_report=narrative,
-        severity_overall=parsed["severity"] or severity,
+        severity_overall=sev,
     )
 
 

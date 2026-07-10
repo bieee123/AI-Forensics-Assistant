@@ -199,6 +199,7 @@ function AnalysisPageContent() {
   };
 
   const narrativeText = result?.narrative_report || ""
+  const severityLabel = (result?.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
 
   return (
     <AppShell>
@@ -380,10 +381,10 @@ function AnalysisPageContent() {
             {/* Severity header */}
             <div
               className="severity-card bg-bg-elevated border border-border-subtle rounded-lg px-5 py-4 flex items-center gap-2.5 flex-wrap"
-              style={{ borderLeftColor: result.severity_overall?.toUpperCase() === "CRITICAL" ? "var(--severity-critical)" : result.severity_overall?.toUpperCase() === "HIGH" ? "var(--severity-high)" : "var(--severity-medium)" }}
+              style={{ borderLeftColor: severityLabel === "CRITICAL" ? "var(--severity-critical)" : severityLabel === "HIGH" ? "var(--severity-high)" : "var(--severity-medium)" }}
             >
-              <span className={severityBadgeClass(result.severity_overall)}>{result.severity_overall}</span>
-              <span className="font-semibold text-text-primary">Severity: {result.severity_overall?.toUpperCase()}</span>
+              <span className={severityBadgeClass(severityLabel)}>{severityLabel}</span>
+              <span className="font-semibold text-text-primary">Severity: {severityLabel}</span>
               <span style={{ color: "var(--text-muted)" }}>·</span>
               <span className="font-mono" style={{ color: "var(--text-secondary)" }}>{result.total_incidents} {tr.analysis.incidents}</span>
               {fromCache && cachedAt && (
