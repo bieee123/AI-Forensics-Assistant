@@ -1,0 +1,17 @@
+[
+  {"timestamp": "2026-06-25T01:03:00Z", "event_type": "port_scan", "source": "ids-sensor", "details": "Port scan detected from 91.121.87.34 — 22,80,443,3306,8080 open"},
+  {"timestamp": "2026-06-25T01:05:00Z", "event_type": "ids_alert", "source": "crowdsec", "details": "SSH brute-force pattern detected — 91.121.87.34 targeting admin, root users"},
+  {"timestamp": "2026-06-25T01:08:00Z", "event_type": "ids_alert", "source": "crowdsec", "details": "Distributed SSH brute-force — multiple source IPs (185.220.101.5, 198.51.100.73) targeting service accounts"},
+  {"timestamp": "2026-06-25T01:16:00Z", "event_type": "auth_anomaly", "source": "auth-service", "details": "Unusual successful SSH login — www-data account from 185.220.101.5 (never logged in before)"},
+  {"timestamp": "2026-06-25T01:16:30Z", "event_type": "privilege_escalation", "source": "auditd", "details": "CVE-2025-1234 pkexec exploit detected — www-data escalated to root on web01"},
+  {"timestamp": "2026-06-25T01:17:00Z", "event_type": "new_user", "source": "auth-service", "details": "New user 'ghost' created with UID 0 (root) — unauthorized persistence mechanism"},
+  {"timestamp": "2026-06-25T01:18:30Z", "event_type": "package_install", "source": "apt-history", "details": "netcat-openbsd installed on web01 by ghost — potential reverse shell preparation"},
+  {"timestamp": "2026-06-25T01:19:00Z", "event_type": "reverse_shell", "source": "network-monitor", "details": "Outbound connection from web01:4444 to 198.51.100.73:4444 — active reverse shell detected"},
+  {"timestamp": "2026-06-25T01:19:30Z", "event_type": "ssh_key_modification", "source": "auditd", "details": "Authorized_keys modified for root on web01 — unauthorized SSH key injected"},
+  {"timestamp": "2026-06-25T01:20:00Z", "event_type": "lateral_movement", "source": "ids-sensor", "details": "SSH connection from web01 (185.220.101.5) to db01 as backup user — lateral movement"},
+  {"timestamp": "2026-06-25T01:21:00Z", "event_type": "data_exfiltration", "source": "dlp-sensor", "details": "Large MySQL dump (42MB) compressed and exfiltrated via HTTP POST to 198.51.100.73:8080/upload"},
+  {"timestamp": "2026-06-25T01:22:00Z", "event_type": "credential_theft", "source": "auditd", "details": "/etc/shadow and database credentials accessed on db01 via root SSH from 185.220.101.5"},
+  {"timestamp": "2026-06-25T01:23:00Z", "event_type": "cron_backdoor", "source": "auditd", "details": "Persistence backdoor installed via crontab — reverse shell every minute to 198.51.100.73:4445"},
+  {"timestamp": "2026-06-25T01:24:00Z", "event_type": "defense_evasion", "source": "wazuh", "details": "fail2ban stopped and disabled, iptables rules flushed, logs deleted — active defense evasion"},
+  {"timestamp": "2026-06-25T01:25:00Z", "event_type": "system_shutdown", "source": "kernel", "details": "Unexpected system poweroff initiated by ghost from web01 — possible cleanup/cover tracks"}
+]
