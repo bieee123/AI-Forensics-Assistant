@@ -53,9 +53,29 @@ export const api = {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.blob();
     }),
+  getAnalysisHistory: () => req<AnalysisHistoryItem[]>("/analyze/history"),
+  getAnalysisResult:  (uploadId: number) => req<SavedAnalysisResult>(`/analyze/result/${uploadId}`),
+  deleteAnalysisResult: (uploadId: number) =>
+    req<{ deleted: boolean }>(`/analyze/result/${uploadId}`, { method: "DELETE" }),
 };
 
 // Types
+export interface AnalysisHistoryItem {
+  id: number;
+  upload_id: number;
+  filename: string;
+  severity: string;
+  total_incidents: number;
+  analyzed_at: string;
+  analysis_duration_seconds: number | null;
+}
+
+export interface SavedAnalysisResult extends AnalysisResult {
+  analyzed_at: string;
+  analysis_duration_seconds: number | null;
+  filename: string;
+}
+
 export interface Summary {
   total_uploads: number;
   total_log_entries: number;

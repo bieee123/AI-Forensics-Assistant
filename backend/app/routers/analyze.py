@@ -7,13 +7,13 @@ and returns attack timeline + IoC explanation via local LLM.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models.schemas import SessionLocal, ParsedLogEntryDB
+from app.models.schemas import SessionLocal, ParsedLogEntryDB, save_analysis_result, LogUploadDB, AnalysisResultDB
 from app.agent_tools import regex_extract_ioc, timestamp_sorter
 from app.config import OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
-import json, os, logging
+import json, os, logging, time
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +109,7 @@ def parse_llm_output(text: str) -> dict:
 
 @router.post("/", response_model=AnalyzeResponse)
 async def analyze_log(request: AnalyzeRequest):
+    start_time = time.time()
     db: Session = SessionLocal()
     try:
         entries = db.query(ParsedLogEntryDB).filter(
@@ -120,7 +121,6 @@ async def analyze_log(request: AnalyzeRequest):
     if not entries:
         raise HTTPException(status_code=404, detail=f"No log entries found for upload_id {request.upload_id}")
 
-    # Step 1: Sort by timestamp using agent tool
     entries_as_dicts = [
         {
             "timestamp": str(e.timestamp),
@@ -135,7 +135,6 @@ async def analyze_log(request: AnalyzeRequest):
     ]
     sorted_entries = timestamp_sorter.invoke({"entries": entries_as_dicts})
 
-    # Step 2: Extract IoCs using agent tool
     combined_text = " ".join(
         f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
         for e in sorted_entries
@@ -143,14 +142,11 @@ async def analyze_log(request: AnalyzeRequest):
     ioc_result = regex_extract_ioc.invoke({"text": combined_text})
     ioc_list   = ioc_result.get("ips_found", [])
 
-    # Step 3: Classify overall severity
     severity = classify_severity(entries)
 
-    # Step 4: Get RAG context from ChromaDB
     rag_query   = f"SSH {severity.lower()} attack incident response runbook"
     rag_context = get_rag_context(rag_query)
 
-    # Step 5: Build prompt and call local LLM
     log_text = "\n".join(
         f"[{e['timestamp']}] {e['event_type']} | IP: {e['source_ip']} | User: {e['user']} | Status: {e['status']}"
         for e in sorted_entries
@@ -172,12 +168,30 @@ async def analyze_log(request: AnalyzeRequest):
         )
     parsed     = parse_llm_output(llm_output)
 
-    # Step 6: Build narrative report
     narrative = (
         f"{parsed['attack_timeline']} "
         f"{parsed['ioc_explanation']} "
         f"Recommendation: {parsed['recommendation']}"
     ).strip()
+
+    # Auto-save result to PostgreSQL
+    duration = int(time.time() - start_time)
+    db_save = SessionLocal()
+    try:
+        upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == request.upload_id).first()
+        filename = upload.filename if upload else f"upload_{request.upload_id}"
+        result_dict = {
+            "severity_overall": parsed["severity"] or severity,
+            "total_incidents": len(entries),
+            "narrative_report": narrative,
+            "ioc_summary": ioc_list,
+            "attack_timeline": sorted_entries,
+        }
+        save_analysis_result(db_save, request.upload_id, filename, result_dict, duration)
+    except Exception as e:
+        logger.warning(f"Failed to save analysis result: {e}")
+    finally:
+        db_save.close()
 
     return AnalyzeResponse(
         upload_id=request.upload_id,
@@ -187,3 +201,69 @@ async def analyze_log(request: AnalyzeRequest):
         narrative_report=narrative,
         severity_overall=parsed["severity"] or severity,
     )
+
+
+@router.get("/history")
+def get_analysis_history():
+    """Return list of all saved analysis results, newest first."""
+    db: Session = SessionLocal()
+    try:
+        records = db.query(AnalysisResultDB).order_by(
+            AnalysisResultDB.analyzed_at.desc()
+        ).all()
+        return [
+            {
+                "id": r.id,
+                "upload_id": r.upload_id,
+                "filename": r.filename,
+                "severity": r.severity,
+                "total_incidents": r.total_incidents,
+                "analyzed_at": str(r.analyzed_at),
+                "analysis_duration_seconds": r.analysis_duration_seconds,
+            }
+            for r in records
+        ]
+    finally:
+        db.close()
+
+
+@router.get("/result/{upload_id}")
+def get_analysis_result(upload_id: int):
+    """Return saved analysis result for a specific upload_id."""
+    db: Session = SessionLocal()
+    try:
+        record = db.query(AnalysisResultDB).filter(
+            AnalysisResultDB.upload_id == upload_id
+        ).first()
+        if not record:
+            raise HTTPException(status_code=404, detail=f"No analysis found for upload_id {upload_id}")
+        return {
+            "upload_id":        record.upload_id,
+            "filename":         record.filename,
+            "severity_overall": record.severity,
+            "total_incidents":  record.total_incidents,
+            "narrative_report": record.narrative_report,
+            "ioc_summary":      json.loads(record.ioc_summary or "[]"),
+            "attack_timeline":  json.loads(record.attack_timeline or "[]"),
+            "analyzed_at":      str(record.analyzed_at),
+            "analysis_duration_seconds": record.analysis_duration_seconds,
+        }
+    finally:
+        db.close()
+
+
+@router.delete("/result/{upload_id}")
+def delete_analysis_result(upload_id: int):
+    """Delete saved analysis result to allow re-analysis."""
+    db: Session = SessionLocal()
+    try:
+        record = db.query(AnalysisResultDB).filter(
+            AnalysisResultDB.upload_id == upload_id
+        ).first()
+        if not record:
+            raise HTTPException(status_code=404, detail="Not found")
+        db.delete(record)
+        db.commit()
+        return {"deleted": True, "upload_id": upload_id}
+    finally:
+        db.close()

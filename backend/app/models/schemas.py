@@ -94,5 +94,53 @@ class ParsedTelemetryEntryDB(Base):
     raw_line = Column(Text)
 
 
+
+class AnalysisResultDB(Base):
+    __tablename__ = "analysis_results"
+
+    id           = Column(Integer, primary_key=True, index=True)
+    upload_id    = Column(Integer, nullable=False, unique=True, index=True)
+    filename     = Column(String, nullable=False)
+    severity     = Column(String, nullable=False)
+    total_incidents = Column(Integer, default=0)
+    narrative_report = Column(Text, nullable=True)
+    ioc_summary  = Column(Text, nullable=True)   # JSON string: ["ip1", "ip2"]
+    attack_timeline = Column(Text, nullable=True) # JSON string: [{...}, {...}]
+    analyzed_at  = Column(DateTime, default=datetime.utcnow)
+    analysis_duration_seconds = Column(Integer, nullable=True)
+
+
+def save_analysis_result(db, upload_id: int, filename: str, result: dict, duration_seconds: int = None):
+    """Save or update analysis result for an upload."""
+    import json
+    existing = db.query(AnalysisResultDB).filter(AnalysisResultDB.upload_id == upload_id).first()
+    if existing:
+        existing.severity          = result.get("severity_overall", "UNKNOWN")
+        existing.total_incidents   = result.get("total_incidents", 0)
+        existing.narrative_report  = result.get("narrative_report", "")
+        existing.ioc_summary       = json.dumps(result.get("ioc_summary", []))
+        existing.attack_timeline   = json.dumps(result.get("attack_timeline", []))
+        existing.analyzed_at       = datetime.utcnow()
+        existing.analysis_duration_seconds = duration_seconds
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        record = AnalysisResultDB(
+            upload_id    = upload_id,
+            filename     = filename,
+            severity     = result.get("severity_overall", "UNKNOWN"),
+            total_incidents = result.get("total_incidents", 0),
+            narrative_report = result.get("narrative_report", ""),
+            ioc_summary  = json.dumps(result.get("ioc_summary", [])),
+            attack_timeline = json.dumps(result.get("attack_timeline", [])),
+            analysis_duration_seconds = duration_seconds,
+        )
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+        return record
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)

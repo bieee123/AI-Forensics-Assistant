@@ -1,6 +1,7 @@
 "use client";
 import TopBar from "./TopBar";
 import Sidebar from "./Sidebar";
+import AnalysisProgressToast from "@/components/ui/AnalysisProgressToast";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <AnalysisProgressToast />
     </div>
   );
 }
