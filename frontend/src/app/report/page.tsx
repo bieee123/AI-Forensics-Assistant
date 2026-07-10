@@ -38,13 +38,7 @@ function ReportPreview({
   }
   const color = sevColor[analysisData.severity_overall?.toUpperCase()] || "#8B92A9"
 
-  let narrativeBody = analysisData.narrative_report || ""
-  let recommendation = ""
-  if (narrativeBody.includes("Recommendation:")) {
-    const idx = narrativeBody.indexOf("Recommendation:")
-    recommendation = narrativeBody.slice(idx + 15).trim()
-    narrativeBody = narrativeBody.slice(0, idx).trim()
-  }
+  const narrativeText = analysisData.narrative_report || ""
 
   return (
     <div className="h-full overflow-y-auto rounded-lg border p-6 text-sm"
@@ -105,21 +99,14 @@ function ReportPreview({
       <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
         2. NARRATIVE ANALYSIS
       </h2>
-      {narrativeBody ? (
+      {narrativeText ? (
         <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
-          {narrativeBody}
+          {narrativeText}
         </p>
       ) : (
         <p className="text-xs italic mb-3" style={{ color: "var(--text-muted)" }}>
           No narrative available.
         </p>
-      )}
-      {recommendation && (
-        <div className="p-3 rounded mb-4 border-l-4"
-          style={{ borderColor: "#FF8C42", background: "rgba(255,140,66,0.08)" }}>
-          <p className="text-xs font-bold mb-1" style={{ color: "#FF8C42" }}>⚠ Recommendation</p>
-          <p className="text-xs" style={{ color: "var(--text-primary)" }}>{recommendation}</p>
-        </div>
       )}
 
       <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>

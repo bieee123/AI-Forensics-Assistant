@@ -198,14 +198,7 @@ function AnalysisPageContent() {
     URL.revokeObjectURL(url);
   };
 
-  // Split narrative into report and recommendation
-  let narrativeBody = result?.narrative_report || "";
-  let recommendation = "";
-  if (narrativeBody.includes("Recommendation:")) {
-    const parts = narrativeBody.split("Recommendation:");
-    narrativeBody = parts[0].trim();
-    recommendation = parts.slice(1).join("Recommendation:").trim();
-  }
+  const narrativeText = result?.narrative_report || ""
 
   return (
     <AppShell>
@@ -405,35 +398,14 @@ function AnalysisPageContent() {
             {/* Narrative Report */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
               <div className="font-semibold text-[13px] text-text-primary mb-2.5">{tr.analysis.narrative}</div>
-
-              {!narrativeBody && result.narrative_report && (
+              {narrativeText ? (
                 <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
-                  {result.narrative_report}
+                  {narrativeText}
                 </p>
-              )}
-
-              {narrativeBody && (
-                <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
-                  {narrativeBody}
-                </p>
-              )}
-
-              {!narrativeBody && !result.narrative_report && (
+              ) : (
                 <p className="text-[13px] italic m-0 mb-3.5" style={{ color: "var(--text-muted)" }}>
                   No narrative available.
                 </p>
-              )}
-
-              {recommendation && (
-                <div className="reco-block">
-                  <div
-                    className="font-semibold text-xs mb-1 uppercase tracking-wider"
-                    style={{ color: "var(--severity-high)" }}
-                  >
-                    {tr.analysis.recommendation}
-                  </div>
-                  <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{recommendation}</div>
-                </div>
               )}
             </div>
 

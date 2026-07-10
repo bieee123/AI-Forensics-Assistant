@@ -95,15 +95,36 @@ def parse_llm_output(text: str) -> dict:
         "ioc_explanation": "",
         "recommendation": ""
     }
+    current_key = None
+    current_value = []
+
     for line in text.strip().splitlines():
         if line.startswith("SEVERITY:"):
-            result["severity"] = line.replace("SEVERITY:", "").strip()
+            if current_key and current_value:
+                result[current_key] = " ".join(current_value).strip()
+            current_key = "severity"
+            current_value = [line.replace("SEVERITY:", "").strip()]
         elif line.startswith("ATTACK_TIMELINE:"):
-            result["attack_timeline"] = line.replace("ATTACK_TIMELINE:", "").strip()
+            if current_key and current_value:
+                result[current_key] = " ".join(current_value).strip()
+            current_key = "attack_timeline"
+            current_value = [line.replace("ATTACK_TIMELINE:", "").strip()]
         elif line.startswith("IOC_EXPLANATION:"):
-            result["ioc_explanation"] = line.replace("IOC_EXPLANATION:", "").strip()
+            if current_key and current_value:
+                result[current_key] = " ".join(current_value).strip()
+            current_key = "ioc_explanation"
+            current_value = [line.replace("IOC_EXPLANATION:", "").strip()]
         elif line.startswith("RECOMMENDATION:"):
-            result["recommendation"] = line.replace("RECOMMENDATION:", "").strip()
+            if current_key and current_value:
+                result[current_key] = " ".join(current_value).strip()
+            current_key = "recommendation"
+            current_value = [line.replace("RECOMMENDATION:", "").strip()]
+        elif current_key:
+            current_value.append(line.strip())
+
+    if current_key and current_value:
+        result[current_key] = " ".join(current_value).strip()
+
     return result
 
 
