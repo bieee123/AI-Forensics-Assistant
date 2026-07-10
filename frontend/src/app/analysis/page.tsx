@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { RefreshCw, Download, Copy, AlertCircle, Clock, Database, FileText, Plus } from "lucide-react";
+import { RefreshCw, Download, Copy, AlertCircle, Clock, Database, FileText, Plus, Eye } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import AnalysisLoader from "@/components/ui/AnalysisLoader";
@@ -55,6 +55,13 @@ function AnalysisPageContent() {
 
     const tryLoadFromCache = async () => {
       const id = parseInt(uploadId)
+
+      // Don't start a new analysis if one is already running for this upload
+      const existing = getActiveJob()
+      if (existing?.status === "running" && existing.uploadId === id) {
+        return
+      }
+
       const session = getSessionCache(id)
       if (session) {
         setResult(session)
@@ -274,9 +281,11 @@ function AnalysisPageContent() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => router.push(`/analysis?upload_id=${item.upload_id}`)}
-                        className="text-xs px-3 py-1.5 rounded-md border transition-colors"
-                        style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
-                        Open
+                        className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-medium cursor-pointer border transition-all"
+                        style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)", borderColor: "var(--border-subtle)" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; e.currentTarget.style.color = "var(--text-secondary)"; }}>
+                        <Eye size={13} /> Open
                       </button>
                       <button
                         onClick={() => router.push(`/analysis?upload_id=${item.upload_id}&run=true`)}

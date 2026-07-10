@@ -2,6 +2,9 @@ const BASE = typeof window !== "undefined"
   ? (process.env.NEXT_PUBLIC_API_URL || `${window.location.protocol}//${window.location.hostname}:8000`)
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
 
+// Deduplicate in-flight requests — same key returns same promise
+const inflight = new Map<string, Promise<any>>()
+
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, options);
   if (!res.ok) {
@@ -21,12 +24,17 @@ export const api = {
     const fd = new FormData(); fd.append("file", file);
     return req<UploadResult>("/upload/", { method: "POST", body: fd });
   },
-  analyze: (uploadId: number) =>
-    req<AnalysisResult>("/analyze/", {
+  analyze: (uploadId: number) => {
+    const key = `analyze:${uploadId}`
+    if (inflight.has(key)) return inflight.get(key)!
+    const promise = req<AnalysisResult>("/analyze/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ upload_id: uploadId }),
-    }),
+    }).finally(() => inflight.delete(key))
+    inflight.set(key, promise)
+    return promise
+  },
   acquireArtifact: (data: AcquireRequest) =>
     req<AcquireResponse>("/acquire/", {
       method: "POST",
