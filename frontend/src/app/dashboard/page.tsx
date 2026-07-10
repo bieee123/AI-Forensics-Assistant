@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Upload, FileText, Activity, AlertCircle, RefreshCw, Zap, Brain, FileDown, Loader2,
+  Upload, FileText, Activity, AlertCircle, RefreshCw, Zap, Brain, FileDown, Loader2, Database, Server,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
@@ -241,8 +241,8 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-1.5">
                               <button
                                 onClick={() => router.push(`/analysis?upload_id=${u.upload_id}&run=true`)}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none transition-all"
-                                style={{ background: "var(--accent)", color: "#fff", minWidth: 0 }}
+                                className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-all"
+                                style={{ background: "var(--accent)", color: "#fff" }}
                                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}
                                 onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.boxShadow = "none"; }}
                               >
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                               <button
                                 onClick={() => handleExportPDF(u)}
                                 disabled={exportingId === u.upload_id}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border transition-all disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-md text-[12.5px] font-medium cursor-pointer border transition-all disabled:opacity-50"
                                 style={{ background: "var(--accent-bg)", color: "var(--accent)", borderColor: "var(--accent)" }}
                                 onMouseEnter={e => { if (exportingId !== u.upload_id) { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; } }}
                                 onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
@@ -304,35 +304,47 @@ export default function DashboardPage() {
 
                 {/* System Status */}
                 <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-                  <div className="font-semibold text-[13px] text-text-primary mb-4">System Status</div>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Ollama LLM</div>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>llama3:8b</div>
-                      </div>
+                  <div className="font-semibold text-[13px] text-text-primary mb-3.5">System Status</div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                        <Brain size={14} />
+                        Ollama LLM
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full inline-block status-dot-active" style={{ background: "var(--severity-low)" }} />
+                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>llama3:8b</span>
+                      </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>ChromaDB RAG</div>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>nomic-embed-text</div>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                        <Database size={14} />
+                        ChromaDB RAG
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full inline-block status-dot-active" style={{ background: "var(--severity-low)" }} />
+                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>nomic-embed-text</span>
+                      </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>PostgreSQL</div>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>forensics_db</div>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                        <Server size={14} />
+                        PostgreSQL
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full inline-block status-dot-active" style={{ background: "var(--severity-low)" }} />
+                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>forensics_db</span>
+                      </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 status-dot-active" style={{ background: "var(--severity-low)" }} />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>API Backend</div>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>localhost:8000</div>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                        <Activity size={14} />
+                        API Backend
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full inline-block status-dot-active" style={{ background: "var(--severity-low)" }} />
+                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>localhost:8000</span>
+                      </span>
                     </div>
                   </div>
                 </div>
