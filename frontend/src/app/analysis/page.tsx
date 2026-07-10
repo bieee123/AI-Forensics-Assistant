@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { RefreshCw, Download, Copy, AlertCircle, Clock } from "lucide-react";
+import { RefreshCw, Download, Copy, AlertCircle, Clock, Database, FileText, Plus } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import AnalysisLoader from "@/components/ui/AnalysisLoader";
-import { api, AnalysisResult } from "@/lib/api";
+import { api, AnalysisResult, AnalysisHistoryItem } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { severityBadgeClass, eventRowClass, eventBadgeClass, formatEventType, fmtTime } from "@/lib/utils";
+import { getSessionCache, setSessionCache } from "@/lib/cache"
+import { startAnalysisJob, updateProgress, completeJob, failJob } from "@/lib/analysisStore"
 
 function AnalysisPageContent() {
   const searchParams = useSearchParams();
@@ -21,6 +23,12 @@ function AnalysisPageContent() {
   const [error, setError] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [fromCache, setFromCache] = useState(false)
+  const [cachedAt, setCachedAt] = useState<string | null>(null)
+  const [historyItems, setHistoryItems] = useState<AnalysisHistoryItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [elapsedMs, setElapsedMs] = useState(0)
+  const [progressPercent, setProgressPercent] = useState(0)
 
   useEffect(() => { setLangState(getLang()); }, []);
   useEffect(() => {
@@ -37,20 +45,91 @@ function AnalysisPageContent() {
     }
   }, [uploadId, shouldRun]);
 
-  const runAnalysis = useCallback(async () => {
-    if (!uploadId) return;
-    setLoading(true);
-    setError("");
-    setResult(null);
-    try {
-      const data = await api.analyze(parseInt(uploadId));
-      setResult(data);
-    } catch (err: any) {
-      setError(err?.message || "Analysis failed. Please try again.");
-    } finally {
-      setLoading(false);
+  // Fetch history when no upload_id
+  useEffect(() => {
+    if (!uploadId) {
+      setHistoryLoading(true)
+      api.getAnalysisHistory()
+        .then(setHistoryItems)
+        .catch(() => {})
+        .finally(() => setHistoryLoading(false))
     }
-  }, [uploadId]);
+  }, [uploadId])
+
+  // Timer for horizontal timeline
+  useEffect(() => {
+    if (!loading) { setElapsedMs(0); setProgressPercent(0); return }
+    const start = Date.now()
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start
+      setElapsedMs(elapsed)
+      setProgressPercent(Math.min(95, Math.floor((elapsed / 70000) * 95)))
+    }, 200)
+    return () => clearInterval(timer)
+  }, [loading])
+
+  const runAnalysis = async () => {
+    if (!uploadId) return
+
+    // Check session cache first
+    const sessionCached = getSessionCache(parseInt(uploadId))
+    if (sessionCached && !shouldRun) {
+      setResult(sessionCached)
+      setFromCache(true)
+      return
+    }
+
+    // Check DB cache via API
+    if (!shouldRun) {
+      try {
+        const saved = await api.getAnalysisResult(parseInt(uploadId))
+        setResult(saved as AnalysisResult)
+        setFromCache(true)
+        setCachedAt(saved.analyzed_at)
+        setSessionCache(parseInt(uploadId), saved as AnalysisResult)
+        return
+      } catch {
+        // Not in DB, run fresh analysis
+      }
+    }
+
+    // Fresh analysis
+    setLoading(true)
+    setError("")
+    setResult(null)
+    setFromCache(false)
+    setCachedAt(null)
+
+    // Get filename for toast
+    const uploads = await api.getUploads().catch(() => [])
+    const upload = uploads.find(u => u.upload_id === parseInt(uploadId!))
+    const filename = upload?.filename || `upload_${uploadId}`
+
+    // Start background job
+    startAnalysisJob(parseInt(uploadId), filename)
+    const startTime = Date.now()
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const simulated = Math.min(88, Math.floor((elapsed / 70000) * 88))
+      updateProgress(simulated)
+    }, 500)
+
+    try {
+      const data = await api.analyze(parseInt(uploadId))
+      clearInterval(progressInterval)
+      setResult(data)
+      setSessionCache(parseInt(uploadId), data)
+      completeJob(data)
+    } catch (err: any) {
+      clearInterval(progressInterval)
+      setError(err?.message || "Analysis failed. Please try again.")
+      failJob("Analysis failed")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const toggleRow = (id: number) => {
     setExpandedRows(prev => {
@@ -119,22 +198,117 @@ function AnalysisPageContent() {
         }
       />
       <div className="p-6 flex flex-col gap-4">
-        {/* No upload_id */}
+        {/* No upload_id — show history list */}
         {!uploadId && (
-          <div className="empty-state">
-            <AlertCircle size={32} />
-            <span>Select an upload from History or Upload page.</span>
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Recent Analyses
+                </h3>
+                <button onClick={() => router.push("/upload")}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md"
+                  style={{ background: "var(--accent-bg)", color: "var(--accent)" }}>
+                  <Plus size={12} /> Analyze New Upload
+                </button>
+              </div>
+
+              {historyLoading && <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading...</p>}
+
+              {!historyLoading && historyItems.length === 0 && (
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No analyses yet. Upload a log file to get started.
+                </p>
+              )}
+
+              <div className="space-y-2">
+                {historyItems.map(item => (
+                  <div key={item.upload_id}
+                    className="flex items-center gap-4 p-4 rounded-lg border transition-colors"
+                    style={{ background: "var(--bg-elevated)", borderColor: "var(--border-subtle)" }}>
+                    <FileText size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                        {item.filename}
+                      </p>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        Upload #{item.upload_id} · {item.total_incidents} incidents
+                        · {new Date(item.analyzed_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={`badge badge-${item.severity.toLowerCase()}`}>{item.severity}</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => router.push(`/analysis?upload_id=${item.upload_id}`)}
+                        className="text-xs px-3 py-1.5 rounded-md border transition-colors"
+                        style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
+                        Open
+                      </button>
+                      <button
+                        onClick={() => router.push(`/analysis?upload_id=${item.upload_id}&run=true`)}
+                        className="text-xs px-3 py-1.5 rounded-md border transition-colors"
+                        style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
+                        Re-analyze
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Loading */}
+        {/* Horizontal loading timeline */}
         {loading && (
-          <div className="bg-bg-elevated border border-border-subtle rounded-lg">
-            <AnalysisLoader
-              steps={tr.analysis.steps}
-              estimatedTime={tr.analysis.estimatedTime}
-              onCancel={() => setLoading(false)}
-            />
+          <div className="bg-bg-elevated border border-border-subtle rounded-xl p-8">
+            <div className="flex items-start justify-between mb-8 relative">
+              <div className="absolute top-4 left-0 right-0 h-0.5 mx-8"
+                style={{ background: "var(--border-subtle)", zIndex: 0 }} />
+
+              {[
+                { key: "parsing",    label: "Parse Logs",   labelId: "Parsing Log",      doneAfter: 0    },
+                { key: "extracting", label: "Extract IoC",  labelId: "Ekstrak IoC",      doneAfter: 2000 },
+                { key: "querying",   label: "Query RAG",    labelId: "Query Basis Data", doneAfter: 5000 },
+                { key: "generating", label: "Generate AI",  labelId: "Generate AI",      doneAfter: null },
+              ].map((step, i) => {
+                const isDone = elapsedMs > (step.doneAfter ?? Infinity)
+                const isActive = !isDone && (i === 0 || elapsedMs > [0,2000,5000,8000][i-1])
+                return (
+                  <div key={step.key} className="flex flex-col items-center gap-2 relative z-10" style={{ width: "25%" }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all"
+                      style={{
+                        background: isDone ? "var(--severity-low)" : isActive ? "var(--accent-bg)" : "var(--bg-base)",
+                        borderColor: isDone ? "var(--severity-low)" : isActive ? "var(--accent)" : "var(--border-subtle)",
+                      }}>
+                      {isDone
+                        ? <span style={{ color: "#fff", fontSize: 14 }}>✓</span>
+                        : isActive
+                          ? <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent)" }} />
+                          : <div className="w-2 h-2 rounded-full" style={{ background: "var(--border-strong)" }} />
+                      }
+                    </div>
+                    <span className="text-xs font-medium text-center"
+                      style={{ color: isDone ? "var(--severity-low)" : isActive ? "var(--accent)" : "var(--text-muted)" }}>
+                      {lang === "id" ? step.labelId : step.label}
+                    </span>
+                    <span className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+                      {isDone ? "Done" : isActive && step.key === "generating" ? "Running..." : ""}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="h-1 rounded-full overflow-hidden mb-4" style={{ background: "var(--border-subtle)" }}>
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%`, background: "var(--accent)" }} />
+            </div>
+
+            <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+              {lang === "id"
+                ? "Proses ini mungkin memakan waktu 30–90 detik pada CPU inference"
+                : "This may take 30–90 seconds on CPU inference"}
+            </p>
           </div>
         )}
 
@@ -176,6 +350,13 @@ function AnalysisPageContent() {
               <span className="font-semibold text-text-primary">Severity: {result.severity_overall?.toUpperCase()}</span>
               <span style={{ color: "var(--text-muted)" }}>·</span>
               <span className="font-mono" style={{ color: "var(--text-secondary)" }}>{result.total_incidents} {tr.analysis.incidents}</span>
+              {fromCache && cachedAt && (
+                <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-md"
+                  style={{ background: "var(--accent-bg)", color: "var(--text-muted)" }}>
+                  <Database size={11} />
+                  Saved · {new Date(cachedAt).toLocaleString()}
+                </span>
+              )}
             </div>
 
             {/* Narrative Report */}
