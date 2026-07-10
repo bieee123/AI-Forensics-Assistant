@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ChevronRight, AlertCircle, Clock, Upload } from "lucide-react";
+import { ChevronRight, AlertCircle, Eye } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { api, LogEntry, Upload as UploadType } from "@/lib/api";
@@ -65,45 +65,57 @@ function TimelinePageContent() {
     });
   };
 
-  // NO UPLOAD SELECTED — plain rows, no card wrapper
+  // NO UPLOAD SELECTED — data table
   if (!activeUploadId) {
     return (
       <AppShell>
         <PageHeader title={tr.timeline.title} subtitle={tr.timeline.subtitle} />
-        <div className="px-6 py-2">
-          <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-            {lang === "id"
-              ? "Pilih unggahan untuk melihat timeline kejadian"
-              : "Select an upload to view its event timeline"}
-          </p>
-          {uploadsLoading && (
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading uploads...</p>
-          )}
-          <div className="space-y-1">
-            {uploads.map(u => (
-              <div
-                key={u.upload_id}
-                onClick={() => selectUpload(u.upload_id)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors"
-                style={{ color: "var(--text-primary)" }}
-                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >
-                <span className="font-mono text-xs w-8 text-right flex-shrink-0"
-                  style={{ color: "var(--text-muted)" }}>#{u.upload_id}</span>
-                <span className="flex-1 text-sm truncate">{u.filename}</span>
-                <span className={fileTypeBadge(u.filename).cls}>{fileTypeBadge(u.filename).label}</span>
-                <span className="text-xs flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {u.total_entries} entries
-                </span>
+        <div className="p-6">
+          <div className="bg-bg-elevated border border-border-subtle rounded-lg overflow-hidden">
+            {uploadsLoading ? (
+              <div className="empty-state">
+                <span>Loading uploads...</span>
               </div>
-            ))}
+            ) : uploads.length === 0 ? (
+              <div className="empty-state">
+                <span>No uploads found.</span>
+              </div>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>File Name</th>
+                    <th>Log Type</th>
+                    <th>Entry Count</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploads.map((u) => (
+                    <tr key={u.upload_id} className="row-hover">
+                      <td className="font-mono">#{u.upload_id}</td>
+                      <td>{u.filename}</td>
+                      <td><span className={fileTypeBadge(u.filename).cls}>{fileTypeBadge(u.filename).label}</span></td>
+                      <td><span className="font-mono" style={{ color: "var(--text-muted)" }}>{u.total_entries} entries</span></td>
+                      <td>
+                        <button
+                          onClick={() => selectUpload(u.upload_id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none transition-all"
+                          style={{ background: "var(--accent)", color: "#fff" }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.boxShadow = "none"; }}
+                        >
+                          <Eye size={13} />
+                          View Timeline
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          {!uploadsLoading && uploads.length === 0 && (
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              No uploads found.
-            </p>
-          )}
         </div>
       </AppShell>
     );
