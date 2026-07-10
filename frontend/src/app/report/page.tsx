@@ -1,22 +1,183 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FileText, Loader2, AlertCircle, Brain } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileText, Loader2, Download } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { getLang, t, Lang } from "@/lib/i18n";
-import { api, Upload } from "@/lib/api";
+import { api, Upload, SavedAnalysisResult } from "@/lib/api";
+import { getSessionCache, setSessionCache } from "@/lib/cache";
+
+function ReportPreview({
+  analysisData,
+  analystName,
+  organization,
+  classification,
+  upload,
+}: {
+  analysisData: SavedAnalysisResult | null
+  analystName: string
+  organization: string
+  classification: string
+  upload: Upload | null
+}) {
+  if (!analysisData) {
+    return (
+      <div className="flex items-center justify-center h-full"
+        style={{ color: "var(--text-muted)" }}>
+        <div className="text-center">
+          <FileText size={40} style={{ margin: "0 auto 12px" }} />
+          <p className="text-sm">Select an upload to preview the report</p>
+        </div>
+      </div>
+    )
+  }
+
+  const sevColor: Record<string, string> = {
+    CRITICAL: "#FF4D6A", HIGH: "#FF8C42", MEDIUM: "#c9a52e", LOW: "#06D6A0", INFO: "#4ECDC4"
+  }
+  const color = sevColor[analysisData.severity_overall?.toUpperCase()] || "#8B92A9"
+
+  let narrativeBody = analysisData.narrative_report || ""
+  let recommendation = ""
+  if (narrativeBody.includes("Recommendation:")) {
+    const idx = narrativeBody.indexOf("Recommendation:")
+    recommendation = narrativeBody.slice(idx + 15).trim()
+    narrativeBody = narrativeBody.slice(0, idx).trim()
+  }
+
+  return (
+    <div className="h-full overflow-y-auto rounded-lg border p-6 text-sm"
+      style={{
+        background: "var(--bg-elevated)",
+        borderColor: "var(--border-subtle)",
+        fontFamily: "Helvetica, Arial, sans-serif",
+      }}>
+
+      <div className="text-center text-xs font-bold py-1.5 mb-4 rounded"
+        style={{ background: "#1F2937", color: "#fff" }}>
+        {classification}
+      </div>
+
+      <h1 className="text-2xl font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
+        INCIDENT REPORT
+      </h1>
+      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+        Agentic AI Digital Forensics Assistant
+      </p>
+      <hr style={{ borderColor: "#0D9488", borderWidth: 2, marginBottom: 16 }} />
+
+      <table className="w-full text-xs mb-5" style={{ borderCollapse: "collapse" }}>
+        {[
+          ["Report ID", `DFA-${analysisData.upload_id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`],
+          ["Generated", new Date().toLocaleString("en-GB")],
+          ["Upload ID", String(analysisData.upload_id)],
+          ["Filename", upload?.filename || `upload_${analysisData.upload_id}`],
+          ["Analyst", analystName],
+          ["Organization", organization],
+          ["Classification", classification],
+        ].map(([k, v], i) => (
+          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+            <td className="py-1.5 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)" }}>{k}</td>
+            <td className="py-1.5 px-2" style={{ color: "var(--text-primary)" }}>{v}</td>
+          </tr>
+        ))}
+      </table>
+
+      <h2 className="text-sm font-bold mb-3" style={{ color: "#0D9488" }}>
+        1. EXECUTIVE SUMMARY
+      </h2>
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="p-3 rounded border text-center"
+          style={{ borderColor: "var(--border-subtle)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Severity</p>
+          <p className="text-xl font-bold" style={{ color }}>{analysisData.severity_overall}</p>
+        </div>
+        <div className="p-3 rounded border text-center"
+          style={{ borderColor: "var(--border-subtle)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Total Incidents</p>
+          <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+            {analysisData.total_incidents}
+          </p>
+        </div>
+      </div>
+
+      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
+        2. NARRATIVE ANALYSIS
+      </h2>
+      {narrativeBody ? (
+        <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
+          {narrativeBody}
+        </p>
+      ) : (
+        <p className="text-xs italic mb-3" style={{ color: "var(--text-muted)" }}>
+          No narrative available.
+        </p>
+      )}
+      {recommendation && (
+        <div className="p-3 rounded mb-4 border-l-4"
+          style={{ borderColor: "#FF8C42", background: "rgba(255,140,66,0.08)" }}>
+          <p className="text-xs font-bold mb-1" style={{ color: "#FF8C42" }}>⚠ Recommendation</p>
+          <p className="text-xs" style={{ color: "var(--text-primary)" }}>{recommendation}</p>
+        </div>
+      )}
+
+      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
+        3. INDICATORS OF COMPROMISE (IoC)
+      </h2>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {(analysisData.ioc_summary || []).map((ip, i) => (
+          <span key={i} className="font-mono text-xs px-2 py-1 rounded"
+            style={{ background: "rgba(255,77,106,0.1)", color: "#FF4D6A", border: "1px solid rgba(255,77,106,0.3)" }}>
+            {ip}
+          </span>
+        ))}
+      </div>
+
+      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
+        4. ATTACK TIMELINE
+      </h2>
+      <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ background: "#0D9488" }}>
+            {["Time", "Event Type", "Source IP", "User", "Status"].map(h => (
+              <th key={h} className="py-1.5 px-2 text-left font-semibold" style={{ color: "#fff" }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {(analysisData.attack_timeline || []).map((e: any, i: number) => (
+            <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+              <td className="py-1.5 px-2 font-mono">{(e.timestamp || "").slice(11,19)}</td>
+              <td className="py-1.5 px-2">{e.event_type}</td>
+              <td className="py-1.5 px-2 font-mono">{e.source_ip || "—"}</td>
+              <td className="py-1.5 px-2">{e.user || "—"}</td>
+              <td className="py-1.5 px-2">{e.status || "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <hr className="mt-6 mb-2" style={{ borderColor: "var(--border-subtle)" }} />
+      <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+        Generated by DFA — Agentic AI Digital Forensics Assistant · {classification}
+      </p>
+    </div>
+  )
+}
 
 export default function ReportPage() {
+  const router = useRouter()
   const [lang, setLangState] = useState<Lang>("en");
-  const [uploads, setUploads] = useState<Upload[]>([]);
-  const [selectedUploadId, setSelectedUploadId] = useState<string>("");
-  const [title, setTitle] = useState("Incident Triage Report");
-  const [caseRef, setCaseRef] = useState("LTI-CASE-2026-0142");
-  const [preparedBy, setPreparedBy] = useState("analyst01");
-  const [classification, setClassification] = useState("CONFIDENTIAL");
-  const [generating, setGenerating] = useState(false);
-  const [statusMsg, setStatusMsg] = useState("");
-  const [error, setError] = useState("");
+  const [uploads, setUploads] = useState<Upload[]>([])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [analysisData, setAnalysisData] = useState<SavedAnalysisResult | null>(null)
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [notAnalyzed, setNotAnalyzed] = useState(false)
+  const [analystName, setAnalystName] = useState("DFA System")
+  const [organization, setOrganization] = useState("PT Teknologi Nasional Indonesia Siber")
+  const [classification, setClassification] = useState("CONFIDENTIAL")
 
   useEffect(() => { setLangState(getLang()); }, []);
   useEffect(() => {
@@ -25,151 +186,208 @@ export default function ReportPage() {
     return () => window.removeEventListener("lang-change", handler);
   }, []);
 
+  const tr = t(lang);
+
   useEffect(() => {
     api.getUploads()
       .then(data => {
         setUploads(data);
-        if (data.length > 0) {
-          setSelectedUploadId(String(data[0].upload_id));
-        }
       })
-      .catch(() => setError("Failed to load uploads"));
+      .catch(() => {});
   }, []);
 
-  const handleGenerateReport = async () => {
-    if (!selectedUploadId) {
-      setError("Please select an upload first");
-      return;
-    }
-    setGenerating(true);
-    setError("");
+  const selectUpload = async (uploadId: number) => {
+    setSelectedId(uploadId)
+    setNotAnalyzed(false)
+    setAnalysisData(null)
+    setLoadingAnalysis(true)
+
     try {
-      // Step 1: Run analysis to get pre-computed data
-      setStatusMsg("Running forensic analysis...");
-      const analysis = await api.analyze(parseInt(selectedUploadId));
+      const session = getSessionCache(uploadId)
+      if (session) {
+        setAnalysisData(session as SavedAnalysisResult)
+        setLoadingAnalysis(false)
+        return
+      }
 
-      // Step 2: Pass analysis results directly to report — avoids double LLM call
-      setStatusMsg("Generating PDF report...");
-      const blob = await api.generateReport({
-        upload_id: parseInt(selectedUploadId),
-        analyst_name: preparedBy,
-        organization: "PT Teknologi Nasional Indonesia Siber",
-        classification: classification,
-        narrative_report: analysis.narrative_report,
-        severity_overall: analysis.severity_overall,
-        ioc_summary: analysis.ioc_summary,
-        attack_timeline: analysis.attack_timeline,
-        total_incidents: analysis.total_incidents,
-      });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `incident_report_upload_${selectedUploadId}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      setStatusMsg("");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to generate PDF report";
-      setError(msg);
-      setStatusMsg("");
+      const saved = await api.getAnalysisResult(uploadId)
+      setAnalysisData(saved)
+      setSessionCache(uploadId, saved)
+
+    } catch {
+      setNotAnalyzed(true)
     } finally {
-      setGenerating(false);
+      setLoadingAnalysis(false)
     }
-  };
+  }
 
-  const tr = t(lang);
+  const handleGeneratePDF = async () => {
+    if (!analysisData || !selectedId) return
+    setGenerating(true)
+    try {
+      const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${BASE}/report/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          upload_id:        selectedId,
+          analyst_name:     analystName,
+          organization:     organization,
+          classification:   classification,
+          narrative_report: analysisData.narrative_report,
+          severity_overall: analysisData.severity_overall,
+          ioc_summary:      analysisData.ioc_summary,
+          attack_timeline:  analysisData.attack_timeline,
+          total_incidents:  analysisData.total_incidents,
+        }),
+      })
+      if (!res.ok) throw new Error("Failed")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `incident_report_${selectedId}_${new Date().toISOString().slice(0,10)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert("PDF generation failed. Please try again.")
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
     <AppShell>
-      <PageHeader title={tr.report.title} subtitle={tr.report.subtitle} />
-      <div className="p-6">
-        <div className="grid gap-4" style={{ gridTemplateColumns: "60% 40%" }}>
-          {/* Report Metadata */}
-          <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-            <div className="font-semibold text-[13px] text-text-primary mb-3.5">{tr.report.reportMetadata}</div>
+      <PageHeader title={tr.report.title} />
+      <div className="flex h-[calc(100vh-56px)]">
 
-            {error && (
-              <div className="flex items-center gap-2 text-xs mb-3.5 p-2.5 rounded-md" style={{ background: "rgba(255,77,106,0.1)", color: "var(--severity-critical)" }}>
-                <AlertCircle size={14} />
-                {error}
-              </div>
-            )}
+        {/* LEFT: Configuration panel */}
+        <div className="w-96 flex-shrink-0 border-r overflow-y-auto p-5 space-y-5"
+          style={{ borderColor: "var(--border-subtle)", background: "var(--bg-elevated)" }}>
 
-            <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              Target Upload Log
+          {/* Upload selector */}
+          <div>
+            <label className="text-xs font-semibold block mb-2"
+              style={{ color: "var(--text-secondary)" }}>
+              Select Upload
             </label>
-            <select
-              value={selectedUploadId}
-              onChange={e => setSelectedUploadId(e.target.value)}
-              className="w-full mb-3"
-              style={{ fontFamily: "inherit", fontSize: 13, background: "var(--bg-base)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "9px 12px", outline: "none" }}
-            >
+            <div className="space-y-1 max-h-48 overflow-y-auto">
               {uploads.map(u => (
-                <option key={u.upload_id} value={u.upload_id}>
-                  #{u.upload_id} - {u.filename} ({u.total_entries.toLocaleString()} entries)
-                </option>
+                <div key={u.upload_id}
+                  onClick={() => selectUpload(u.upload_id)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors"
+                  style={{
+                    background: selectedId === u.upload_id ? "var(--accent-bg)" : "transparent",
+                    color: selectedId === u.upload_id ? "var(--accent)" : "var(--text-primary)",
+                    border: selectedId === u.upload_id ? "1px solid var(--accent)" : "1px solid transparent",
+                  }}>
+                  <span className="font-mono text-xs w-6 flex-shrink-0"
+                    style={{ color: "var(--text-muted)" }}>#{u.upload_id}</span>
+                  <span className="flex-1 truncate">{u.filename}</span>
+                  <span className="text-xs flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                    {u.total_entries}
+                  </span>
+                </div>
               ))}
-            </select>
-
-            <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              {tr.report.reportTitle}
-            </label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="mb-3" />
-
-            <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              {tr.report.caseRef}
-            </label>
-            <input type="text" className="font-mono mb-3" value={caseRef} onChange={e => setCaseRef(e.target.value)} />
-
-            <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              {tr.report.preparedBy}
-            </label>
-            <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} className="mb-3" />
-
-            <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              Classification
-            </label>
-            <select
-              value={classification}
-              onChange={e => setClassification(e.target.value)}
-              className="w-full mb-4.5"
-              style={{ fontFamily: "inherit", fontSize: 13, background: "var(--bg-base)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "9px 12px", outline: "none" }}
-            >
-              <option value="UNCLASSIFIED">UNCLASSIFIED</option>
-              <option value="RESTRICTED">RESTRICTED</option>
-              <option value="CONFIDENTIAL">CONFIDENTIAL</option>
-              <option value="SECRET">SECRET</option>
-            </select>
-
-            <button
-              onClick={handleGenerateReport}
-              disabled={generating}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border-none"
-              style={{ background: generating ? "var(--text-muted)" : "var(--accent)", color: "#fff", opacity: generating ? 0.7 : 1 }}
-            >
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
-              {generating ? (statusMsg || "Generating...") : tr.report.generateReport}
-            </button>
-          </div>
-
-          {/* Preview Box */}
-          <div className="bg-bg-elevated border border-border-subtle rounded-lg self-start">
-            <div className="px-5 py-4 border-b border-border-subtle font-semibold text-[13px] text-text-primary">
-              {tr.report.preview}
-            </div>
-            <div className="p-5">
-              <div className="font-bold text-sm mb-0.5">{title}</div>
-              <div className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
-                {caseRef} · {tr.report.generatedLabel} (Real-time Preview)
-              </div>
-              <div className="text-[12.5px] mb-3.5" style={{ color: "var(--text-secondary)" }}>
-                Metadata and selected upload logs will be formatted into a publication-quality PDF report including the Executive Summary, Narrative Analysis, extracted Indicators of Compromise (IoC), and incident Timeline.
-              </div>
-              <div className="wire-note text-[11px] italic" style={{ color: "var(--text-muted)" }}>
-                Prepared by: {preparedBy} | Classification: {classification}
-              </div>
             </div>
           </div>
+
+          {/* Analysis status */}
+          {loadingAnalysis && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+              <Loader2 size={14} className="animate-spin" /> Loading analysis data...
+            </div>
+          )}
+          {notAnalyzed && selectedId && (
+            <div className="p-3 rounded-lg border-l-4 text-xs"
+              style={{ borderColor: "#c9a52e", background: "rgba(255,209,102,0.08)" }}>
+              <p className="font-semibold mb-1" style={{ color: "#c9a52e" }}>
+                ⚠ Not yet analyzed
+              </p>
+              <p style={{ color: "var(--text-secondary)" }} className="mb-2">
+                This upload has not been analyzed yet.
+              </p>
+              <button
+                onClick={() => router.push(`/analysis?upload_id=${selectedId}&run=true`)}
+                className="text-xs px-3 py-1.5 rounded-md"
+                style={{ background: "var(--accent)", color: "#fff" }}>
+                Run Analysis →
+              </button>
+            </div>
+          )}
+
+          {/* Report metadata inputs */}
+          {analysisData && (
+            <>
+              <div>
+                <label className="text-xs font-semibold block mb-1.5"
+                  style={{ color: "var(--text-secondary)" }}>Analyst Name</label>
+                <input value={analystName} onChange={e => setAnalystName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md text-sm"
+                  style={{
+                    background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)", outline: "none"
+                  }} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold block mb-1.5"
+                  style={{ color: "var(--text-secondary)" }}>Organization</label>
+                <input value={organization} onChange={e => setOrganization(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md text-sm"
+                  style={{
+                    background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)", outline: "none"
+                  }} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold block mb-1.5"
+                  style={{ color: "var(--text-secondary)" }}>Classification</label>
+                <select value={classification} onChange={e => setClassification(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md text-sm"
+                  style={{
+                    background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)", outline: "none"
+                  }}>
+                  <option>CONFIDENTIAL</option>
+                  <option>INTERNAL</option>
+                  <option>PUBLIC</option>
+                  <option>RESTRICTED</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleGeneratePDF}
+                disabled={generating}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+                style={{ background: "var(--accent)", color: "#fff" }}>
+                {generating
+                  ? <><Loader2 size={14} className="animate-spin" /> Generating PDF...</>
+                  : <><Download size={14} /> Generate & Download PDF</>
+                }
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* RIGHT: Live preview */}
+        <div className="flex-1 p-5 overflow-hidden">
+          {loadingAnalysis ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                <Loader2 size={16} className="animate-spin" /> Loading preview...
+              </div>
+            </div>
+          ) : (
+            <ReportPreview
+              analysisData={analysisData}
+              analystName={analystName}
+              organization={organization}
+              classification={classification}
+              upload={uploads.find(u => u.upload_id === selectedId) || null}
+            />
+          )}
         </div>
       </div>
     </AppShell>

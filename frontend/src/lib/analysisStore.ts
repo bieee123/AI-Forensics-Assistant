@@ -42,6 +42,11 @@ export function failJob(error: string) {
 
 export function getActiveJob() { return activeJob }
 
+export function getElapsedMs(): number {
+  if (!activeJob || activeJob.status !== "running") return 0
+  return Date.now() - new Date(activeJob.startedAt).getTime()
+}
+
 function dispatch() {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("analysis-job-update", { detail: activeJob }))

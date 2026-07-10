@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw, Download, Copy, AlertCircle, Clock, Database, FileText, Plus } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
@@ -9,7 +9,7 @@ import { api, AnalysisResult, AnalysisHistoryItem } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { severityBadgeClass, eventRowClass, eventBadgeClass, formatEventType, fmtTime } from "@/lib/utils";
 import { getSessionCache, setSessionCache } from "@/lib/cache"
-import { startAnalysisJob, updateProgress, completeJob, failJob } from "@/lib/analysisStore"
+import { startAnalysisJob, updateProgress, completeJob, failJob, getActiveJob, getElapsedMs, AnalysisJob } from "@/lib/analysisStore"
 
 function AnalysisPageContent() {
   const searchParams = useSearchParams();
@@ -19,7 +19,10 @@ function AnalysisPageContent() {
 
   const [lang, setLangState] = useState<Lang>("en");
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    const job = getActiveJob()
+    return job?.status === "running" && job.uploadId === parseInt(uploadId || "0")
+  })
   const [error, setError] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -27,8 +30,16 @@ function AnalysisPageContent() {
   const [cachedAt, setCachedAt] = useState<string | null>(null)
   const [historyItems, setHistoryItems] = useState<AnalysisHistoryItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-  const [elapsedMs, setElapsedMs] = useState(0)
+  const [elapsedMs, setElapsedMs] = useState(() => {
+    const job = getActiveJob()
+    if (job?.status === "running" && job.uploadId === parseInt(uploadId || "0")) {
+      return getElapsedMs()
+    }
+    return 0
+  })
   const [progressPercent, setProgressPercent] = useState(0)
+
+  const mountTime = useRef(Date.now()).current
 
   useEffect(() => { setLangState(getLang()); }, []);
   useEffect(() => {
@@ -40,10 +51,33 @@ function AnalysisPageContent() {
   const tr = t(lang);
 
   useEffect(() => {
-    if (uploadId && shouldRun) {
-      runAnalysis();
+    if (!uploadId) return
+
+    const tryLoadFromCache = async () => {
+      const id = parseInt(uploadId)
+      const session = getSessionCache(id)
+      if (session) {
+        setResult(session)
+        setFromCache(true)
+        return
+      }
+      try {
+        const saved = await api.getAnalysisResult(id)
+        setResult(saved as AnalysisResult)
+        setFromCache(true)
+        setCachedAt(saved.analyzed_at)
+        setSessionCache(id, saved as AnalysisResult)
+        return
+      } catch {
+        // Not in DB
+      }
+      if (shouldRun) {
+        runAnalysis()
+      }
     }
-  }, [uploadId, shouldRun]);
+
+    tryLoadFromCache()
+  }, [uploadId])
 
   // Fetch history when no upload_id
   useEffect(() => {
@@ -56,62 +90,66 @@ function AnalysisPageContent() {
     }
   }, [uploadId])
 
-  // Timer for horizontal timeline
+  // Timer for horizontal timeline — restores from store if already running
   useEffect(() => {
-    if (!loading) { setElapsedMs(0); setProgressPercent(0); return }
-    const start = Date.now()
+    if (!loading) {
+      setElapsedMs(0)
+      setProgressPercent(0)
+      return
+    }
+
+    const baseElapsed = getElapsedMs()
+
     const timer = setInterval(() => {
-      const elapsed = Date.now() - start
-      setElapsedMs(elapsed)
-      setProgressPercent(Math.min(95, Math.floor((elapsed / 70000) * 95)))
+      const total = baseElapsed + (Date.now() - mountTime)
+      setElapsedMs(total)
+      setProgressPercent(Math.min(95, Math.floor((total / 70000) * 95)))
     }, 200)
+
     return () => clearInterval(timer)
   }, [loading])
+
+  // Listen to store events for cross-navigation analysis updates
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const job = (e as CustomEvent).detail as AnalysisJob | null
+      if (!job) return
+      if (job.uploadId !== parseInt(uploadId || "0")) return
+
+      if (job.status === "done" && job.result) {
+        setLoading(false)
+        setResult(job.result)
+        setSessionCache(parseInt(uploadId!), job.result)
+      } else if (job.status === "error") {
+        setLoading(false)
+        setError("Analysis failed. Please try again.")
+      } else if (job.status === "running") {
+        setLoading(true)
+        setProgressPercent(job.progress)
+      }
+    }
+    window.addEventListener("analysis-job-update", handler)
+    return () => window.removeEventListener("analysis-job-update", handler)
+  }, [uploadId])
 
   const runAnalysis = async () => {
     if (!uploadId) return
 
-    // Check session cache first
-    const sessionCached = getSessionCache(parseInt(uploadId))
-    if (sessionCached && !shouldRun) {
-      setResult(sessionCached)
-      setFromCache(true)
-      return
-    }
-
-    // Check DB cache via API
-    if (!shouldRun) {
-      try {
-        const saved = await api.getAnalysisResult(parseInt(uploadId))
-        setResult(saved as AnalysisResult)
-        setFromCache(true)
-        setCachedAt(saved.analyzed_at)
-        setSessionCache(parseInt(uploadId), saved as AnalysisResult)
-        return
-      } catch {
-        // Not in DB, run fresh analysis
-      }
-    }
-
-    // Fresh analysis
     setLoading(true)
     setError("")
     setResult(null)
     setFromCache(false)
-    setCachedAt(null)
+    setElapsedMs(0)
 
-    // Get filename for toast
     const uploads = await api.getUploads().catch(() => [])
-    const upload = uploads.find(u => u.upload_id === parseInt(uploadId!))
+    const upload = uploads.find(u => u.upload_id === parseInt(uploadId))
     const filename = upload?.filename || `upload_${uploadId}`
 
-    // Start background job
     startAnalysisJob(parseInt(uploadId), filename)
-    const startTime = Date.now()
 
-    // Simulate progress
+    const jobStartTime = Date.now()
     const progressInterval = setInterval(() => {
-      const elapsed = Date.now() - startTime
+      const elapsed = Date.now() - jobStartTime
       const simulated = Math.min(88, Math.floor((elapsed / 70000) * 88))
       updateProgress(simulated)
     }, 500)
@@ -119,15 +157,11 @@ function AnalysisPageContent() {
     try {
       const data = await api.analyze(parseInt(uploadId))
       clearInterval(progressInterval)
-      setResult(data)
-      setSessionCache(parseInt(uploadId), data)
       completeJob(data)
+      setSessionCache(parseInt(uploadId), data)
     } catch (err: any) {
       clearInterval(progressInterval)
-      setError(err?.message || "Analysis failed. Please try again.")
       failJob("Analysis failed")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -362,9 +396,25 @@ function AnalysisPageContent() {
             {/* Narrative Report */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
               <div className="font-semibold text-[13px] text-text-primary mb-2.5">{tr.analysis.narrative}</div>
-              <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
-                {narrativeBody}
-              </p>
+
+              {!narrativeBody && result.narrative_report && (
+                <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
+                  {result.narrative_report}
+                </p>
+              )}
+
+              {narrativeBody && (
+                <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
+                  {narrativeBody}
+                </p>
+              )}
+
+              {!narrativeBody && !result.narrative_report && (
+                <p className="text-[13px] italic m-0 mb-3.5" style={{ color: "var(--text-muted)" }}>
+                  No narrative available.
+                </p>
+              )}
+
               {recommendation && (
                 <div className="reco-block">
                   <div
