@@ -40,6 +40,11 @@ function ReportPreview({
   const color = sevColor[severityLabel.toUpperCase()] || "#8B92A9"
 
   const narrativeText = analysisData.narrative_report || ""
+  let recommendationText = ""
+  if (narrativeText.includes("Recommendation:")) {
+    const idx = narrativeText.indexOf("Recommendation:")
+    recommendationText = narrativeText.slice(idx + "Recommendation:".length).trim()
+  }
 
   return (
     <div className="h-full overflow-y-auto rounded-lg border p-6 text-sm"
@@ -108,6 +113,14 @@ function ReportPreview({
         <p className="text-xs italic mb-3" style={{ color: "var(--text-muted)" }}>
           No narrative available.
         </p>
+      )}
+
+      {recommendationText && (
+        <div className="p-3 rounded mb-4 border-l-4"
+          style={{ borderColor: "#FF8C42", background: "rgba(255,140,66,0.08)" }}>
+          <p className="text-xs font-bold mb-1" style={{ color: "#FF8C42" }}>⚠ Recommendation</p>
+          <p className="text-xs" style={{ color: "var(--text-primary)" }}>{recommendationText}</p>
+        </div>
       )}
 
       <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>

@@ -200,6 +200,11 @@ function AnalysisPageContent() {
 
   const narrativeText = result?.narrative_report || ""
   const severityLabel = (result?.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
+  let recommendationText = ""
+  if (narrativeText.includes("Recommendation:")) {
+    const idx = narrativeText.indexOf("Recommendation:")
+    recommendationText = narrativeText.slice(idx + "Recommendation:".length).trim()
+  }
 
   return (
     <AppShell>
@@ -410,6 +415,15 @@ function AnalysisPageContent() {
               )}
             </div>
 
+            {recommendationText && (
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
+                <div className="font-semibold text-[13px] text-text-primary mb-2.5">Recommendation</div>
+                <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
+                  {recommendationText}
+                </p>
+              </div>
+            )}
+
             {/* IoC Summary */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
               <div className="font-semibold text-[13px] text-text-primary mb-3">{tr.analysis.iocSummary}</div>
@@ -460,24 +474,38 @@ function AnalysisPageContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {result.attack_timeline.map((entry) => (
+                      {result.attack_timeline.map((entry, idx) => (
                         <>
                           <tr
-                            key={entry.id}
+                            key={idx}
                             className={`row-hover cursor-pointer ${eventRowClass(entry.event_type)}`}
-                            onClick={() => toggleRow(entry.id)}
+                            onClick={() => toggleRow(idx)}
                           >
                             <td className="font-mono">{fmtTime(entry.timestamp)}</td>
                             <td><span className={eventBadgeClass(entry.event_type)}>{formatEventType(entry.event_type)}</span></td>
                             <td className="font-mono">{entry.source_ip}</td>
                             <td className="font-mono">{entry.user}</td>
-                            <td className="font-mono">{entry.auth_method}</td>
+                            <td className="font-mono">{entry.auth_method || "—"}</td>
                             <td>{entry.status}</td>
                           </tr>
-                          {expandedRows.has(entry.id) && (
+                          {expandedRows.has(idx) && (
                             <tr>
                               <td colSpan={6} className="p-0">
-                                <div className="raw-log-box m-3">{entry.raw_message}</div>
+                                <div className="m-3 p-3 rounded text-xs space-y-1.5"
+                                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Time: </span>{entry.timestamp}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Event: </span>{entry.event_type}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Host: </span>{entry.host || "—"}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Source IP: </span>{entry.source_ip || "—"}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>User: </span>{entry.user || "—"}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Status: </span>{entry.status || "—"}</div>
+                                  {entry.raw_message && (
+                                    <div className="pt-2 mt-2 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+                                      <div className="font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Raw Log:</div>
+                                      <div className="font-mono" style={{ color: "var(--text-muted)", wordBreak: "break-all" }}>{entry.raw_message}</div>
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           )}
