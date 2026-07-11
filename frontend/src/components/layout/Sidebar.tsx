@@ -131,7 +131,10 @@ export default function Sidebar() {
         </button>
 
         {/* Profile row */}
-        <div className={`flex items-center gap-2.5 py-3 border-t border-border-subtle ${collapsed ? "justify-center px-0" : "px-4"}`}>
+        <div
+          onClick={() => router.push("/profile")}
+          className={`flex items-center gap-2.5 py-3 border-t border-border-subtle cursor-pointer transition-colors hover:bg-bg-hover ${collapsed ? "justify-center px-0" : "px-4"}`}
+        >
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
             style={{ background: "var(--accent)", color: "#fff" }}
@@ -145,7 +148,7 @@ export default function Sidebar() {
                 <div className="text-[11px] text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">Forensic Analyst</div>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
                 title="Logout"
                 className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 border-none cursor-pointer text-text-muted hover:bg-bg-hover hover:text-critical"
               >

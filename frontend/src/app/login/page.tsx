@@ -126,6 +126,19 @@ export default function LoginPage() {
             <p className="text-xs mt-[-16px] mb-3" style={{ color: "var(--severity-critical)" }}>{fieldErrors.password}</p>
           )}
 
+          <div className="flex justify-end mb-4">
+            <button
+              type="button"
+              onClick={() => router.push("/forgot-password")}
+              className="text-xs border-none bg-transparent cursor-pointer p-0 font-sans"
+              style={{ color: "var(--accent)" }}
+              onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
+              onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
+            >
+              {tr.login.forgotPassword}
+            </button>
+          </div>
+
           {error && (
             <p className="text-xs text-center mb-3" style={{ color: "var(--severity-critical)" }}>{error}</p>
           )}

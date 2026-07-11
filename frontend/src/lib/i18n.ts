@@ -140,6 +140,7 @@ export const translations = {
       error: "Invalid credentials. Please try again.",
       usernameRequired: "Username is required",
       passwordRequired: "Password is required",
+      forgotPassword: "Forgot password?",
     },
   },
   id: {
@@ -284,6 +285,7 @@ export const translations = {
       error: "Kredensial tidak valid. Silakan coba lagi.",
       usernameRequired: "Nama pengguna wajib diisi",
       passwordRequired: "Kata sandi wajib diisi",
+      forgotPassword: "Lupa kata sandi?",
     },
   },
 } as const;
