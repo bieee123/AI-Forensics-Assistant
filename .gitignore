@@ -27,3 +27,10 @@ Thumbs.db
 uploads/
 *.log
 4b93d526115db98f4488fb35e9f91bf2cc315d2a
+
+# Deployment & docs — only frontend/ and backend/ files
+docs/
+deploy-remote.ps1
+deploy-remote.bat
+dfa-mockup-new-pages.html
+dfa-wireframe.html
