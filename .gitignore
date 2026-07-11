@@ -30,7 +30,7 @@ uploads/
 
 # Deployment & docs — only frontend/ and backend/ files
 docs/
-deploy-remote.ps1
-deploy-remote.bat
-dfa-mockup-new-pages.html
-dfa-wireframe.html
+deploy*
+dfa-*
+ecosystem.config.js
+run.bat
