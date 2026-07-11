@@ -641,12 +641,12 @@ export default function ProfilePage() {
                 Security settings
               </div>
             </div>
-            <div className="px-5 pb-4 pt-3">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                <Lock size={13} style={{ color: "var(--accent)" }} />
+            <div className="px-6 pb-6 pt-4">
+              <div className="flex items-center gap-2 text-[13px] font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                <Lock size={15} style={{ color: "var(--accent)" }} />
                 Password policy
               </div>
-              <div className="space-y-0.5 mb-2">
+              <div className="space-y-1 mb-4">
                 {[
                   { key: "Minimum length", val: "8 characters" },
                   { key: "Require uppercase", val: "Enabled", green: true },
@@ -657,12 +657,12 @@ export default function ProfilePage() {
                 ].map((item) => (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between py-0.5 border-b last:border-b-0"
+                    className="flex items-center justify-between py-1.5 border-b last:border-b-0"
                     style={{ borderColor: "var(--border-subtle)" }}
                   >
-                    <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.key}</span>
+                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{item.key}</span>
                     <span
-                      className="font-mono text-[11px]"
+                      className="font-mono text-[12px]"
                       style={{ color: item.green ? "var(--severity-low)" : "var(--text-primary)" }}
                     >
                       {item.val}
@@ -670,7 +670,7 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
-              <p className="font-mono text-[10px] m-0" style={{ color: "var(--text-muted)" }}>
+              <p className="font-mono text-[11px] m-0" style={{ color: "var(--text-muted)" }}>
                 Policy configured by system administrator. Contact admin to modify.
               </p>
             </div>
