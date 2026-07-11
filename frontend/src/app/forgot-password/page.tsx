@@ -243,7 +243,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <div
-              className="flex items-center justify-center gap-1 text-xs mt-3.5 cursor-pointer"
+              className="flex items-center justify-end gap-1 text-xs mt-3.5 cursor-pointer"
               style={{ color: "var(--text-muted)" }}
               onClick={() => router.push("/login")}
             >

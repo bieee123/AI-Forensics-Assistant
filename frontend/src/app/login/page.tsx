@@ -152,7 +152,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="flex justify-end mt-4">
           <button
             type="button"
             onClick={() => router.push("/forgot-password")}

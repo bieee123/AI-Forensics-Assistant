@@ -311,61 +311,62 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div
-              className="flex justify-end gap-2.5 px-5 py-3 border-t"
-              style={{
-                background: "var(--bg-base)",
-                borderColor: "var(--border-subtle)",
-              }}
-            >
-              <button
-                onClick={() => {
-                  setEditing(false);
-                  setEditFullName(user?.full_name || "");
-                  setEditEmail(user?.email || "");
-                }}
-                className="px-3.5 py-1.5 rounded-md text-xs font-semibold border cursor-pointer font-sans"
+            {editing && (
+              <div
+                className="flex justify-end gap-2.5 px-5 py-3 border-t"
                 style={{
-                  background: "var(--bg-elevated)",
-                  color: "var(--text-secondary)",
+                  background: "var(--bg-base)",
                   borderColor: "var(--border-subtle)",
-                  display: editing ? "inline-flex" : "none",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; }}
               >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  if (!editing) return;
-                  setSaving(true);
-                  try {
-                    const token = getToken();
-                    await api.updateProfile(token, {
-                      full_name: editFullName,
-                      email: editEmail,
-                    });
-                    setProfile(prev => prev ? {
-                      ...prev,
-                      user: { ...prev.user, full_name: editFullName, email: editEmail },
-                    } : prev);
+                <button
+                  onClick={() => {
                     setEditing(false);
-                  } catch (err: unknown) {
-                    setError(err instanceof Error ? err.message : "Failed to save");
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-                disabled={!editing || saving}
-                className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans disabled:opacity-50"
-                style={{ background: "var(--accent)", color: "#fff", display: editing ? "inline-flex" : "none" }}
-                onMouseEnter={e => { if (!saving) e.currentTarget.style.background = "var(--accent-hover)"; }}
-                onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
-              >
-                {saving ? "Saving..." : "Save changes"}
-              </button>
-            </div>
+                    setEditFullName(user?.full_name || "");
+                    setEditEmail(user?.email || "");
+                  }}
+                  className="px-3.5 py-1.5 rounded-md text-xs font-semibold border cursor-pointer font-sans"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    color: "var(--text-secondary)",
+                    borderColor: "var(--border-subtle)",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!editing) return;
+                    setSaving(true);
+                    try {
+                      const token = getToken();
+                      await api.updateProfile(token, {
+                        full_name: editFullName,
+                        email: editEmail,
+                      });
+                      setProfile(prev => prev ? {
+                        ...prev,
+                        user: { ...prev.user, full_name: editFullName, email: editEmail },
+                      } : prev);
+                      setEditing(false);
+                    } catch (err: unknown) {
+                      setError(err instanceof Error ? err.message : "Failed to save");
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving}
+                  className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans disabled:opacity-50"
+                  style={{ background: "var(--accent)", color: "#fff" }}
+                  onMouseEnter={e => { if (!saving) e.currentTarget.style.background = "var(--accent-hover)"; }}
+                  onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
+                >
+                  {saving ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Change Password */}
@@ -437,45 +438,62 @@ export default function ProfilePage() {
                     {showNewPw ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
-                <div className="mt-2">
-                  <div className="flex gap-1 mb-1.5">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="flex-1 h-[3px] rounded-full"
-                        style={{ background: i <= 2 ? "var(--severity-medium)" : "var(--border-subtle)" }}
-                      />
-                    ))}
-                    <div
-                      className="flex-1 h-[3px] rounded-full"
-                      style={{ background: "var(--border-subtle)" }}
-                    />
-                  </div>
-                  <div className="font-mono text-[10px]" style={{ color: "var(--severity-medium-text)" }}>
-                    Medium &mdash; add a symbol to strengthen
-                  </div>
-                </div>
-                <div className="mt-2.5 space-y-1.5">
-                  {[
-                    { text: "Minimum 8 characters", pass: true },
-                    { text: "Contains uppercase letter (A-Z)", pass: true },
-                    { text: "Contains number (0-9)", pass: true },
-                    { text: "Contains symbol (!@#$%^&*)", pass: false },
-                  ].map((req) => (
-                    <div key={req.text} className="flex items-center gap-1.5 font-mono text-[10px]" style={{ color: req.pass ? "var(--severity-low)" : "var(--text-muted)" }}>
-                      <div
-                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{
-                          background: req.pass ? "rgba(6,214,160,0.12)" : "transparent",
-                          border: `1px solid ${req.pass ? "rgba(6,214,160,0.3)" : "var(--border-subtle)"}`,
-                        }}
-                      >
-                        {req.pass ? <Check size={7} style={{ color: "var(--severity-low)" }} /> : <X size={7} />}
-                      </div>
-                      {req.text}
+                {pwNew && (
+                  <div className="mt-2">
+                    <div className="flex gap-1 mb-1.5">
+                      {(() => {
+                        const passes = [
+                          pwNew.length >= 8,
+                          /[A-Z]/.test(pwNew),
+                          /[0-9]/.test(pwNew),
+                          /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew),
+                        ];
+                        const passed = passes.filter(Boolean).length;
+                        const colors = ["var(--critical)", "var(--severity-medium-text)", "var(--severity-low)", "var(--severity-low)"];
+                        return [1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className="flex-1 h-[3px] rounded-full"
+                            style={{ background: i <= passed ? colors[passed - 1] : "var(--border-subtle)" }}
+                          />
+                        ));
+                      })()}
                     </div>
-                  ))}
-                </div>
+                    <div className="font-mono text-[10px]" style={{
+                      color: pwNew.length < 8 ? "var(--critical)" :
+                             /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew) ? "var(--severity-low)" :
+                             "var(--severity-medium-text)"
+                    }}>
+                      {pwNew.length < 8 && "Weak — too short"}
+                      {pwNew.length >= 8 && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew) && "Medium — add a symbol to strengthen"}
+                      {pwNew.length >= 8 && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew) && /[A-Z]/.test(pwNew) && /[0-9]/.test(pwNew) && "Strong"}
+                      {pwNew.length >= 8 && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew) && (!/[A-Z]/.test(pwNew) || !/[0-9]/.test(pwNew)) && "Good — almost there"}
+                    </div>
+                  </div>
+                )}
+                {pwNew && (
+                  <div className="mt-2.5 space-y-1.5">
+                    {[
+                      { text: "Minimum 8 characters", pass: pwNew.length >= 8 },
+                      { text: "Contains uppercase letter (A-Z)", pass: /[A-Z]/.test(pwNew) },
+                      { text: "Contains number (0-9)", pass: /[0-9]/.test(pwNew) },
+                      { text: "Contains symbol (!@#$%^&*)", pass: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwNew) },
+                    ].map((req) => (
+                      <div key={req.text} className="flex items-center gap-1.5 font-mono text-[10px]" style={{ color: req.pass ? "var(--severity-low)" : "var(--text-muted)" }}>
+                        <div
+                          className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: req.pass ? "rgba(6,214,160,0.12)" : "transparent",
+                            border: `1px solid ${req.pass ? "rgba(6,214,160,0.3)" : "var(--border-subtle)"}`,
+                          }}
+                        >
+                          {req.pass ? <Check size={7} style={{ color: "var(--severity-low)" }} /> : <X size={7} />}
+                        </div>
+                        {req.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[11px] font-medium uppercase tracking-wide block mb-1" style={{ color: "var(--text-secondary)" }}>
