@@ -594,32 +594,34 @@ export default function ProfilePage() {
                 View all &rarr;
               </span>
             </div>
-            <div className="p-5 max-h-[260px] overflow-y-auto">
+            <div className="px-5 pb-5 pt-4">
               {activityLog.length === 0 ? (
                 <div className="font-mono text-[10px] text-center py-4" style={{ color: "var(--text-muted)" }}>
                   No activity yet
                 </div>
               ) : (
-                activityLog.slice(0, 7).map((activity, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 py-2.5 border-b last:border-b-0"
-                    style={{ borderColor: "var(--border-subtle)" }}
-                  >
+                <div className="space-y-0.5">
+                  {activityLog.slice(0, 7).map((activity, idx) => (
                     <div
-                      className="w-[7px] h-[7px] rounded-full flex-shrink-0 mt-1"
-                      style={{ background: activity.dot_color }}
-                    />
-                    <span className="font-mono text-[10px] whitespace-nowrap flex-shrink-0 min-w-[120px]" style={{ color: "var(--text-muted)" }}>
-                      {activity.timestamp}
-                    </span>
-                    <span
-                      className="text-[11px] leading-relaxed"
-                      style={{ color: "var(--text-secondary)" }}
-                      dangerouslySetInnerHTML={{ __html: activity.details }}
-                    />
-                  </div>
-                ))
+                      key={idx}
+                      className="flex items-start gap-3 py-2 border-b last:border-b-0"
+                      style={{ borderColor: "var(--border-subtle)" }}
+                    >
+                      <div
+                        className="w-[7px] h-[7px] rounded-full flex-shrink-0 mt-1"
+                        style={{ background: activity.dot_color }}
+                      />
+                      <span className="font-mono text-[10px] whitespace-nowrap flex-shrink-0 min-w-[120px]" style={{ color: "var(--text-muted)" }}>
+                        {activity.timestamp}
+                      </span>
+                      <span
+                        className="text-[11px] leading-relaxed"
+                        style={{ color: "var(--text-secondary)" }}
+                        dangerouslySetInnerHTML={{ __html: activity.details }}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
