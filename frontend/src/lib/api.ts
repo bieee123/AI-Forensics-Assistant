@@ -8,8 +8,15 @@ const inflight = new Map<string, Promise<any>>()
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, options);
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || `HTTP ${res.status}`);
+    const text = await res.text();
+    let msg = `HTTP ${res.status}`;
+    try {
+      const json = JSON.parse(text);
+      msg = json.detail || json.message || msg;
+    } catch {
+      msg = text || msg;
+    }
+    throw new Error(msg);
   }
   return res.json();
 }

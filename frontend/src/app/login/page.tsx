@@ -42,15 +42,19 @@ export default function LoginPage() {
       return;
     }
 
-    setLoading(true);
+      setLoading(true);
     try {
       const res = await api.login(username.trim(), password);
       document.cookie = `dfa-token=${res.token}; path=/; max-age=28800`;
       document.cookie = "dfa-authed=true; path=/";
       router.push("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : tr.login.error;
-      setError(msg);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("credentials")) {
+        setError(tr.login.error);
+      } else {
+        setError(msg || tr.login.error);
+      }
     } finally {
       setLoading(false);
     }
@@ -132,19 +136,6 @@ export default function LoginPage() {
             <p className="text-xs mt-[-16px] mb-3" style={{ color: "var(--severity-critical)" }}>{fieldErrors.password}</p>
           )}
 
-          <div className="flex justify-end mb-4">
-            <button
-              type="button"
-              onClick={() => router.push("/forgot-password")}
-              className="text-xs border-none bg-transparent cursor-pointer p-0 font-sans"
-              style={{ color: "var(--accent)" }}
-              onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
-              onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
-            >
-              {tr.login.forgotPassword}
-            </button>
-          </div>
-
           {error && (
             <p className="text-xs text-center mb-3" style={{ color: "var(--severity-critical)" }}>{error}</p>
           )}
@@ -161,7 +152,20 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="flex justify-between mt-5">
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            onClick={() => router.push("/forgot-password")}
+            className="text-xs border-none bg-transparent cursor-pointer font-sans"
+            style={{ color: "var(--accent)" }}
+            onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
+            onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
+          >
+            {tr.login.forgotPassword}
+          </button>
+        </div>
+
+        <div className="flex justify-between mt-3">
           <button
             onClick={toggleLang}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border-none cursor-pointer bg-transparent"

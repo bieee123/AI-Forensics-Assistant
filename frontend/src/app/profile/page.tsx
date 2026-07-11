@@ -26,6 +26,16 @@ export default function ProfilePage() {
   const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwUpdating, setPwUpdating] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
 
   useEffect(() => { setLangState(getLang()); }, []);
 
@@ -115,17 +125,24 @@ export default function ProfilePage() {
           </div>
           <div className="flex gap-2">
             <button
+              onClick={() => {
+                if (!editing) {
+                  setEditFullName(user?.full_name || "");
+                  setEditEmail(user?.email || "");
+                }
+                setEditing(!editing);
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border cursor-pointer transition-all"
               style={{
-                background: "var(--bg-elevated)",
-                color: "var(--text-secondary)",
-                borderColor: "var(--border-subtle)",
+                background: editing ? "rgba(255,77,106,0.08)" : "var(--bg-elevated)",
+                color: editing ? "var(--critical)" : "var(--text-secondary)",
+                borderColor: editing ? "rgba(255,77,106,0.25)" : "var(--border-subtle)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = editing ? "rgba(255,77,106,0.15)" : "var(--bg-hover)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = editing ? "rgba(255,77,106,0.08)" : "var(--bg-elevated)"; }}
             >
-              <Edit3 size={13} />
-              Edit profile
+              {editing ? <X size={13} /> : <Edit3 size={13} />}
+              {editing ? "Cancel edit" : "Edit profile"}
             </button>
             <button
               onClick={handleLogout}
@@ -198,15 +215,16 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value={user?.full_name || ""}
-                  disabled
+                  value={editing ? editFullName : (user?.full_name || "")}
+                  disabled={!editing}
+                  onChange={e => setEditFullName(e.target.value)}
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
                     background: "var(--bg-base)",
                     color: "var(--text-primary)",
                     border: "1px solid var(--border-subtle)",
-                    opacity: 0.6,
-                    cursor: "not-allowed",
+                    opacity: editing ? 1 : 0.6,
+                    cursor: editing ? "text" : "not-allowed",
                   }}
                 />
               </div>
@@ -235,15 +253,19 @@ export default function ProfilePage() {
                 <div className="relative">
                   <input
                     type="email"
-                    value={user?.email || ""}
+                    value={editing ? editEmail : (user?.email || "")}
+                    disabled={!editing}
+                    onChange={e => setEditEmail(e.target.value)}
                     className="w-full rounded-md px-3 py-2 text-[13px] font-sans pr-9"
                     style={{
                       background: "var(--bg-base)",
                       color: "var(--text-primary)",
                       border: "1px solid var(--border-subtle)",
+                      opacity: editing ? 1 : 0.6,
+                      cursor: editing ? "text" : "not-allowed",
                     }}
                   />
-                  <Mail size={14} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                  {!editing && <Mail size={14} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />}
                 </div>
                 <span className="font-mono text-[10px] mt-1 block" style={{ color: "var(--text-muted)" }}>
                   Used for OTP authentication and notifications
@@ -297,11 +319,17 @@ export default function ProfilePage() {
               }}
             >
               <button
+                onClick={() => {
+                  setEditing(false);
+                  setEditFullName(user?.full_name || "");
+                  setEditEmail(user?.email || "");
+                }}
                 className="px-3.5 py-1.5 rounded-md text-xs font-semibold border cursor-pointer font-sans"
                 style={{
                   background: "var(--bg-elevated)",
                   color: "var(--text-secondary)",
                   borderColor: "var(--border-subtle)",
+                  display: editing ? "inline-flex" : "none",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; }}
@@ -309,19 +337,40 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button
-                className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans"
-                style={{ background: "var(--accent)", color: "#fff" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; }}
+                onClick={async () => {
+                  if (!editing) return;
+                  setSaving(true);
+                  try {
+                    const token = getToken();
+                    await api.updateProfile(token, {
+                      full_name: editFullName,
+                      email: editEmail,
+                    });
+                    setProfile(prev => prev ? {
+                      ...prev,
+                      user: { ...prev.user, full_name: editFullName, email: editEmail },
+                    } : prev);
+                    setEditing(false);
+                  } catch (err: unknown) {
+                    setError(err instanceof Error ? err.message : "Failed to save");
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={!editing || saving}
+                className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans disabled:opacity-50"
+                style={{ background: "var(--accent)", color: "#fff", display: editing ? "inline-flex" : "none" }}
+                onMouseEnter={e => { if (!saving) e.currentTarget.style.background = "var(--accent-hover)"; }}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
               >
-                Save changes
+                {saving ? "Saving..." : "Save changes"}
               </button>
             </div>
           </div>
 
           {/* Change Password */}
           <div
-            className="rounded-lg border overflow-hidden"
+            className="rounded-lg border overflow-hidden flex flex-col"
             style={{
               background: "var(--bg-elevated)",
               borderColor: "var(--border-subtle)",
@@ -336,7 +385,7 @@ export default function ProfilePage() {
                 Change password
               </div>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 flex-1">
               <div>
                 <label className="text-[11px] font-medium uppercase tracking-wide block mb-1" style={{ color: "var(--text-secondary)" }}>
                   Current password <span style={{ color: "var(--critical)" }}>*</span>
@@ -345,6 +394,8 @@ export default function ProfilePage() {
                   <input
                     type={showCurrentPw ? "text" : "password"}
                     placeholder="••••••••••"
+                    value={pwCurrent}
+                    onChange={e => { setPwCurrent(e.target.value); setPwError(""); setPwSuccess(""); }}
                     className="w-full rounded-md px-3 py-2 text-[13px] font-sans pr-9"
                     style={{
                       background: "var(--bg-base)",
@@ -369,6 +420,8 @@ export default function ProfilePage() {
                   <input
                     type={showNewPw ? "text" : "password"}
                     placeholder="Min. 8 characters"
+                    value={pwNew}
+                    onChange={e => { setPwNew(e.target.value); setPwError(""); setPwSuccess(""); }}
                     className="w-full rounded-md px-3 py-2 text-[13px] font-sans pr-9"
                     style={{
                       background: "var(--bg-base)",
@@ -431,6 +484,8 @@ export default function ProfilePage() {
                 <input
                   type={showConfirmPw ? "text" : "password"}
                   placeholder="Re-enter new password"
+                  value={pwConfirm}
+                  onChange={e => { setPwConfirm(e.target.value); setPwError(""); setPwSuccess(""); }}
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
                     background: "var(--bg-base)",
@@ -440,6 +495,16 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+            {pwError && (
+              <div className="px-5 py-2 text-xs" style={{ color: "var(--critical)", background: "var(--bg-base)" }}>
+                {pwError}
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="px-5 py-2 text-xs" style={{ color: "var(--severity-low)", background: "var(--bg-base)" }}>
+                {pwSuccess}
+              </div>
+            )}
             <div
               className="flex justify-end px-5 py-3 border-t"
               style={{
@@ -448,12 +513,42 @@ export default function ProfilePage() {
               }}
             >
               <button
-                className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans"
+                onClick={async () => {
+                  setPwError("");
+                  setPwSuccess("");
+                  if (!pwCurrent || !pwNew || !pwConfirm) {
+                    setPwError("All password fields are required");
+                    return;
+                  }
+                  if (pwNew !== pwConfirm) {
+                    setPwError("New passwords do not match");
+                    return;
+                  }
+                  if (pwNew.length < 8) {
+                    setPwError("New password must be at least 8 characters");
+                    return;
+                  }
+                  setPwUpdating(true);
+                  try {
+                    const token = getToken();
+                    await api.changePassword(token, pwCurrent, pwNew);
+                    setPwSuccess("Password changed successfully");
+                    setPwCurrent("");
+                    setPwNew("");
+                    setPwConfirm("");
+                  } catch (err: unknown) {
+                    setPwError(err instanceof Error ? err.message : "Failed to update password");
+                  } finally {
+                    setPwUpdating(false);
+                  }
+                }}
+                disabled={pwUpdating}
+                className="px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none font-sans disabled:opacity-50"
                 style={{ background: "var(--accent)", color: "#fff" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; }}
+                onMouseEnter={e => { if (!pwUpdating) e.currentTarget.style.background = "var(--accent-hover)"; }}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
               >
-                Update password
+                {pwUpdating ? "Updating..." : "Update password"}
               </button>
             </div>
           </div>
