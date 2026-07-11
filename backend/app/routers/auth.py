@@ -130,7 +130,7 @@ def forgot_password(req: ForgotPasswordRequest):
     try:
         user = db.query(UserDB).filter(UserDB.email == req.email).first()
         if not user:
-            return {"message": "If the email is registered, an OTP has been sent"}
+            raise HTTPException(status_code=404, detail="No account found with that email")
 
         # Invalidate old unused OTPs
         db.query(OTPTokenDB).filter(
