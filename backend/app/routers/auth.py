@@ -10,7 +10,8 @@ import bcrypt
 from fastapi import APIRouter, HTTPException, Header
 from sqlalchemy.orm import Session
 
-from app.config import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, OTP_EXPIRE_SECONDS
+from app.config import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, OTP_EXPIRE_SECONDS, SMTP_USERNAME, SMTP_PASSWORD
+from app.email import send_otp_email
 from app.models.schemas import (
     SessionLocal, UserDB, OTPTokenDB, PasswordPolicyDB, UserSessionDB, ActivityLogDB,
     LoginRequest, ForgotPasswordRequest, VerifyOTPRequest, ResetPasswordRequest,
@@ -152,8 +153,16 @@ def forgot_password(req: ForgotPasswordRequest):
                       "Password reset OTP sent to email")
         db.commit()
 
-        # In dev, log OTP to console
+        # Log OTP to console (always for dev visibility)
         print(f"[DEV] OTP for {user.email}: {otp_code}")
+
+        # Send via email if SMTP configured
+        if SMTP_USERNAME and SMTP_PASSWORD:
+            sent = send_otp_email(user.email, otp_code)
+            if sent:
+                print(f"[EMAIL] OTP sent to {user.email}")
+            else:
+                print(f"[EMAIL] Failed to send OTP to {user.email}")
 
         return {"message": "If the email is registered, an OTP has been sent"}
     finally:

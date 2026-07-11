@@ -594,13 +594,13 @@ export default function ProfilePage() {
                 View all &rarr;
               </span>
             </div>
-            <div className="p-5">
+            <div className="p-5 max-h-[260px] overflow-y-auto">
               {activityLog.length === 0 ? (
                 <div className="font-mono text-[10px] text-center py-4" style={{ color: "var(--text-muted)" }}>
                   No activity yet
                 </div>
               ) : (
-                activityLog.map((activity, idx) => (
+                activityLog.slice(0, 7).map((activity, idx) => (
                   <div
                     key={idx}
                     className="flex items-start gap-3 py-2.5 border-b last:border-b-0"
@@ -641,45 +641,37 @@ export default function ProfilePage() {
                 Security settings
               </div>
             </div>
-            <div className="p-5">
-              <div
-                className="rounded-lg p-4 mb-4"
-                style={{
-                  background: "var(--bg-base)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-              >
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-2.5" style={{ color: "var(--text-primary)" }}>
-                  <Lock size={13} style={{ color: "var(--accent)" }} />
-                  Password policy
-                </div>
-                <div className="space-y-1">
-                  {[
-                    { key: "Minimum length", val: "8 characters" },
-                    { key: "Require uppercase", val: "Enabled", green: true },
-                    { key: "Require number", val: "Enabled", green: true },
-                    { key: "Require symbol", val: "Enabled", green: true },
-                    { key: "OTP on login", val: "Enabled", green: true },
-                    { key: "OTP delivery", val: "Email" },
-                  ].map((item) => (
-                    <div
-                      key={item.key}
-                      className="flex items-center justify-between py-1 border-b last:border-b-0"
-                      style={{ borderColor: "var(--border-subtle)" }}
+            <div className="px-5 pb-4 pt-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+                <Lock size={13} style={{ color: "var(--accent)" }} />
+                Password policy
+              </div>
+              <div className="space-y-0.5 mb-2">
+                {[
+                  { key: "Minimum length", val: "8 characters" },
+                  { key: "Require uppercase", val: "Enabled", green: true },
+                  { key: "Require number", val: "Enabled", green: true },
+                  { key: "Require symbol", val: "Enabled", green: true },
+                  { key: "OTP on login", val: "Enabled", green: true },
+                  { key: "OTP delivery", val: "Email" },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between py-0.5 border-b last:border-b-0"
+                    style={{ borderColor: "var(--border-subtle)" }}
+                  >
+                    <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.key}</span>
+                    <span
+                      className="font-mono text-[11px]"
+                      style={{ color: item.green ? "var(--severity-low)" : "var(--text-primary)" }}
                     >
-                      <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.key}</span>
-                      <span
-                        className="font-mono text-[11px]"
-                        style={{ color: item.green ? "var(--severity-low)" : "var(--text-primary)" }}
-                      >
-                        {item.val}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                      {item.val}
+                    </span>
+                  </div>
+                ))}
               </div>
               <p className="font-mono text-[10px] m-0" style={{ color: "var(--text-muted)" }}>
-                Policy configured by system administrator in Settings. Contact admin to modify.
+                Policy configured by system administrator. Contact admin to modify.
               </p>
             </div>
           </div>
