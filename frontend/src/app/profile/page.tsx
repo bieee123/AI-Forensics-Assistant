@@ -7,6 +7,13 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { getLang, t, Lang } from "@/lib/i18n";
+import { api, ProfileResponse, ActivityLogItem } from "@/lib/api";
+
+function getToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|;\s*)dfa-token=([^;]*)/);
+  return match ? match[1] : "";
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -14,6 +21,11 @@ export default function ProfilePage() {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => { setLangState(getLang()); }, []);
 
@@ -23,12 +35,46 @@ export default function ProfilePage() {
     return () => window.removeEventListener("lang-change", handler);
   }, []);
 
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    Promise.all([
+      api.getProfile(token),
+      api.getActivityLog(token),
+    ])
+      .then(([p, log]) => {
+        setProfile(p);
+        setActivityLog(log);
+      })
+      .catch(() => {
+        setError("Failed to load profile");
+      })
+      .finally(() => setLoading(false));
+  }, [router]);
+
   const tr = t(lang);
 
   const handleLogout = () => {
+    document.cookie = "dfa-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     document.cookie = "dfa-authed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     router.push("/login");
   };
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="p-6 max-w-5xl mx-auto flex items-center justify-center h-64">
+          <div className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>Loading...</div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const user = profile?.user;
+  const stats = profile?.stats;
 
   return (
     <AppShell>
@@ -49,12 +95,12 @@ export default function ProfilePage() {
               borderColor: "var(--accent)",
             }}
           >
-            A1
+            {user?.username?.charAt(0).toUpperCase()}{user?.username?.slice(-1).toUpperCase() || "?"}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold m-0" style={{ color: "var(--text-primary)" }}>analyst01</h2>
+            <h2 className="text-base font-semibold m-0" style={{ color: "var(--text-primary)" }}>{user?.username}</h2>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-              analyst01@lti-internal.id &nbsp;·&nbsp; Forensic Analyst
+              {user?.email} &nbsp;·&nbsp; {user?.role}
             </p>
             <div className="flex gap-4 mt-2">
               <span className="flex items-center gap-1.5 font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -63,7 +109,7 @@ export default function ProfilePage() {
               </span>
               <span className="flex items-center gap-1.5 font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
                 <Clock size={11} />
-                Last login: 2026-07-05 17:12:03
+                Last login: {profile?.last_login ? new Date(profile.last_login).toLocaleString() : "N/A"}
               </span>
             </div>
           </div>
@@ -101,9 +147,9 @@ export default function ProfilePage() {
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { label: "Total Sessions", value: "47", sub: "Since: 2026-01-12" },
-            { label: "Logs Uploaded", value: "213", sub: "~8.6 GB total" },
-            { label: "Reports Generated", value: "31", sub: "Last: Jul 05, 2026" },
+            { label: "Total Sessions", value: String(stats?.total_sessions ?? 0), sub: "Active sessions" },
+            { label: "Logs Uploaded", value: String(stats?.total_uploads ?? 0), sub: "All time" },
+            { label: "Reports Generated", value: String(stats?.total_reports ?? 0), sub: "All time" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -152,7 +198,7 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value="Ahmad Analyst"
+                  value={user?.full_name || ""}
                   disabled
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
@@ -170,7 +216,7 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value="analyst01"
+                  value={user?.username || ""}
                   disabled
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
@@ -189,7 +235,7 @@ export default function ProfilePage() {
                 <div className="relative">
                   <input
                     type="email"
-                    value="analyst01@lti-internal.id"
+                    value={user?.email || ""}
                     className="w-full rounded-md px-3 py-2 text-[13px] font-sans pr-9"
                     style={{
                       background: "var(--bg-base)",
@@ -209,7 +255,7 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value="Forensic Analyst"
+                  value={user?.role || ""}
                   disabled
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
@@ -230,7 +276,7 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value="PT Teknologi Nasional Indonesia Siber (LTI)"
+                  value={user?.organization || ""}
                   disabled
                   className="w-full rounded-md px-3 py-2 text-[13px] font-sans"
                   style={{
@@ -436,32 +482,32 @@ export default function ProfilePage() {
               </span>
             </div>
             <div className="p-5">
-              {[
-                { dot: "var(--severity-low)", ts: "2026-07-05 17:12:03", msg: 'Login successful &mdash; OTP verified via <strong>analyst01@lti-internal.id</strong>' },
-                { dot: "var(--accent)", ts: "2026-07-05 17:14:22", msg: 'Uploaded log: <strong>sample_auth.log</strong> (4 entries)' },
-                { dot: "var(--accent)", ts: "2026-07-05 17:25:09", msg: 'AI analysis triggered on <strong>sample_auth.log</strong> &mdash; Severity: HIGH' },
-                { dot: "var(--severity-medium)", ts: "2026-07-04 09:03:17", msg: "Failed login attempt &mdash; OTP was not submitted within 5 minutes" },
-                { dot: "var(--severity-low)", ts: "2026-07-04 09:08:42", msg: "Password changed successfully" },
-              ].map((activity, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 py-2.5 border-b last:border-b-0"
-                  style={{ borderColor: "var(--border-subtle)" }}
-                >
-                  <div
-                    className="w-[7px] h-[7px] rounded-full flex-shrink-0 mt-1"
-                    style={{ background: activity.dot }}
-                  />
-                  <span className="font-mono text-[10px] whitespace-nowrap flex-shrink-0 min-w-[120px]" style={{ color: "var(--text-muted)" }}>
-                    {activity.ts}
-                  </span>
-                  <span
-                    className="text-[11px] leading-relaxed"
-                    style={{ color: "var(--text-secondary)" }}
-                    dangerouslySetInnerHTML={{ __html: activity.msg }}
-                  />
+              {activityLog.length === 0 ? (
+                <div className="font-mono text-[10px] text-center py-4" style={{ color: "var(--text-muted)" }}>
+                  No activity yet
                 </div>
-              ))}
+              ) : (
+                activityLog.map((activity, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 py-2.5 border-b last:border-b-0"
+                    style={{ borderColor: "var(--border-subtle)" }}
+                  >
+                    <div
+                      className="w-[7px] h-[7px] rounded-full flex-shrink-0 mt-1"
+                      style={{ background: activity.dot_color }}
+                    />
+                    <span className="font-mono text-[10px] whitespace-nowrap flex-shrink-0 min-w-[120px]" style={{ color: "var(--text-muted)" }}>
+                      {activity.timestamp}
+                    </span>
+                    <span
+                      className="text-[11px] leading-relaxed"
+                      style={{ color: "var(--text-secondary)" }}
+                      dangerouslySetInnerHTML={{ __html: activity.details }}
+                    />
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

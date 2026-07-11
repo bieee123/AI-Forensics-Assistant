@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, logs, analyze, acquire, report
-from app.models.schemas import init_db
+from app.routers import upload, logs, analyze, acquire, report, auth
+from app.models.schemas import init_db, SessionLocal, UserDB, PasswordPolicyDB, ActivityLogDB
 from app.config import OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
-import httpx, os, glob, logging
+import httpx, os, glob, logging, bcrypt
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ app.include_router(logs.router,     prefix="/logs",     tags=["logs"])
 app.include_router(analyze.router,  prefix="/analyze",  tags=["analyze"])
 app.include_router(acquire.router,  prefix="/acquire",  tags=["acquire"])
 app.include_router(report.router,   prefix="/report",   tags=["report"])
+app.include_router(auth.router,     prefix="/auth",     tags=["auth"])
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "../../chroma_db")
 RUNBOOKS_DIR = os.path.join(os.path.dirname(__file__), "../../data/runbooks")
@@ -29,14 +30,53 @@ RUNBOOKS_DIR = os.path.join(os.path.dirname(__file__), "../../data/runbooks")
 
 @app.on_event("startup")
 def on_startup():
-    """Initialize database tables on first run, then seed ChromaDB."""
+    """Initialize database tables on first run, then seed defaults."""
     try:
         init_db()
         logger.info("Database tables verified/created")
     except Exception as e:
         logger.warning("init_db skipped: %s", e)
 
+    seed_defaults()
     seed_chromadb()
+
+
+def seed_defaults():
+    """Seed default user and password policy if not exist."""
+    try:
+        db: SessionLocal = SessionLocal()
+
+        # Default password policy
+        policy = db.query(PasswordPolicyDB).first()
+        if not policy:
+            db.add(PasswordPolicyDB(
+                min_length=8,
+                require_uppercase=True,
+                require_number=True,
+                require_symbol=True,
+                otp_ttl_seconds=300,
+            ))
+            db.commit()
+            logger.info("Default password policy created")
+
+        # Default analyst user
+        user = db.query(UserDB).filter(UserDB.username == "analyst01").first()
+        if not user:
+            hashed = bcrypt.hashpw(b"Forensic@2026", bcrypt.gensalt()).decode()
+            db.add(UserDB(
+                username="analyst01",
+                email="analyst01@lti-internal.id",
+                password_hash=hashed,
+                full_name="Ahmad Analyst",
+                role="Forensic Analyst",
+                organization="PT Teknologi Nasional Indonesia Siber (LTI)",
+            ))
+            db.commit()
+            logger.info("Default user created (analyst01 / Forensic@2026)")
+
+        db.close()
+    except Exception as e:
+        logger.warning("seed_defaults skipped: %s", e)
 
 
 def seed_chromadb():

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Shield, Sun, Moon, Eye, EyeOff } from "lucide-react";
 import { getLang, setLang, t, Lang } from "@/lib/i18n";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => { setMounted(true); setLangState(getLang()); }, []);
 
@@ -27,7 +29,7 @@ export default function LoginPage() {
     window.dispatchEvent(new Event("lang-change"));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     const errs: { username?: string; password?: string } = {};
@@ -40,14 +42,18 @@ export default function LoginPage() {
       return;
     }
 
-    // Simulate login: accept any non-empty, reject "wrong"
-    if (username.toLowerCase() === "wrong") {
-      setError(tr.login.error);
-      return;
+    setLoading(true);
+    try {
+      const res = await api.login(username.trim(), password);
+      document.cookie = `dfa-token=${res.token}; path=/; max-age=28800`;
+      document.cookie = "dfa-authed=true; path=/";
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : tr.login.error;
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-
-    document.cookie = "dfa-authed=true; path=/";
-    router.push("/dashboard");
   };
 
   if (!mounted) return null;
@@ -145,12 +151,13 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border-none"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border-none disabled:opacity-50"
             style={{ background: "var(--accent)", color: "#fff" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "var(--accent-hover)"; }}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
           >
-            {tr.login.submit}
+            {loading ? "Signing in..." : tr.login.submit}
           </button>
         </form>
 

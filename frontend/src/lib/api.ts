@@ -65,6 +65,52 @@ export const api = {
   getAnalysisResult:  (uploadId: number) => req<SavedAnalysisResult>(`/analyze/result/${uploadId}`),
   deleteAnalysisResult: (uploadId: number) =>
     req<{ deleted: boolean }>(`/analyze/result/${uploadId}`, { method: "DELETE" }),
+
+  // Auth
+  login: (username: string, password: string) =>
+    req<LoginResponse>("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    }),
+  forgotPassword: (email: string) =>
+    req<{ message: string }>("/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }),
+  verifyOtp: (email: string, otp_code: string) =>
+    req<{ message: string; reset_token: string }>("/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp_code }),
+    }),
+  resetPassword: (email: string, otp_code: string, new_password: string) =>
+    req<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp_code, new_password }),
+    }),
+  getProfile: (token: string) =>
+    req<ProfileResponse>("/auth/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  updateProfile: (token: string, data: { full_name?: string; email?: string }) =>
+    req<{ message: string }>("/auth/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
+  changePassword: (token: string, current_password: string, new_password: string) =>
+    req<{ message: string }>("/auth/change-password", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ current_password, new_password }),
+    }),
+  getActivityLog: (token: string) =>
+    req<ActivityLogItem[]>("/auth/activity-log", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 };
 
 // Types
@@ -143,5 +189,37 @@ export interface Artifact {
   sha256: string;
   acquired_at: string;
   size_bytes: number;
+}
+
+// Auth types
+export interface LoginResponse {
+  token: string;
+  user: UserInfo;
+}
+
+export interface UserInfo {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  role: string;
+  organization: string;
+}
+
+export interface ProfileResponse {
+  user: UserInfo & { created_at: string };
+  stats: {
+    total_sessions: number;
+    total_uploads: number;
+    total_reports: number;
+  };
+  last_login: string | null;
+}
+
+export interface ActivityLogItem {
+  timestamp: string;
+  action: string;
+  details: string;
+  dot_color: string;
 }
 

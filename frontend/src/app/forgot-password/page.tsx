@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Shield, Sun, Moon, Eye, EyeOff, ArrowLeft, Mail, Lock, Check, X, KeyRound } from "lucide-react";
 import { getLang, setLang, Lang } from "@/lib/i18n";
+import { api } from "@/lib/api";
 
 type Step = 1 | 2 | 3;
 
@@ -17,6 +18,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>(1);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Step 2: OTP
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -29,6 +31,7 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [resetToken, setResetToken] = useState("");
 
   useEffect(() => { setMounted(true); setLangState(getLang()); }, []);
 
@@ -53,15 +56,23 @@ export default function ForgotPasswordPage() {
     window.dispatchEvent(new Event("lang-change"));
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email.trim()) {
       setError("Email address is required");
       return;
     }
-    setStep(2);
-    setResendTimer(60);
+    setLoading(true);
+    try {
+      await api.forgotPassword(email.trim());
+      setStep(2);
+      setResendTimer(60);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -80,25 +91,39 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleOtpSubmit = () => {
+  const handleOtpSubmit = async () => {
     const code = otp.join("");
     if (code.length < 6) {
       setError("Please enter the full 6-digit code");
       return;
     }
+    setLoading(true);
     setError("");
-    setStep(3);
+    try {
+      const res = await api.verifyOtp(email.trim(), code);
+      setResetToken(res.reset_token);
+      setStep(3);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendTimer > 0) return;
     setOtp(["", "", "", "", "", ""]);
     setOtpTimer(300);
     setResendTimer(60);
-    inputRefs.current[0]?.focus();
+    try {
+      await api.forgotPassword(email.trim());
+      inputRefs.current[0]?.focus();
+    } catch {
+      // silent
+    }
   };
 
-  const handleSetPassword = () => {
+  const handleSetPassword = async () => {
     setError("");
     if (newPassword.length < 8) {
       setError("Password must be at least 8 characters");
@@ -108,8 +133,16 @@ export default function ForgotPasswordPage() {
       setError("Passwords do not match");
       return;
     }
-    document.cookie = "dfa-authed=true; path=/";
-    router.push("/dashboard");
+    setLoading(true);
+    try {
+      await api.resetPassword(email.trim(), otp.join(""), newPassword);
+      document.cookie = "dfa-authed=true; path=/";
+      router.push("/login");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to reset password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fmtTime = (s: number) => {
@@ -199,12 +232,13 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none disabled:opacity-50"
                 style={{ background: "var(--accent)", color: "#fff" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "var(--accent-hover)"; }}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
               >
-                Send verification code
+                {loading ? "Sending..." : "Send verification code"}
               </button>
             </form>
 
@@ -285,12 +319,13 @@ export default function ForgotPasswordPage() {
 
             <button
               onClick={handleOtpSubmit}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none disabled:opacity-50"
               style={{ background: "var(--accent)", color: "#fff" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "var(--accent-hover)"; }}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
             >
-              Verify code
+              {loading ? "Verifying..." : "Verify code"}
             </button>
 
             <button
@@ -484,12 +519,13 @@ export default function ForgotPasswordPage() {
 
             <button
               onClick={handleSetPassword}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-medium cursor-pointer border-none disabled:opacity-50"
               style={{ background: "var(--accent)", color: "#fff" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "var(--accent-hover)"; }}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
             >
-              Set new password
+              {loading ? "Resetting..." : "Set new password"}
             </button>
 
             <div className="font-mono text-[10px] text-center mt-3" style={{ color: "var(--text-muted)" }}>

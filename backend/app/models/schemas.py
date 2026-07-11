@@ -6,7 +6,7 @@ and SQLAlchemy models for database persistence.
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, Integer, String, DateTime, Text, create_engine
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
 import os
@@ -44,6 +44,65 @@ class UploadResponse(BaseModel):
     upload_id: int
     file_type: str
     total_entries_parsed: int
+
+
+# --- Auth Schemas ---
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    user: "UserResponse"
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    full_name: str
+    role: str
+    organization: str
+
+    class Config:
+        from_attributes = True
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    otp_code: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp_code: str
+    new_password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ActivityLogEntry(BaseModel):
+    timestamp: str
+    action: str
+    details: str
+    dot_color: str
+
+    class Config:
+        from_attributes = True
 
 
 # --- SQLAlchemy Setup ---
@@ -108,6 +167,72 @@ class AnalysisResultDB(Base):
     attack_timeline = Column(Text, nullable=True) # JSON string: [{...}, {...}]
     analyzed_at  = Column(DateTime, default=datetime.utcnow)
     analysis_duration_seconds = Column(Integer, nullable=True)
+
+
+# --- Auth ORM Models ---
+
+class UserDB(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False, default="")
+    role = Column(String(50), nullable=False, default="Forensic Analyst")
+    organization = Column(String(255), nullable=False, default="")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class OTPTokenDB(Base):
+    __tablename__ = "otp_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    email = Column(String(255), nullable=False)
+    otp_code = Column(String(6), nullable=False)
+    purpose = Column(String(20), nullable=False)  # "login" or "reset_password"
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PasswordPolicyDB(Base):
+    __tablename__ = "password_policy"
+
+    id = Column(Integer, primary_key=True, index=True)
+    min_length = Column(Integer, default=8)
+    require_uppercase = Column(Boolean, default=True)
+    require_number = Column(Boolean, default=True)
+    require_symbol = Column(Boolean, default=True)
+    otp_ttl_seconds = Column(Integer, default=300)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UserSessionDB(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String(255), unique=True, nullable=False, index=True)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+
+
+class ActivityLogDB(Base):
+    __tablename__ = "activity_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String(100), nullable=False)
+    details = Column(Text, nullable=True)
+    dot_color = Column(String(20), nullable=False, default="var(--accent)")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 def save_analysis_result(db, upload_id: int, filename: str, result: dict, duration_seconds: int = None):
