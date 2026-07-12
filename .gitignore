@@ -29,8 +29,10 @@ uploads/
 4b93d526115db98f4488fb35e9f91bf2cc315d2a
 
 # Deployment & docs — only frontend/ and backend/ files
-docs/
-deploy*
-dfa-*
+/docs
+deploy-remote.bat
+deploy-remote.ps1
+dfa-mockup-new-page.html
+dfa-wireframe.html
 ecosystem.config.js
 run.bat
