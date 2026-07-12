@@ -25,11 +25,13 @@ Thumbs.db
 
 # Logs & uploads (data forensik sensitif - JANGAN pernah ke-commit)
 uploads/
+data/
 *.log
 4b93d526115db98f4488fb35e9f91bf2cc315d2a
 
 # Deployment & docs — only frontend/ and backend/ files
-/docs
+/docs/*
+!/docs/database_erd.md
 deploy-remote.bat
 deploy-remote.ps1
 dfa-mockup-new-page.html
