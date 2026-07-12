@@ -1,177 +1,177 @@
 # Database ERD — AI Forensics Assistant
 
-Terdapat **11 tabel** dalam database PostgreSQL (`forensics_db`):
+There are **11 tables** in the PostgreSQL database (`forensics_db`):
 
 ---
 
-## Tabel & Fungsi
+## Tables & Functions
 
-| Tabel | Fungsi |
+| Table | Function |
 |---|---|
-| `users` | Akun analyst |
-| `otp_tokens` | Token OTP login + reset password |
-| `password_policy` | Konfigurasi aturan password (min length, uppercase, number, symbol, OTP TTL) |
-| `user_sessions` | Riwayat login session |
-| `activity_log` | Audit trail semua aksi user (untuk Profile → Recent Activity) |
-| `log_uploads` | File log yang di-upload |
-| `parsed_log_entries` | Baris log auth yang sudah diparse |
-| `parsed_telemetry_entries` | Baris telemetry/IDS yang sudah diparse |
-| `analysis_results` | Hasil analisis AI per upload |
-| `artifact_acquisitions` | (placeholder) Sesi SSH artifact acquisition |
-| `reports` | (placeholder) Laporan yang di-generate |
+| `users` | Analyst accounts |
+| `otp_tokens` | OTP tokens for login & password reset |
+| `password_policy` | Password policy configuration (min length, uppercase, number, symbol, OTP TTL) |
+| `user_sessions` | Login session history |
+| `activity_log` | Audit trail of all user actions (for Profile → Recent Activity) |
+| `log_uploads` | Uploaded log files |
+| `parsed_log_entries` | Parsed auth log lines |
+| `parsed_telemetry_entries` | Parsed telemetry/IDS entries |
+| `analysis_results` | AI analysis results per upload |
+| `artifact_acquisitions` | (placeholder) SSH artifact acquisition sessions |
+| `reports` | (placeholder) Generated reports |
 
 ---
 
-## 1. `users` — Akun analyst
+## 1. `users` — Analyst accounts
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `username` | String (UNIQUE) | Nama pengguna untuk login |
-| `email` | String (UNIQUE) | Email untuk OTP & notifikasi |
-| `password_hash` | String | Hash bcrypt dari password |
-| `full_name` | String | Nama lengkap analyst |
-| `role` | String | Jabatan (default: "Forensic Analyst") |
-| `organization` | String | Nama instansi/perusahaan |
-| `is_active` | Boolean | Status akun aktif/nonaktif |
-| `created_at` | DateTime | Waktu pembuatan akun |
-| `updated_at` | DateTime | Waktu update terakhir |
+| `username` | String (UNIQUE) | Username for login |
+| `email` | String (UNIQUE) | Email for OTP & notifications |
+| `password_hash` | String | bcrypt hash of password |
+| `full_name` | String | Full name of analyst |
+| `role` | String | Job title (default: "Forensic Analyst") |
+| `organization` | String | Agency/company name |
+| `is_active` | Boolean | Account active/inactive status |
+| `created_at` | DateTime | Account creation time |
+| `updated_at` | DateTime | Last update time |
 
-**Relasi:** Satu user memiliki banyak `otp_tokens`, `user_sessions`, dan `activity_log`.
+**Relations:** One user has many `otp_tokens`, `user_sessions`, and `activity_log` entries.
 
 ---
 
-## 2. `otp_tokens` — Token OTP login + reset password
+## 2. `otp_tokens` — OTP tokens for login & password reset
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `user_id` | Integer (FK → `users.id`) | ID user pemilik OTP |
-| `email` | String | Email tujuan pengiriman OTP |
-| `otp_code` | String (6) | Kode OTP 6 digit |
-| `purpose` | String | Tujuan: `login` atau `reset_password` |
-| `expires_at` | DateTime | Waktu kadaluarsa OTP |
-| `is_used` | Boolean | Apakah OTP sudah dipakai |
-| `created_at` | DateTime | Waktu pembuatan OTP |
+| `user_id` | Integer (FK → `users.id`) | User ID who owns the OTP |
+| `email` | String | Email where OTP was sent |
+| `otp_code` | String (6) | 6-digit OTP code |
+| `purpose` | String | Purpose: `login` or `reset_password` |
+| `expires_at` | DateTime | OTP expiration time |
+| `is_used` | Boolean | Whether the OTP has been used |
+| `created_at` | DateTime | OTP creation time |
 
-**Relasi:** `user_id` → `users.id`.
+**Relation:** `user_id` → `users.id`.
 
 ---
 
-## 3. `password_policy` — Konfigurasi aturan password
+## 3. `password_policy` — Password policy configuration
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `min_length` | Integer | Panjang minimum password (default: 8) |
-| `require_uppercase` | Boolean | Wajib huruf kapital |
-| `require_number` | Boolean | Wajib angka |
-| `require_symbol` | Boolean | Wajib simbol |
-| `otp_ttl_seconds` | Integer | Masa berlaku OTP dalam detik (default: 300) |
-| `updated_at` | DateTime | Waktu update terakhir |
+| `min_length` | Integer | Minimum password length (default: 8) |
+| `require_uppercase` | Boolean | Require uppercase letter |
+| `require_number` | Boolean | Require number |
+| `require_symbol` | Boolean | Require symbol |
+| `otp_ttl_seconds` | Integer | OTP validity in seconds (default: 300) |
+| `updated_at` | DateTime | Last update time |
 
-**Relasi:** Hanya ada satu baris konfigurasi global.
+**Relation:** Single global configuration row.
 
 ---
 
-## 4. `user_sessions` — Riwayat login session
+## 4. `user_sessions` — Login session history
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `user_id` | Integer (FK → `users.id`) | ID user |
-| `token` | String (UNIQUE) | Token sesi (bearer token) |
-| `ip_address` | String | Alamat IP saat login |
-| `user_agent` | String | User-Agent browser |
-| `is_active` | Boolean | Status sesi masih aktif |
-| `created_at` | DateTime | Waktu login |
-| `expires_at` | DateTime | Waktu kadaluarsa sesi |
+| `user_id` | Integer (FK → `users.id`) | User ID |
+| `token` | String (UNIQUE) | Session token (bearer token) |
+| `ip_address` | String | IP address at login |
+| `user_agent` | String | Browser User-Agent |
+| `is_active` | Boolean | Whether session is still active |
+| `created_at` | DateTime | Login time |
+| `expires_at` | DateTime | Session expiration time |
 
-**Relasi:** `user_id` → `users.id`.
+**Relation:** `user_id` → `users.id`.
 
 ---
 
-## 5. `activity_log` — Audit trail semua aksi user
+## 5. `activity_log` — Audit trail of all user actions
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `user_id` | Integer (FK → `users.id`) | ID user pelaku aksi |
-| `action` | String | Nama aksi (Login successful, Password changed, dll) |
-| `details` | Text | Deskripsi detail aksi (bisa HTML untuk frontend) |
-| `dot_color` | String | Warna indikator dot (CSS variable) |
-| `created_at` | DateTime | Waktu aksi |
+| `user_id` | Integer (FK → `users.id`) | User ID who performed the action |
+| `action` | String | Action name (Login successful, Password changed, etc.) |
+| `details` | Text | Detailed action description (can include HTML for frontend) |
+| `dot_color` | String | Indicator dot color (CSS variable) |
+| `created_at` | DateTime | Action timestamp |
 
-**Relasi:** `user_id` → `users.id`.
+**Relation:** `user_id` → `users.id`.
 
 ---
 
-## 6. `log_uploads` — File log yang di-upload
+## 6. `log_uploads` — Uploaded log files
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `filename` | String | Nama file asli |
-| `uploaded_at` | DateTime | Timestamp upload |
-| `total_entries` | Integer | Jumlah entry yang berhasil diparse |
+| `filename` | String | Original file name |
+| `uploaded_at` | DateTime | Upload timestamp |
+| `total_entries` | Integer | Number of entries successfully parsed |
 
-**Relasi:** Satu upload memiliki banyak entry di `parsed_log_entries` dan `parsed_telemetry_entries`.
+**Relation:** One upload has many entries in `parsed_log_entries` and `parsed_telemetry_entries`.
 
 ---
 
-## 7. `parsed_log_entries` — Baris log auth yang sudah diparse
+## 7. `parsed_log_entries` — Parsed auth log lines
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `upload_id` | Integer (FK → `log_uploads.id`) | ID upload asal |
-| `timestamp` | DateTime | Waktu event |
-| `host` | String | Hostname server |
-| `source` | String | Sumber log (sshd, sudo, dll) |
-| `event_type` | String | Jenis event |
-| `raw_message` | Text | Baris log mentah asli |
-| `source_ip` | String | IP address sumber |
-| `user` | String | Username terkait |
-| `port` | String | Port koneksi |
-| `auth_method` | String | Metode autentikasi |
-| `status` | String | Status (Failed, Accepted, dll) |
+| `upload_id` | Integer (FK → `log_uploads.id`) | Source upload ID |
+| `timestamp` | DateTime | Event time |
+| `host` | String | Server hostname |
+| `source` | String | Log source (sshd, sudo, etc.) |
+| `event_type` | String | Event type |
+| `raw_message` | Text | Original raw log line |
+| `source_ip` | String | Source IP address |
+| `user` | String | Related username |
+| `port` | String | Connection port |
+| `auth_method` | String | Authentication method |
+| `status` | String | Status (Failed, Accepted, etc.) |
 
-**Relasi:** `upload_id` → `log_uploads.id`.
+**Relation:** `upload_id` → `log_uploads.id`.
 
 ---
 
-## 8. `parsed_telemetry_entries` — Baris telemetry/IDS yang sudah diparse
+## 8. `parsed_telemetry_entries` — Parsed telemetry/IDS entries
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `upload_id` | Integer (FK → `log_uploads.id`) | ID upload asal |
-| `timestamp` | String | Waktu event (string) |
-| `event_type` | String | Jenis event |
-| `source` | String | Sumber deteksi |
-| `details` | Text | Deskripsi detail event |
-| `raw_line` | Text | Baris JSON mentah asli |
+| `upload_id` | Integer (FK → `log_uploads.id`) | Source upload ID |
+| `timestamp` | String | Event time (string) |
+| `event_type` | String | Event type |
+| `source` | String | Detection source |
+| `details` | Text | Event detail description |
+| `raw_line` | Text | Original raw JSON line |
 
-**Relasi:** `upload_id` → `log_uploads.id`.
+**Relation:** `upload_id` → `log_uploads.id`.
 
 ---
 
-## 9. `analysis_results` — Hasil analisis AI per upload
+## 9. `analysis_results` — AI analysis results per upload
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | Integer (PK) | Auto-increment |
-| `upload_id` | Integer (UNIQUE, FK → `log_uploads.id`) | ID upload (1:1) |
-| `filename` | String | Nama file yang dianalisis |
-| `severity` | String | Tingkat bahaya (CRITICAL / HIGH / MEDIUM / LOW / INFO) |
-| `total_incidents` | Integer | Total insiden terdeteksi |
-| `narrative_report` | Text | Narasi lengkap dari LLM |
-| `ioc_summary` | Text | JSON array IP indikator kompromi |
-| `attack_timeline` | Text | JSON array objek timeline |
-| `analyzed_at` | DateTime | Waktu analisis |
-| `analysis_duration_seconds` | Integer | Durasi analisis dalam detik |
+| `upload_id` | Integer (UNIQUE, FK → `log_uploads.id`) | Upload ID (1:1) |
+| `filename` | String | Name of analyzed file |
+| `severity` | String | Severity level (CRITICAL / HIGH / MEDIUM / LOW / INFO) |
+| `total_incidents` | Integer | Total detected incidents |
+| `narrative_report` | Text | Full narrative from LLM |
+| `ioc_summary` | Text | JSON array of indicator IPs |
+| `attack_timeline` | Text | JSON array of timeline objects |
+| `analyzed_at` | DateTime | Analysis time |
+| `analysis_duration_seconds` | Integer | Analysis duration in seconds |
 
-**Relasi:** `upload_id` → `log_uploads.id` (one-to-one).
+**Relation:** `upload_id` → `log_uploads.id` (one-to-one).
 
 ---
 
