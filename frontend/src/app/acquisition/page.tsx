@@ -88,7 +88,7 @@ export default function AcquisitionPage() {
     <AppShell>
       <PageHeader title={tr.acquisition.title} subtitle={tr.acquisition.subtitle} />
       <div className="p-6">
-        <div className="grid gap-4" style={{ gridTemplateColumns: "5fr 2fr" }}>
+        <div className="grid gap-4" style={{ gridTemplateColumns: "3fr 2fr" }}>
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
             {/* Target Server Connection */}
