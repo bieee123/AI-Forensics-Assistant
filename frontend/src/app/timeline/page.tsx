@@ -182,7 +182,11 @@ function TimelinePageContent() {
                     <span className={eventBadgeClass(entry.event_type)}>{formatEventType(entry.event_type)}</span>
                   </div>
                   <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
-                    User <span className="font-mono">&apos;{entry.user}&apos;</span> via {entry.auth_method} from {entry.source_ip}
+                    {entry.source_ip ? (
+                      <>User <span className="font-mono">&apos;{entry.user}&apos;</span> via {entry.auth_method} from {entry.source_ip}</>
+                    ) : (
+                      <>Source: <span className="font-mono">{entry.source}</span></>
+                    )}
                   </p>
                   <button
                     onClick={() => toggleExpand(entry.id)}

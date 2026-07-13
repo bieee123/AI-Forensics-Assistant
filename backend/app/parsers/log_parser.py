@@ -4,6 +4,7 @@ Parsers for auth.log/syslog and JSON API telemetry.
 
 import re
 import json
+import os
 from datetime import datetime
 from typing import Any
 from app.models.schemas import ParsedLogEntry, ParsedTelemetryEntry
@@ -123,3 +124,33 @@ def parse_json_telemetry_text(raw_text: str) -> list[ParsedTelemetryEntry]:
         ))
 
     return entries
+
+
+BINARY_EXTENSIONS = {".raw", ".dd", ".mem", ".img", ".dmp", ".bin", ".e01"}
+
+
+def looks_like_binary(filename: str) -> bool:
+    _, ext = os.path.splitext(filename.lower())
+    return ext in BINARY_EXTENSIONS
+
+
+def extract_readable_strings(raw_bytes: bytes, min_len: int = 4) -> str:
+    """Extract ASCII printable strings from binary data."""
+    pattern = re.compile(rb'[\x20-\x7E]{{{},}}'.format(min_len))
+    strings = [s.decode("ascii", errors="ignore") for s in pattern.findall(raw_bytes)]
+    return "\n".join(strings)
+
+
+def parse_binary_artifact(raw_bytes: bytes, filename: str) -> tuple[list[ParsedLogEntry], list[ParsedTelemetryEntry]]:
+    """Parse binary disk/memory artifact by extracting readable strings."""
+    readable = extract_readable_strings(raw_bytes)
+
+    auth_entries = parse_auth_log_text(readable)
+    if auth_entries:
+        return auth_entries, []
+
+    telemetry_entries = parse_json_telemetry_text(readable)
+    if telemetry_entries:
+        return [], telemetry_entries
+
+    return [], []

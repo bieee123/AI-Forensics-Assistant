@@ -32,29 +32,52 @@ def get_uploads():
 
 @router.get("/entries")
 def get_entries(upload_id: int = Query(..., description="Upload ID to fetch entries for")):
-    """Return parsed log entries for a given upload_id."""
+    """Return parsed log entries for a given upload_id (supports both auth logs and telemetry)."""
     db: Session = SessionLocal()
     try:
-        entries = db.query(ParsedLogEntryDB).filter(
+        auth_entries = db.query(ParsedLogEntryDB).filter(
             ParsedLogEntryDB.upload_id == upload_id
         ).order_by(ParsedLogEntryDB.timestamp).all()
+
+        if auth_entries:
+            return [
+                {
+                    "id": e.id,
+                    "upload_id": e.upload_id,
+                    "timestamp": str(e.timestamp),
+                    "host": e.host,
+                    "source": e.source,
+                    "event_type": e.event_type,
+                    "source_ip": e.source_ip,
+                    "user": e.user,
+                    "port": e.port,
+                    "auth_method": e.auth_method,
+                    "status": e.status,
+                    "raw_message": e.raw_message,
+                }
+                for e in auth_entries
+            ]
+
+        telemetry_entries = db.query(ParsedTelemetryEntryDB).filter(
+            ParsedTelemetryEntryDB.upload_id == upload_id
+        ).all()
 
         return [
             {
                 "id": e.id,
                 "upload_id": e.upload_id,
-                "timestamp": str(e.timestamp),
-                "host": e.host,
+                "timestamp": e.timestamp,
+                "host": e.source,
                 "source": e.source,
                 "event_type": e.event_type,
-                "source_ip": e.source_ip,
-                "user": e.user,
-                "port": e.port,
-                "auth_method": e.auth_method,
-                "status": e.status,
-                "raw_message": e.raw_message,
+                "source_ip": "",
+                "user": "",
+                "port": "",
+                "auth_method": "",
+                "status": "",
+                "raw_message": e.details,
             }
-            for e in entries
+            for e in telemetry_entries
         ]
     finally:
         db.close()

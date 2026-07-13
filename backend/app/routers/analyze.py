@@ -7,7 +7,7 @@ and returns attack timeline + IoC explanation via local LLM.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models.schemas import SessionLocal, ParsedLogEntryDB, save_analysis_result, LogUploadDB, AnalysisResultDB
+from app.models.schemas import SessionLocal, ParsedLogEntryDB, ParsedTelemetryEntryDB, save_analysis_result, LogUploadDB, AnalysisResultDB
 from app.agent_tools import regex_extract_ioc, timestamp_sorter
 from app.config import OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
@@ -149,45 +149,85 @@ async def analyze_log(request: AnalyzeRequest):
     start_time = time.time()
     db: Session = SessionLocal()
     try:
-        entries = db.query(ParsedLogEntryDB).filter(
+        auth_entries = db.query(ParsedLogEntryDB).filter(
             ParsedLogEntryDB.upload_id == request.upload_id
+        ).all()
+        telemetry_entries = db.query(ParsedTelemetryEntryDB).filter(
+            ParsedTelemetryEntryDB.upload_id == request.upload_id
         ).all()
     finally:
         db.close()
 
-    if not entries:
+    has_auth = bool(auth_entries)
+    has_telemetry = bool(telemetry_entries)
+
+    if not has_auth and not has_telemetry:
         raise HTTPException(status_code=404, detail=f"No log entries found for upload_id {request.upload_id}")
 
-    entries_as_dicts = [
-        {
-            "timestamp": str(e.timestamp),
-            "host": e.host,
-            "event_type": e.event_type,
-            "source_ip": e.source_ip,
-            "user": e.user,
-            "status": e.status,
-            "raw_message": e.raw_message,
-        }
-        for e in entries
-    ]
-    sorted_entries = timestamp_sorter.invoke({"entries": entries_as_dicts})
+    is_telemetry = has_telemetry and not has_auth
 
-    combined_text = " ".join(
-        f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
-        for e in sorted_entries
-    )
-    ioc_result = regex_extract_ioc.invoke({"text": combined_text})
-    ioc_list   = ioc_result.get("ips_found", [])
+    if is_telemetry:
+        # ── Telemetry entry analysis ──
+        entries_as_dicts = [
+            {
+                "timestamp": e.timestamp,
+                "host": e.source,
+                "event_type": e.event_type,
+                "source_ip": "",
+                "user": "",
+                "status": "",
+                "raw_message": e.details,
+            }
+            for e in telemetry_entries
+        ]
+        sorted_entries = sorted(entries_as_dicts, key=lambda x: x.get("timestamp", ""))
 
-    severity = classify_severity(entries)
+        combined_text = " ".join(e.get("raw_message", "") for e in sorted_entries)
+        ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+        ioc_list = ioc_result.get("ips_found", [])
 
-    rag_query   = f"SSH {severity.lower()} attack incident response runbook"
-    rag_context = get_rag_context(rag_query)
+        severity = "MEDIUM" if len(telemetry_entries) > 5 else "INFO"
 
-    log_text = "\n".join(
-        f"[{e['timestamp']}] {e['event_type']} | IP: {e['source_ip']} | User: {e['user']} | Status: {e['status']}"
-        for e in sorted_entries
-    )
+        rag_query = "security telemetry analysis incident response runbook"
+        rag_context = get_rag_context(rag_query)
+
+        log_text = "\n".join(
+            f"[{e['timestamp']}] {e['event_type']} | Source: {e['host']} | Details: {e['raw_message']}"
+            for e in sorted_entries
+        )
+    else:
+        # ── Auth log entry analysis (original logic) ──
+        entries_as_dicts = [
+            {
+                "timestamp": str(e.timestamp),
+                "host": e.host,
+                "event_type": e.event_type,
+                "source_ip": e.source_ip,
+                "user": e.user,
+                "status": e.status,
+                "raw_message": e.raw_message,
+            }
+            for e in auth_entries
+        ]
+        sorted_entries = timestamp_sorter.invoke({"entries": entries_as_dicts})
+
+        combined_text = " ".join(
+            f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
+            for e in sorted_entries
+        )
+        ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+        ioc_list = ioc_result.get("ips_found", [])
+
+        severity = classify_severity(auth_entries)
+
+        rag_query = f"SSH {severity.lower()} attack incident response runbook"
+        rag_context = get_rag_context(rag_query)
+
+        log_text = "\n".join(
+            f"[{e['timestamp']}] {e['event_type']} | IP: {e['source_ip']} | User: {e['user']} | Status: {e['status']}"
+            for e in sorted_entries
+        )
+
     prompt = FORENSIC_PROMPT.format(
         log_entries=log_text,
         rag_context=rag_context or "No runbook context available.",
@@ -212,6 +252,7 @@ async def analyze_log(request: AnalyzeRequest):
     ).strip()
 
     # Auto-save result to PostgreSQL
+    total_incidents = len(auth_entries) + len(telemetry_entries)
     duration = int(time.time() - start_time)
     db_save = SessionLocal()
     try:
@@ -220,7 +261,7 @@ async def analyze_log(request: AnalyzeRequest):
         sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
         result_dict = {
             "severity_overall": sev,
-            "total_incidents": len(entries),
+            "total_incidents": total_incidents,
             "narrative_report": narrative,
             "ioc_summary": ioc_list,
             "attack_timeline": sorted_entries,
@@ -234,7 +275,7 @@ async def analyze_log(request: AnalyzeRequest):
     sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
     return AnalyzeResponse(
         upload_id=request.upload_id,
-        total_incidents=len(entries),
+        total_incidents=total_incidents,
         attack_timeline=sorted_entries,
         ioc_summary=ioc_list,
         narrative_report=narrative,
