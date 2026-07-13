@@ -39,7 +39,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <PageHeader title={tr.settings.title} />
+      <PageHeader title={tr.settings.title} crumbs={[{ label: "Home", href: "/" }, { label: "Settings" }]} />
       <div className="p-6 flex flex-col gap-4 max-w-[640px]">
         {/* Appearance */}
         <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">

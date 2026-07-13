@@ -112,6 +112,7 @@ export default function DashboardPage() {
       <PageHeader
         title={tr.dashboard.title}
         subtitle={tr.dashboard.subtitle}
+        crumbs={[{ label: "Home" }]}
         actions={
           <button
             onClick={fetchData}

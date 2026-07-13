@@ -210,6 +210,11 @@ function AnalysisPageContent() {
     <AppShell>
       <PageHeader
         title={tr.analysis.title}
+        crumbs={
+          uploadId
+            ? [{ label: "Home", href: "/" }, { label: "Analysis", href: "/analysis" }, { label: `Upload #${uploadId}` }]
+            : [{ label: "Home", href: "/" }, { label: "Analysis" }]
+        }
         actions={
           result ? (
             <>
