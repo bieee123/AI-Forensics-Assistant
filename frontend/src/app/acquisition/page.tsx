@@ -86,9 +86,7 @@ export default function AcquisitionPage() {
 
   return (
     <AppShell>
-      <PageHeader         title={tr.acquisition.title}
-        subtitle={tr.acquisition.subtitle}
-        crumbs={[{ label: "Home", href: "/" }, { label: "Acquisition" }]} />
+      <PageHeader title={tr.acquisition.title} subtitle={tr.acquisition.subtitle} />
       <div className="p-6">
         <div className="grid gap-4" style={{ gridTemplateColumns: "5fr 2fr" }}>
           {/* LEFT COLUMN */}

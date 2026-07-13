@@ -49,7 +49,7 @@ export default function HistoryPage() {
 
   return (
     <AppShell>
-      <PageHeader title={tr.history.title} crumbs={[{ label: "Home", href: "/" }, { label: "History" }]} />
+      <PageHeader title={tr.history.title} />
       <div className="p-6">
         {/* Search */}
         <div className="relative max-w-[320px] mb-4">

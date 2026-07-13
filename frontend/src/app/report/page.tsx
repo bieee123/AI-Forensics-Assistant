@@ -261,7 +261,7 @@ export default function ReportPage() {
 
   return (
     <AppShell>
-      <PageHeader title={tr.report.title} crumbs={[{ label: "Home", href: "/" }, { label: "Report" }]} />
+      <PageHeader title={tr.report.title} />
       <div className="flex h-[calc(100vh-56px)]">
 
         {/* LEFT: Configuration panel */}

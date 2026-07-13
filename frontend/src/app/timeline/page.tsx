@@ -69,7 +69,7 @@ function TimelinePageContent() {
   if (!activeUploadId) {
     return (
       <AppShell>
-        <PageHeader title={tr.timeline.title} subtitle={tr.timeline.subtitle} crumbs={[{ label: "Home", href: "/" }, { label: "Timeline" }]} />
+        <PageHeader title={tr.timeline.title} subtitle={tr.timeline.subtitle} />
         <div className="p-6">
           <div className="bg-bg-elevated border border-border-subtle rounded-lg overflow-hidden">
             {uploadsLoading ? (
@@ -127,11 +127,6 @@ function TimelinePageContent() {
       <PageHeader
         title={tr.timeline.title}
         subtitle={selectedUpload ? `Upload #${activeUploadId} · ${selectedUpload.filename}` : tr.timeline.subtitle}
-        crumbs={
-          selectedUpload
-            ? [{ label: "Home", href: "/" }, { label: "Timeline", href: "/timeline" }, { label: `Upload #${activeUploadId}` }]
-            : [{ label: "Home", href: "/" }, { label: "Timeline" }]
-        }
       />
       <div className="p-6">
         {/* Filters */}
