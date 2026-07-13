@@ -334,7 +334,7 @@ export default function UploadPage() {
                       <td className="font-mono">{u.total_entries.toLocaleString()}</td>
                       <td className="font-mono">{fmtDate(u.uploaded_at)}</td>
                       <td>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5" style={{ flexWrap: "nowrap", whiteSpace: "nowrap" }}>
                           <button
                             onClick={() => router.push(`/analysis?upload_id=${u.upload_id}`)}
                             className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-medium cursor-pointer border transition-all"

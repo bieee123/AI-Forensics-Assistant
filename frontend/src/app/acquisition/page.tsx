@@ -180,7 +180,7 @@ export default function AcquisitionPage() {
                   onClick={handleAcquire}
                   disabled={acquiring}
                   className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-medium cursor-pointer border-none"
-                  style={{ background: acquiring ? "var(--text-muted)" : "var(--accent)", color: "#fff", opacity: acquiring ? 0.7 : 1 }}
+                  style={{ whiteSpace: "nowrap", background: acquiring ? "var(--text-muted)" : "var(--accent)", color: "#fff", opacity: acquiring ? 0.7 : 1 }}
                   onMouseEnter={e => { if (!acquiring) e.currentTarget.style.background = "var(--accent-hover)"; }}
                   onMouseLeave={e => { if (!acquiring) e.currentTarget.style.background = "var(--accent)"; }}
                 >
