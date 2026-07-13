@@ -53,6 +53,7 @@ export default function TopBar() {
     const segment = pathname?.split("/")[1] || "dashboard";
     if (segment === "login") return "";
     const labels = lang === "id" ? PAGE_LABELS_ID : PAGE_LABELS;
+    if (segment === "timeline") return labels["analysis"];
     return labels[segment] || segment;
   };
 
@@ -95,7 +96,7 @@ export default function TopBar() {
           </span>
           <ChevronRight size={12} style={{ opacity: 0.5 }} />
           <span
-            onClick={() => router.push(`/${pathname?.split("/")[1] || "dashboard"}`)}
+            onClick={() => router.push(`/${pathname?.startsWith("/timeline") ? "analysis" : pathname?.split("/")[1] || "dashboard"}`)}
             className="font-semibold cursor-pointer hover:opacity-80 transition-opacity"
             style={{ color: "#fff" }}
           >
