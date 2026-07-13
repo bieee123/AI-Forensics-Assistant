@@ -329,7 +329,7 @@ export default function UploadPage() {
                   return (
                     <tr key={u.upload_id} className="row-hover">
                       <td className="font-mono">{u.upload_id}</td>
-                      <td>{u.filename}</td>
+                      <td className="max-w-[200px]"><span className="block truncate" title={u.filename}>{u.filename}</span></td>
                       <td><span className={ft.cls}>{ft.label}</span></td>
                       <td className="font-mono">{u.total_entries.toLocaleString()}</td>
                       <td className="font-mono">{fmtDate(u.uploaded_at)}</td>
