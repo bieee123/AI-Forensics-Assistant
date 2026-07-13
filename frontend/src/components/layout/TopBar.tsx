@@ -1,5 +1,15 @@
 "use client";
-import { useRouter, usePathname } from "next/navigation";
+import { Suspense } from "react";
+
+export default function TopBar() {
+  return (
+    <Suspense fallback={<div className="h-12" style={{ background: "#0B0E14" }} />}>
+      <TopBarContent />
+    </Suspense>
+  );
+}
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import {
@@ -19,9 +29,10 @@ const PAGE_LABELS_ID: Record<string, string> = {
   report: "Laporan", settings: "Pengaturan",
 };
 
-export default function TopBar() {
+function TopBarContent() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
   const [lang, setLangState] = useState<Lang>("en");
   const [mounted, setMounted] = useState(false);
@@ -41,13 +52,8 @@ export default function TopBar() {
     window.dispatchEvent(new Event("lang-change"));
   };
 
-  const [detailLabel, setDetailLabel] = useState<string | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const uploadId = params.get("upload_id");
-    setDetailLabel(uploadId ? `Upload #${uploadId}` : null);
-  }, [pathname]);
+  const uploadId = searchParams.get("upload_id");
+  const detailLabel = uploadId ? `Upload #${uploadId}` : null;
 
   const getPageName = (): string => {
     const segment = pathname?.split("/")[1] || "dashboard";
