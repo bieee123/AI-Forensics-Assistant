@@ -64,7 +64,6 @@ async def acquire_artifact(request: AcquireRequest):
         }
         if request.private_key_path:
             if "-----BEGIN" in request.private_key_path:
-                import io
                 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key
                 pkey = None
                 key_errors = []
