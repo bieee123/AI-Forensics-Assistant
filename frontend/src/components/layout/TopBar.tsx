@@ -85,13 +85,22 @@ export default function TopBar() {
 
       {/* Breadcrumb */}
       {currentPage && (
-        <div className="flex items-center gap-1.5 text-xs whitespace-nowrap" style={{ color: "rgba(255,255,255,0.55)" }}>
-          <span className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 text-xs whitespace-nowrap select-none" style={{ color: "rgba(255,255,255,0.55)" }}>
+          <span
+            onClick={() => router.push("/")}
+            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <Home size={12} style={{ opacity: 0.5 }} />
             Home
           </span>
           <ChevronRight size={12} style={{ opacity: 0.5 }} />
-          <span className="font-semibold" style={{ color: "#fff" }}>{currentPage}</span>
+          <span
+            onClick={() => router.push(`/${pathname?.split("/")[1] || "dashboard"}`)}
+            className="font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ color: "#fff" }}
+          >
+            {currentPage}
+          </span>
           {detailLabel && (
             <>
               <ChevronRight size={12} style={{ opacity: 0.5 }} />
