@@ -264,9 +264,8 @@ async def analyze_log(request: AnalyzeRequest):
     try:
         upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == request.upload_id).first()
         filename = upload.filename if upload else f"upload_{request.upload_id}"
-        sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
         result_dict = {
-            "severity_overall": sev,
+            "severity_overall": severity,
             "total_incidents": total_incidents,
             "narrative_report": narrative,
             "ioc_summary": ioc_list,
@@ -278,14 +277,13 @@ async def analyze_log(request: AnalyzeRequest):
     finally:
         db_save.close()
 
-    sev = parsed["severity"] if parsed["severity"] not in ("UNKNOWN", "") else severity
     return AnalyzeResponse(
         upload_id=request.upload_id,
         total_incidents=total_incidents,
         attack_timeline=sorted_entries,
         ioc_summary=ioc_list,
         narrative_report=narrative,
-        severity_overall=sev,
+        severity_overall=severity,
     )
 
 
