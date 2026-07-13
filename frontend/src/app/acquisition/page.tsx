@@ -243,7 +243,7 @@ export default function AcquisitionPage() {
               <div key={a.filename} className="px-4 py-3 border-b border-border-subtle">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-mono text-[13px] font-semibold text-text-primary truncate flex-1 min-w-0" title={a.filename}>
-                    {a.filename}
+                    {a.filename.length > 28 ? a.filename.substring(0, 28) + '...' : a.filename}
                   </span>
                   <span className="badge badge-low flex-shrink-0">VERIFIED</span>
                 </div>
