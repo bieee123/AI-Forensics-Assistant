@@ -241,8 +241,8 @@ export default function AcquisitionPage() {
 
             {!loadingArtifacts && artifacts.map((a, i) => (
               <div key={a.filename} className="px-4 py-3 border-b border-border-subtle">
-                <div className="flex items-center justify-between mb-1.5 min-w-0">
-                  <span className="font-mono text-[13px] font-semibold text-text-primary truncate" title={a.filename}>
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <span className="font-mono text-[13px] font-semibold text-text-primary truncate flex-1 min-w-0" title={a.filename}>
                     {a.filename}
                   </span>
                   <span className="badge badge-low flex-shrink-0">VERIFIED</span>
