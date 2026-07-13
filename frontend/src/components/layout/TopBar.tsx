@@ -41,6 +41,14 @@ export default function TopBar() {
     window.dispatchEvent(new Event("lang-change"));
   };
 
+  const [detailLabel, setDetailLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const uploadId = params.get("upload_id");
+    setDetailLabel(uploadId ? `Upload #${uploadId}` : null);
+  }, [pathname]);
+
   const getPageName = (): string => {
     const segment = pathname?.split("/")[1] || "dashboard";
     if (segment === "login") return "";
@@ -84,6 +92,12 @@ export default function TopBar() {
           </span>
           <ChevronRight size={12} style={{ opacity: 0.5 }} />
           <span className="font-semibold" style={{ color: "#fff" }}>{currentPage}</span>
+          {detailLabel && (
+            <>
+              <ChevronRight size={12} style={{ opacity: 0.5 }} />
+              <span style={{ color: "rgba(255,255,255,0.8)" }}>{detailLabel}</span>
+            </>
+          )}
         </div>
       )}
 
