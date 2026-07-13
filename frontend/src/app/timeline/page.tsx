@@ -169,8 +169,10 @@ function TimelinePageContent() {
                 <span className="inc-dot" style={{ background: eventDotColor(entry.event_type) }} />
                 <div className="inc-meta">
                   <span>{fmtTime(entry.timestamp)}</span>
-                  <span style={{ color: "var(--border-strong)" }}>·</span>
-                  <span>IP: {entry.source_ip}</span>
+                  {entry.source_ip && (
+                    <><span style={{ color: "var(--border-strong)" }}>·</span>
+                    <span>IP: {entry.source_ip}</span></>
+                  )}
                 </div>
                 <div className={`incident-card ${
                   entry.event_type === "privilege_escalation" ? "sev-critical" :

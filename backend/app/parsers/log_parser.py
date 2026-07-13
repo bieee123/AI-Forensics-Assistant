@@ -136,7 +136,7 @@ def looks_like_binary(filename: str) -> bool:
 
 def extract_readable_strings(raw_bytes: bytes, min_len: int = 4) -> str:
     """Extract ASCII printable strings from binary data."""
-    pattern = re.compile(rb'[\x20-\x7E]{{{},}}'.format(min_len))
+    pattern = re.compile(rb'[\x20-\x7E]{%d,}' % min_len)
     strings = [s.decode("ascii", errors="ignore") for s in pattern.findall(raw_bytes)]
     return "\n".join(strings)
 

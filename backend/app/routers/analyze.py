@@ -183,8 +183,11 @@ async def analyze_log(request: AnalyzeRequest):
         sorted_entries = sorted(entries_as_dicts, key=lambda x: x.get("timestamp", ""))
 
         combined_text = " ".join(e.get("raw_message", "") for e in sorted_entries)
-        ioc_result = regex_extract_ioc.invoke({"text": combined_text})
-        ioc_list = ioc_result.get("ips_found", [])
+        try:
+            ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+            ioc_list = ioc_result.get("ips_found", [])
+        except Exception:
+            ioc_list = []
 
         severity = "MEDIUM" if len(telemetry_entries) > 5 else "INFO"
 
@@ -215,8 +218,11 @@ async def analyze_log(request: AnalyzeRequest):
             f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
             for e in sorted_entries
         )
-        ioc_result = regex_extract_ioc.invoke({"text": combined_text})
-        ioc_list = ioc_result.get("ips_found", [])
+        try:
+            ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+            ioc_list = ioc_result.get("ips_found", [])
+        except Exception:
+            ioc_list = []
 
         severity = classify_severity(auth_entries)
 
