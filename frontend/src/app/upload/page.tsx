@@ -143,7 +143,7 @@ export default function UploadPage() {
             </div>
             <div className="font-semibold text-[13.5px] mb-1">{tr.upload.systemLog}</div>
             <div className="text-xs text-text-secondary mb-2">{tr.upload.systemLogDesc}</div>
-            <div className="text-[11px] font-mono text-text-muted">{tr.upload.supported}</div>
+            <div className="text-[11px] font-mono text-text-muted">{uploadType === "system" ? tr.upload.supported : ".log · .txt · .json"}</div>
           </div>
           <div
             onClick={() => setUploadType("disk")}
