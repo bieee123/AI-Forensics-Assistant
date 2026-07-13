@@ -4,7 +4,7 @@ module.exports = {
       name: "dfa-backend",
       cwd: "/home/dfa-admin/ai-forensics-assistant/backend",
       script: "/home/dfa-admin/ai-forensics-assistant/backend/venv/bin/uvicorn",
-      args: "app.main:app --host 127.0.0.1 --port 8000",
+      args: "app.main:app --host 0.0.0.0 --port 8000",
       interpreter: "none",
       env: {
         PATH: "/home/dfa-admin/ai-forensics-assistant/backend/venv/bin:/usr/local/bin:/usr/bin:/bin",
