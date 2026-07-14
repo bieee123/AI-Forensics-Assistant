@@ -41,9 +41,11 @@ function ReportPreview({
 
   const narrativeText = analysisData.narrative_report || ""
   let recommendationText = ""
+  let displayNarrative = narrativeText
   if (narrativeText.includes("Recommendation:")) {
     const idx = narrativeText.indexOf("Recommendation:")
     recommendationText = narrativeText.slice(idx + "Recommendation:".length).trim()
+    displayNarrative = narrativeText.substring(0, idx).trim()
   }
 
   return (
@@ -105,9 +107,9 @@ function ReportPreview({
       <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
         2. NARRATIVE ANALYSIS
       </h2>
-      {narrativeText ? (
+      {displayNarrative ? (
         <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
-          {narrativeText}
+          {displayNarrative}
         </p>
       ) : (
         <p className="text-xs italic mb-3" style={{ color: "var(--text-muted)" }}>

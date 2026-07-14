@@ -1,0 +1,5 @@
+[
+  {"timestamp": "2026-07-14T08:00:00Z", "event_type": "scheduled_backup", "source": "backup_service", "status": "success", "size_mb": 2048},
+  {"timestamp": "2026-07-14T08:00:05Z", "event_type": "health_check", "source": "monitoring", "service": "nginx", "status": "ok"},
+  {"timestamp": "2026-07-14T08:00:10Z", "event_type": "health_check", "source": "monitoring", "service": "postgresql", "status": "ok"}
+]

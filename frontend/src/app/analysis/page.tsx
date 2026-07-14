@@ -201,9 +201,11 @@ function AnalysisPageContent() {
   const narrativeText = result?.narrative_report || ""
   const severityLabel = (result?.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
   let recommendationText = ""
+  let displayNarrative = narrativeText
   if (narrativeText.includes("Recommendation:")) {
     const idx = narrativeText.indexOf("Recommendation:")
     recommendationText = narrativeText.slice(idx + "Recommendation:".length).trim()
+    displayNarrative = narrativeText.substring(0, idx).trim()
   }
 
   return (
@@ -404,9 +406,9 @@ function AnalysisPageContent() {
             {/* Narrative Report */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
               <div className="font-semibold text-[13px] text-text-primary mb-2.5">{tr.analysis.narrative}</div>
-              {narrativeText ? (
+              {displayNarrative ? (
                 <p className="text-[13px] m-0 mb-3.5" style={{ color: "var(--text-secondary)" }}>
-                  {narrativeText}
+                  {displayNarrative}
                 </p>
               ) : (
                 <p className="text-[13px] italic m-0 mb-3.5" style={{ color: "var(--text-muted)" }}>

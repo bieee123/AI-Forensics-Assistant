@@ -1,0 +1,11 @@
+[
+  {"timestamp": "2026-07-14T00:00:00Z", "event_type": "vpn_connection", "source": "vpn_gateway", "user": "attacker1", "src_ip": "185.220.101.1", "country": "RU"},
+  {"timestamp": "2026-07-14T00:01:00Z", "event_type": "vpn_connection", "source": "vpn_gateway", "user": "attacker2", "src_ip": "185.220.101.2", "country": "CN"},
+  {"timestamp": "2026-07-14T00:02:00Z", "event_type": "api_scan", "source": "web_app", "method": "GET", "path": "/.env", "status_code": 404, "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:03:00Z", "event_type": "api_scan", "source": "web_app", "method": "GET", "path": "/wp-admin", "status_code": 404, "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:04:00Z", "event_type": "api_scan", "source": "web_app", "method": "POST", "path": "/api/login", "status_code": 401, "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:05:00Z", "event_type": "api_scan", "source": "web_app", "method": "POST", "path": "/api/login", "status_code": 401, "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:06:00Z", "event_type": "api_login_success", "source": "web_app", "method": "POST", "path": "/api/login", "status_code": 200, "user": "admin", "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:07:00Z", "event_type": "data_export", "source": "web_app", "user": "admin", "records": 15000, "table": "users", "src_ip": "185.220.101.1"},
+  {"timestamp": "2026-07-14T00:08:00Z", "event_type": "data_export", "source": "web_app", "user": "admin", "records": 50000, "table": "transactions", "src_ip": "185.220.101.1"}
+]
