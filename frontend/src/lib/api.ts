@@ -142,6 +142,33 @@ export interface Summary {
   total_log_entries: number;
   total_telemetry_entries: number;
   recent_uploads: Upload[];
+  total_analyses: number;
+  total_incidents: number;
+  critical_alerts: number;
+  severity_breakdown: Record<string, number>;
+  recent_analyses: RecentAnalysis[];
+  recent_iocs: string[];
+  total_artifacts: number;
+  acquisition_data_size: number;
+  last_acquisition: string | null;
+  recent_artifacts: RecentArtifact[];
+  timeline_daily_counts: TimelineDailyCount[];
+}
+export interface RecentAnalysis {
+  upload_id: number;
+  filename: string;
+  severity: string;
+  total_incidents: number;
+  analyzed_at: string;
+}
+export interface RecentArtifact {
+  filename: string;
+  size_bytes: number;
+  sha256: string;
+}
+export interface TimelineDailyCount {
+  date: string;
+  count: number;
 }
 export interface Upload {
   upload_id: number;
