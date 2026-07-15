@@ -172,7 +172,42 @@ export default function DashboardPage() {
               <StatCard label="Total Log Entries" value={data.total_log_entries.toLocaleString()} icon={FileText} />
             </div>
 
-            {/* Row 2: Two columns — Left: Severity + Recent Analyses, Right: Acquisition + IoC */}
+            {/* Latest Incident Triage */}
+            <div className="bg-bg-elevated border border-border-subtle rounded-lg">
+              <div className="flex justify-between items-center px-5 py-4 border-b border-border-subtle">
+                <span className="font-semibold text-[13px] text-text-primary">
+                  {tr.dashboard.latestTriage}{" "}
+                  <span className="font-normal text-text-muted">({tr.dashboard.suspiciousActivity})</span>
+                </span>
+                <button onClick={() => router.push("/analysis")}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border-none cursor-pointer bg-transparent"
+                  style={{ color: "var(--text-secondary)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  {tr.dashboard.viewFullAnalysis}
+                </button>
+              </div>
+              <div className="p-5">
+                <div className="incident-card sev-high">
+                  <div className="flex items-center justify-between gap-2.5 flex-wrap font-semibold text-sm mb-1.5">
+                    <span className="flex items-center gap-1.5">
+                      <AlertCircle size={14} style={{ color: "var(--severity-high)" }} />
+                      Privilege Escalation Detected
+                    </span>
+                    <span className="badge badge-high">High</span>
+                  </div>
+                  <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
+                    User <span className="font-mono">&apos;www-data&apos;</span> berhasil mengeksekusi binary pembuat root shell via celah sudoers bug pada{" "}
+                    <span className="font-mono">185.220.101.5</span>.
+                  </p>
+                  <div className="raw-log-box mt-3">
+                    sudo: www-data : TTY=unknown ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/pkexec_exploit
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: Two columns — Left: Severity + Recent Analyses, Right: Acquisition + IoC */}
             <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Left column */}
               <div className="flex flex-col gap-4">
@@ -379,7 +414,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Row 3: Timeline Preview (full width) */}
+            {/* Row 4: Timeline Preview (full width) */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
               <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-4">
                 <Clock size={15} />
@@ -413,7 +448,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Row 4: Recent Uploads + Quick Actions */}
+            {/* Row 5: Recent Uploads + Quick Actions */}
             <div className="grid gap-4" style={{ gridTemplateColumns: "60% 40%" }}>
               {/* Recent Uploads */}
               <div className="bg-bg-elevated border border-border-subtle rounded-lg">
