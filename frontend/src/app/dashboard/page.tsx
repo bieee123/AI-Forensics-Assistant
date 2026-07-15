@@ -179,7 +179,10 @@ export default function DashboardPage() {
                   {tr.dashboard.latestTriage}{" "}
                   <span className="font-normal text-text-muted">({tr.dashboard.suspiciousActivity})</span>
                 </span>
-                <button onClick={() => router.push("/analysis")}
+                <button onClick={() => {
+                  const id = data.latest_triage?.upload_id;
+                  router.push(id ? `/analysis?upload_id=${id}` : "/analysis");
+                }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border-none cursor-pointer bg-transparent"
                   style={{ color: "var(--text-secondary)" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
@@ -188,22 +191,47 @@ export default function DashboardPage() {
                 </button>
               </div>
               <div className="p-5">
-                <div className="incident-card sev-high">
-                  <div className="flex items-center justify-between gap-2.5 flex-wrap font-semibold text-sm mb-1.5">
-                    <span className="flex items-center gap-1.5">
-                      <AlertCircle size={14} style={{ color: "var(--severity-high)" }} />
-                      Privilege Escalation Detected
+                {data.latest_triage ? (
+                  <div className={`incident-card sev-${data.latest_triage.severity.toLowerCase()}`}>
+                    <div className="flex items-center justify-between gap-2.5 flex-wrap font-semibold text-sm mb-1.5">
+                      <span className="flex items-center gap-1.5">
+                        <AlertCircle size={14} style={{ color: SEV_COLORS[data.latest_triage.severity] || "var(--severity-high)" }} />
+                        {data.latest_triage.event_type
+                          ? data.latest_triage.event_type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+                          : data.latest_triage.filename}
+                      </span>
+                      <span className={`badge badge-${data.latest_triage.severity.toLowerCase()}`}>
+                        {data.latest_triage.severity}
+                      </span>
+                    </div>
+                    <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
+                      {data.latest_triage.source_ip && (
+                        <>From <span className="font-mono">{data.latest_triage.source_ip}</span></>
+                      )}
+                      {data.latest_triage.user && (
+                        <> via user <span className="font-mono">&apos;{data.latest_triage.user}&apos;</span></>
+                      )}
+                      {data.latest_triage.total_incidents > 0 && (
+                        <> &mdash; {data.latest_triage.total_incidents} total incident(s)</>
+                      )}
+                      {!data.latest_triage.source_ip && !data.latest_triage.user && data.latest_triage.narrative_preview && (
+                        <> {data.latest_triage.narrative_preview.split("Recommendation:")[0].trim().slice(0, 200)}</>
+                      )}
+                    </p>
+                    {data.latest_triage.raw_message && (
+                      <div className="raw-log-box mt-3">
+                        {data.latest_triage.raw_message}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="empty-state" style={{ padding: "40px 20px" }}>
+                    <AlertCircle size={28} style={{ color: "var(--text-muted)" }} />
+                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
+                      No analysis data yet. Upload and analyze a log file first.
                     </span>
-                    <span className="badge badge-high">High</span>
                   </div>
-                  <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
-                    User <span className="font-mono">&apos;www-data&apos;</span> berhasil mengeksekusi binary pembuat root shell via celah sudoers bug pada{" "}
-                    <span className="font-mono">185.220.101.5</span>.
-                  </p>
-                  <div className="raw-log-box mt-3">
-                    sudo: www-data : TTY=unknown ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/pkexec_exploit
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 

@@ -211,6 +211,46 @@ def get_summary():
                 "count": daily_counts.get(day, 0),
             })
 
+        # ── Latest incident triage detail ──
+        latest_triage = None
+        if recent_analyses:
+            latest = recent_analyses[0]
+            timeline_first = None
+            if latest.attack_timeline:
+                try:
+                    tl = json.loads(latest.attack_timeline)
+                    if isinstance(tl, list) and len(tl) > 0:
+                        timeline_first = tl[0]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            narrative_preview = ""
+            if latest.narrative_report:
+                narrative_preview = latest.narrative_report[:300]
+
+            latest_iocs = []
+            if latest.ioc_summary:
+                try:
+                    ips = json.loads(latest.ioc_summary)
+                    if isinstance(ips, list):
+                        latest_iocs = ips[:5]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            latest_triage = {
+                "upload_id": latest.upload_id,
+                "filename": latest.filename,
+                "severity": latest.severity,
+                "total_incidents": latest.total_incidents,
+                "analyzed_at": str(latest.analyzed_at),
+                "narrative_preview": narrative_preview,
+                "iocs": latest_iocs,
+                "raw_message": timeline_first.get("raw_message", "") if timeline_first else "",
+                "source_ip": timeline_first.get("source_ip", "") if timeline_first else "",
+                "user": timeline_first.get("user", "") if timeline_first else "",
+                "event_type": timeline_first.get("event_type", "") if timeline_first else "",
+            }
+
         # ── Build upload list ──
         def serialize_upload(u):
             return {
@@ -246,6 +286,8 @@ def get_summary():
             "acquisition_data_size": acquisition_data_size,
             "last_acquisition": last_acquisition,
             "recent_artifacts": recent_artifacts,
+
+            "latest_triage": latest_triage,
 
             "timeline_daily_counts": timeline_daily_counts,
         }

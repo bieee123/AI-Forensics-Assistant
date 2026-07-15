@@ -153,6 +153,20 @@ export interface Summary {
   last_acquisition: string | null;
   recent_artifacts: RecentArtifact[];
   timeline_daily_counts: TimelineDailyCount[];
+  latest_triage: LatestTriage | null;
+}
+export interface LatestTriage {
+  upload_id: number;
+  filename: string;
+  severity: string;
+  total_incidents: number;
+  analyzed_at: string;
+  narrative_preview: string;
+  iocs: string[];
+  raw_message: string;
+  source_ip: string;
+  user: string;
+  event_type: string;
 }
 export interface RecentAnalysis {
   upload_id: number;
