@@ -416,22 +416,35 @@ export default function DashboardPage() {
                                 background: "var(--bg-elevated)",
                                 border: "1px solid var(--border-subtle)",
                                 borderRadius: 8,
-                                padding: "12px 14px",
-                                boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
+                                padding: "14px 16px",
+                                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
                                 zIndex: 50,
-                                minWidth: 220,
-                                maxHeight: 320,
+                                minWidth: 320,
+                                maxHeight: 240,
                                 overflowY: "auto",
                               }}>
-                                <div className="font-semibold text-[11px] mb-2" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                  All IPs ({data.recent_iocs.slice(10).length + 10})
+                                <div className="flex items-center justify-between mb-2.5">
+                                  <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    All IPs ({data.recent_iocs.length})
+                                  </span>
+                                  <button onClick={() => setMoreHover(false)}
+                                    className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
+                                    style={{ color: "var(--text-muted)" }}
+                                    onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
+                                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+                                    ✕
+                                  </button>
                                 </div>
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col gap-0.5">
                                   {data.recent_iocs.map((ip, i) => (
-                                    <span key={i} className="font-mono text-[12px] px-1.5 py-0.5 rounded"
-                                      style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent" }}>
-                                      {ip}
-                                    </span>
+                                    <div key={i} className="font-mono text-[12px] px-2 py-1 rounded flex items-center justify-between transition-all"
+                                      onClick={() => navigator.clipboard.writeText(ip)}
+                                      style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
+                                      onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
+                                      <span className="truncate mr-2">{ip}</span>
+                                      <span className="text-[10px] shrink-0" style={{ color: "var(--text-muted)", opacity: 0.5 }}>copy</span>
+                                    </div>
                                   ))}
                                 </div>
                               </div>
