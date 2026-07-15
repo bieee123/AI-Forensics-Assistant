@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [exportingId, setExportingId] = useState<number | null>(null);
+  const [moreHover, setMoreHover] = useState(false);
 
   useEffect(() => { setLangState(getLang()); }, []);
 
@@ -168,7 +169,7 @@ export default function DashboardPage() {
               <StatCard label="Total Incidents" value={data.total_incidents.toLocaleString()} icon={AlertTriangle} />
               <StatCard label="Critical Alerts" value={data.critical_alerts} icon={AlertCircle} iconColor="var(--severity-critical)" />
               <StatCard label="Artifacts Acquired" value={data.total_artifacts} icon={HardDrive} />
-              <StatCard label="Log Entries" value={data.total_log_entries.toLocaleString()} icon={FileText} />
+              <StatCard label="Total Log Entries" value={data.total_log_entries.toLocaleString()} icon={FileText} />
             </div>
 
             {/* Row 2: Two columns — Left: Severity + Recent Analyses, Right: Acquisition + IoC */}
@@ -298,8 +299,8 @@ export default function DashboardPage() {
                       <button onClick={() => router.push("/acquisition")}
                         className="w-full mt-2 py-1.5 rounded-md text-[12px] font-medium cursor-pointer border-none transition-all"
                         style={{ background: "var(--accent-bg)", color: "var(--accent)" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "var(--accent)"}
-                        onMouseLeave={e => e.currentTarget.style.background = "var(--accent-bg)"}
+                        onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
                       >
                         View All Artifacts
                       </button>
@@ -328,8 +329,39 @@ export default function DashboardPage() {
                           </span>
                         ))}
                         {data.recent_iocs.length > 10 && (
-                          <span className="text-[11px] self-center" style={{ color: "var(--text-muted)" }}>
-                            +{data.recent_iocs.length - 10} more
+                          <span className="relative self-center" style={{ cursor: "pointer" }}
+                            onMouseEnter={() => setMoreHover(true)}
+                            onMouseLeave={() => setMoreHover(false)}
+                          >
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)" }}>
+                              +{data.recent_iocs.length - 10} more
+                            </span>
+                            {moreHover && (
+                              <div style={{
+                                position: "absolute",
+                                bottom: "calc(100% + 6px)",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                background: "var(--bg-elevated)",
+                                border: "1px solid var(--border-subtle)",
+                                borderRadius: 6,
+                                padding: "8px 10px",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                zIndex: 50,
+                                whiteSpace: "nowrap",
+                                maxHeight: 200,
+                                overflowY: "auto",
+                              }}>
+                                <div className="flex flex-col gap-1">
+                                  {data.recent_iocs.slice(10).map((ip, i) => (
+                                    <span key={i} className="font-mono text-[11px] whitespace-nowrap"
+                                      style={{ color: "var(--text-secondary)" }}>
+                                      {ip}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </span>
                         )}
                       </div>
