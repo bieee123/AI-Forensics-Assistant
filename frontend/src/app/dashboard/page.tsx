@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [exportingId, setExportingId] = useState<number | null>(null);
   const [moreHover, setMoreHover] = useState(false);
-  const moreTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const moreTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const handleMoreEnter = () => {
     if (moreTimeout.current) clearTimeout(moreTimeout.current);
     setMoreHover(true);
