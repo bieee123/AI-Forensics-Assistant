@@ -3,9 +3,10 @@
 #  DFA — Digital Forensics Assistant | VPS Deployment Script
 #  Usage:
 #    chmod +x deploy.sh
-#    ./deploy.sh           # update/deploy (pull + rebuild + restart)
-#    ./deploy.sh --setup   # first-time full setup (clone to PM2)
-#    ./deploy.sh --build   # pull + rebuild only (no restart)
+#    ./deploy.sh                    # update/deploy (pull + rebuild + restart)
+#    ./deploy.sh --setup            # first-time full setup (clone to PM2)
+#    ./deploy.sh --build            # pull + rebuild only (no restart)
+#    ./deploy.sh --branch develop   # deploy from a specific branch
 # =============================================================================
 
 set -e
@@ -16,6 +17,7 @@ PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "$0")" && pwd)}"   # auto-detect (or
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 NODE_ENV="${NODE_ENV:-production}"
+BRANCH="${BRANCH:-main}"
 
 # ── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -173,8 +175,8 @@ setup() {
 build() {
     cd "$PROJECT_DIR" || err "Project directory not found: $PROJECT_DIR"
 
-    info "Pulling latest changes..."
-    git fetch origin main && git reset --hard origin/main
+    info "Pulling latest changes from origin/$BRANCH ..."
+    git fetch origin "$BRANCH" && git reset --hard "origin/$BRANCH"
     ok "Git pull done"
 
     info "Installing frontend dependencies..."
@@ -197,8 +199,8 @@ deploy() {
     cd "$PROJECT_DIR" || err "Project directory not found: $PROJECT_DIR"
 
     # ── Pull ──
-    info "Pulling latest changes..."
-    git fetch origin main && git reset --hard origin/main
+    info "Pulling latest changes from origin/$BRANCH ..."
+    git fetch origin "$BRANCH" && git reset --hard "origin/$BRANCH"
     ok "Git pull done"
 
     # ── Backend deps ──
@@ -266,13 +268,19 @@ deploy() {
 case "${1:-}" in
     --setup)  setup  ;;
     --build)  build  ;;
+    --branch)
+        if [ -z "$2" ]; then err "Missing branch name. Usage: ./deploy.sh --branch <name>"; fi
+        BRANCH="$2"
+        deploy
+        ;;
     -h|--help)
-        echo "Usage: ./deploy.sh [--setup|--build|-h]"
+        echo "Usage: ./deploy.sh [--setup|--build|--branch <name>|-h]"
         echo ""
-        echo "  (no flag)   Full deploy: pull → install → build → restart"
-        echo "  --setup     First-time setup: clone, env, deps, DB, build, PM2"
-        echo "  --build     Pull + rebuild only (no restart)"
-        echo "  -h, --help  This help"
+        echo "  (no flag)          Full deploy: pull → install → build → restart"
+        echo "  --setup            First-time setup: clone, env, deps, DB, build, PM2"
+        echo "  --build            Pull + rebuild only (no restart)"
+        echo "  --branch <name>    Deploy from a specific branch (e.g. development)"
+        echo "  -h, --help         This help"
         ;;
     *)  deploy  ;;
 esac
