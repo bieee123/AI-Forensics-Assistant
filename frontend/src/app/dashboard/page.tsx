@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, FileText, Activity, AlertCircle, RefreshCw, Zap, Brain, FileDown, Loader2, Database, Server,
@@ -36,6 +36,14 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [exportingId, setExportingId] = useState<number | null>(null);
   const [moreHover, setMoreHover] = useState(false);
+  const moreTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const handleMoreEnter = () => {
+    if (moreTimeout.current) clearTimeout(moreTimeout.current);
+    setMoreHover(true);
+  };
+  const handleMoreLeave = () => {
+    moreTimeout.current = setTimeout(() => setMoreHover(false), 250);
+  };
 
   useEffect(() => { setLangState(getLang()); }, []);
 
@@ -392,40 +400,43 @@ export default function DashboardPage() {
                           </span>
                         ))}
                         {data.recent_iocs.length > 10 && (
-                          <span className="relative self-center" style={{ cursor: "pointer" }}
-                            onMouseEnter={() => setMoreHover(true)}
-                            onMouseLeave={() => setMoreHover(false)}
+                          <div className="self-center" style={{ position: "relative", display: "inline-block" }}
+                            onMouseEnter={handleMoreEnter}
+                            onMouseLeave={handleMoreLeave}
                           >
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)" }}>
+                            <span className="text-[11px] inline-block" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)", cursor: "pointer" }}>
                               +{data.recent_iocs.length - 10} more
                             </span>
                             {moreHover && (
                               <div style={{
                                 position: "absolute",
-                                bottom: "calc(100% + 6px)",
+                                bottom: "calc(100% + 8px)",
                                 left: "50%",
                                 transform: "translateX(-50%)",
                                 background: "var(--bg-elevated)",
                                 border: "1px solid var(--border-subtle)",
-                                borderRadius: 6,
-                                padding: "8px 10px",
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                borderRadius: 8,
+                                padding: "12px 14px",
+                                boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
                                 zIndex: 50,
-                                whiteSpace: "nowrap",
-                                maxHeight: 200,
+                                minWidth: 220,
+                                maxHeight: 320,
                                 overflowY: "auto",
                               }}>
+                                <div className="font-semibold text-[11px] mb-2" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                  All IPs ({data.recent_iocs.slice(10).length + 10})
+                                </div>
                                 <div className="flex flex-col gap-1">
-                                  {data.recent_iocs.slice(10).map((ip, i) => (
-                                    <span key={i} className="font-mono text-[11px] whitespace-nowrap"
-                                      style={{ color: "var(--text-secondary)" }}>
+                                  {data.recent_iocs.map((ip, i) => (
+                                    <span key={i} className="font-mono text-[12px] px-1.5 py-0.5 rounded"
+                                      style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent" }}>
                                       {ip}
                                     </span>
                                   ))}
                                 </div>
                               </div>
                             )}
-                          </span>
+                          </div>
                         )}
                       </div>
                       <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
