@@ -59,8 +59,15 @@ export default function ProfilePage() {
         setProfile(p);
         setActivityLog(log);
       })
-      .catch(() => {
-        setError("Failed to load profile");
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("401") || msg.toLowerCase().includes("session") || msg.toLowerCase().includes("invalid")) {
+          document.cookie = "dfa-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+          document.cookie = "dfa-authed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+          router.push("/login");
+          return;
+        }
+        setError(msg || "Failed to load profile");
       })
       .finally(() => setLoading(false));
   }, [router]);
@@ -89,6 +96,34 @@ export default function ProfilePage() {
   return (
     <AppShell>
       <div className="p-6 max-w-5xl mx-auto">
+        {/* Error banner */}
+        {error && (
+          <div
+            className="rounded-lg border px-4 py-3 mb-5 flex items-center justify-between"
+            style={{
+              background: "rgba(255,59,48,0.08)",
+              borderColor: "rgba(255,59,48,0.25)",
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="font-mono text-[11px]" style={{ color: "#FF3B30" }}>
+                {error}
+              </span>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-semibold border cursor-pointer"
+              style={{
+                background: "rgba(255,59,48,0.1)",
+                color: "#FF3B30",
+                borderColor: "rgba(255,59,48,0.25)",
+              }}
+            >
+              <RefreshCw size={12} /> Retry
+            </button>
+          </div>
+        )}
+
         {/* Profile Hero */}
         <div
           className="rounded-xl border p-5 mb-6 flex items-center gap-5 relative"
@@ -105,7 +140,7 @@ export default function ProfilePage() {
               borderColor: "var(--accent)",
             }}
           >
-            {user?.username?.charAt(0).toUpperCase()}{user?.username?.slice(-1).toUpperCase() || "?"}
+            {user?.username?.charAt(0)?.toUpperCase()}{user?.username?.slice(-1)?.toUpperCase() || "?"}
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold m-0" style={{ color: "var(--text-primary)" }}>{user?.username}</h2>
@@ -131,6 +166,7 @@ export default function ProfilePage() {
                   setEditEmail(user?.email || "");
                 }
                 setEditing(!editing);
+                setError("");
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border cursor-pointer transition-all"
               style={{
