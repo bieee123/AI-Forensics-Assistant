@@ -46,7 +46,7 @@ export default function LoginPage() {
     try {
       const res = await api.login(username.trim(), password);
       document.cookie = `dfa-token=${res.token}; path=/; max-age=28800`;
-      document.cookie = "dfa-authed=true; path=/";
+      document.cookie = "dfa-authed=true; path=/; max-age=28800";
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
