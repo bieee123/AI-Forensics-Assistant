@@ -156,14 +156,14 @@ function TopBarContent() {
       </button>
 
       {/* Avatar */}
-      <div
-        onClick={() => router.push("/profile")}
-        className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 cursor-pointer"
+      <a
+        href="/profile"
+        className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 cursor-pointer no-underline"
         style={{ background: "var(--accent)", color: "#fff" }}
         title="analyst01"
       >
         A1
-      </div>
+      </a>
     </div>
   );
 }

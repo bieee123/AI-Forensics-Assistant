@@ -132,7 +132,7 @@ export default function Sidebar() {
 
         {/* Profile row */}
         <div
-          onClick={() => router.push("/profile")}
+          onClick={() => { window.location.href = "/profile"; }}
           className={`flex items-center gap-2.5 py-3 border-t border-border-subtle cursor-pointer transition-colors hover:bg-bg-hover ${collapsed ? "justify-center px-0" : "px-4"}`}
         >
           <div
