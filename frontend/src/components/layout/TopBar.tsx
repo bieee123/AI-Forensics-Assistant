@@ -143,6 +143,16 @@ function TopBarContent() {
         {mounted && theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
       </button>
 
+      {/* Avatar — placed BEFORE logout so it's not accidentally clicked */}
+      <div
+        onClick={() => router.push("/profile")}
+        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 cursor-pointer"
+        style={{ background: "var(--accent)", color: "#fff" }}
+        title="analyst01"
+      >
+        A1
+      </div>
+
       {/* Logout */}
       <button
         onClick={handleLogout}
@@ -154,16 +164,6 @@ function TopBarContent() {
       >
         <LogOut size={16} />
       </button>
-
-      {/* Avatar */}
-      <a
-        href="/profile"
-        className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 cursor-pointer no-underline"
-        style={{ background: "var(--accent)", color: "#fff" }}
-        title="analyst01"
-      >
-        A1
-      </a>
     </div>
   );
 }
