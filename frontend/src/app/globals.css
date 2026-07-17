@@ -117,6 +117,15 @@ body {
   background: var(--border-subtle);
 }
 
+/* Alternating table row for report preview */
+.bg-alt { background: var(--bg-hover); }
+
+/* Classification header — auto-adapts to theme */
+.classification-header {
+  background: var(--text-primary);
+  color: var(--bg-base);
+}
+
 /* Table row severity styles */
 .row-success td:first-child { box-shadow: inset 3px 0 0 var(--severity-low); }
 .row-warn td:first-child { box-shadow: inset 3px 0 0 var(--severity-high); }

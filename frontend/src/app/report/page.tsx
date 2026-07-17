@@ -56,8 +56,7 @@ function ReportPreview({
         fontFamily: "Helvetica, Arial, sans-serif",
       }}>
 
-      <div className="text-center text-xs font-bold py-1.5 mb-4 rounded"
-        style={{ background: "#1F2937", color: "#fff" }}>
+      <div className="text-center text-xs font-bold py-1.5 mb-4 rounded classification-header">
         {classification}
       </div>
 
@@ -79,7 +78,7 @@ function ReportPreview({
           ["Organization", organization],
           ["Classification", classification],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1.5 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)" }}>{k}</td>
             <td className="py-1.5 px-2" style={{ color: "var(--text-primary)" }}>{v}</td>
           </tr>
@@ -150,7 +149,7 @@ function ReportPreview({
         </thead>
         <tbody>
           {(analysisData.attack_timeline || []).map((e: any, i: number) => (
-            <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+            <tr key={i} className={i % 2 === 0 ? "" : "bg-alt"}>
               <td className="py-1.5 px-2 font-mono">{(e.timestamp || "").slice(11,19)}</td>
               <td className="py-1.5 px-2">{e.event_type}</td>
               <td className="py-1.5 px-2 font-mono">{e.source_ip || "—"}</td>
@@ -176,7 +175,7 @@ function ReportPreview({
           ["Hostname",       "DFA Forensic Analysis Server"],
           ["Evidence Label", `DFA-EVID-${analysisData.upload_id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
@@ -193,7 +192,7 @@ function ReportPreview({
           ["Location",       `Remote server / Upload portal — Upload #${analysisData.upload_id}`],
           ["Classification", classification],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
@@ -209,7 +208,7 @@ function ReportPreview({
           ["Source Data",        "Narrative report + IoC list + Attack timeline + Timestamp"],
           ["Verification Status","PASSED — Integrity verified"],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
@@ -228,7 +227,7 @@ function ReportPreview({
           ["Transfer Date",     new Date().toLocaleString("en-GB")],
           ["Received By",       "Automated DFA System"],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
@@ -246,7 +245,7 @@ function ReportPreview({
           ["Physical Location","DFA Server — Secure Data Center / VPS"],
           ["Retention",        "Indefinite (until manually deleted by analyst)"],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
@@ -263,7 +262,7 @@ function ReportPreview({
           ["Signature Method",    "SHA-256 hash chain — automated Chain of Custody"],
           ["Verification",        "Re-compute hash from analysis data to verify integrity"],
         ].map(([k, v], i) => (
-          <tr key={k} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.04)" }}>
+          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
             <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
             <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
           </tr>
