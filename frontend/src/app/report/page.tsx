@@ -8,6 +8,102 @@ import { getLang, t, Lang } from "@/lib/i18n";
 import { api, Upload, SavedAnalysisResult } from "@/lib/api";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
 
+const SEV_COLORS: Record<string, string> = {
+  CRITICAL: "#FF3B30", HIGH: "#FF9500", MEDIUM: "#FFCC00", LOW: "#34C759", INFO: "#5AC8FA"
+}
+
+const SEV_LABEL_STYLE: Record<string, React.CSSProperties> = {
+  CRITICAL: { background: "#FF3B30", color: "#fff" },
+  HIGH:     { background: "#FF9500", color: "#fff" },
+  MEDIUM:   { background: "#FFCC00", color: "#1D1D1F" },
+  LOW:      { background: "#34C759", color: "#fff" },
+  INFO:     { background: "#5AC8FA", color: "#fff" },
+}
+
+function tagColor(classification: string): string {
+  switch (classification) {
+    case "CONFIDENTIAL": return "#FF3B30"
+    case "RESTRICTED":   return "#FF9500"
+    case "INTERNAL":     return "#5AC8FA"
+    case "PUBLIC":       return "#34C759"
+    default:             return "#86868B"
+  }
+}
+
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div style={{
+      display: "flex", padding: "7px 0",
+      borderBottom: "1px solid var(--border-subtle)",
+    }}>
+      <span style={{
+        width: 140, flexShrink: 0,
+        fontSize: 12, fontWeight: 600,
+        color: "var(--text-secondary)",
+        letterSpacing: "0.01em",
+      }}>{label}</span>
+      <span className={mono ? "font-mono" : ""} style={{
+        fontSize: 12, color: "var(--text-primary)",
+      }}>{value}</span>
+    </div>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 style={{
+      fontSize: 13, fontWeight: 700,
+      color: "var(--text-primary)",
+      letterSpacing: "0.02em",
+      margin: "28px 0 14px",
+      paddingBottom: 8,
+      borderBottom: "1px solid var(--border-subtle)",
+    }}>
+      {children}
+    </h2>
+  )
+}
+
+function InfoCard({ borderColor, title, titleColor, children }: {
+  borderColor: string; title: string; titleColor: string; children: React.ReactNode
+}) {
+  return (
+    <div style={{
+      padding: "14px 16px", borderRadius: 6,
+      borderLeft: `3px solid ${borderColor}`,
+      background: "var(--bg-hover)",
+      marginBottom: 20,
+    }}>
+      <p style={{
+        fontSize: 11, fontWeight: 700, color: titleColor,
+        margin: "0 0 6px",
+        letterSpacing: "0.04em", textTransform: "uppercase",
+      }}>{title}</p>
+      <p style={{ fontSize: 12, color: "var(--text-primary)", margin: 0, lineHeight: 1.6 }}>
+        {children}
+      </p>
+    </div>
+  )
+}
+
+function CustodySection({ title, data, monoKeys }: {
+  title: string; data: [string, string][]; monoKeys?: string[]
+}) {
+  return (
+    <>
+      <p style={{
+        fontSize: 11, fontWeight: 700, color: "var(--text-primary)",
+        margin: "18px 0 8px",
+      }}>{title}</p>
+      <div style={{ marginBottom: 4 }}>
+        {data.map(([k, v]) => (
+          <Row key={k} label={k} value={v} mono={monoKeys?.includes(k)} />
+        ))}
+      </div>
+    </>
+  )
+}
+
 function ReportPreview({
   analysisData,
   analystName,
@@ -34,10 +130,8 @@ function ReportPreview({
   }
 
   const severityLabel = (analysisData.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
-  const sevColor: Record<string, string> = {
-    CRITICAL: "#FF4D6A", HIGH: "#FF8C42", MEDIUM: "#c9a52e", LOW: "#06D6A0", INFO: "#4ECDC4"
-  }
-  const color = sevColor[severityLabel.toUpperCase()] || "#8B92A9"
+  const severity = severityLabel.toUpperCase()
+  const sevPill = SEV_LABEL_STYLE[severity] || { background: "#86868B", color: "#fff" }
 
   const narrativeText = analysisData.narrative_report || ""
   let recommendationText = ""
@@ -48,239 +142,287 @@ function ReportPreview({
     displayNarrative = narrativeText.substring(0, idx).trim()
   }
 
+  const now = new Date()
+  const dateStr = now.toLocaleString("en-GB")
+  const dateTag = now.toISOString().slice(0, 10).replace(/-/g, "")
+  const uploadId = analysisData.upload_id
+  const filename = upload?.filename || `upload_${uploadId}`
+
   return (
-    <div className="h-full overflow-y-auto rounded-lg border p-6 text-sm"
+    <div className="h-full overflow-y-auto"
       style={{
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif",
+      }}>
+      <div style={{
+        maxWidth: 780, margin: "0 auto",
         background: "var(--bg-elevated)",
-        borderColor: "var(--border-subtle)",
-        fontFamily: "Helvetica, Arial, sans-serif",
+        borderRadius: 12, padding: "48px 56px",
       }}>
 
-      <div className="text-center text-xs font-bold py-1.5 mb-4 rounded classification-header">
-        {classification}
-      </div>
+        {/* Classification tag */}
+        <span style={{
+          display: "inline-block",
+          padding: "3px 12px", borderRadius: 4,
+          fontSize: 10, fontWeight: 700,
+          letterSpacing: "0.12em",
+          color: tagColor(classification),
+          border: `1px solid ${tagColor(classification)}`,
+          marginBottom: 24,
+        }}>
+          {classification}
+        </span>
 
-      <h1 className="text-2xl font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
-        INCIDENT REPORT
-      </h1>
-      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-        Agentic AI Digital Forensics Assistant
-      </p>
-      <hr style={{ borderColor: "#0D9488", borderWidth: 2, marginBottom: 16 }} />
+        {/* Title */}
+        <h1 style={{
+          fontSize: 32, fontWeight: 700,
+          color: "var(--text-primary)",
+          letterSpacing: "-0.03em",
+          margin: 0, marginBottom: 4,
+        }}>
+          Incident Report
+        </h1>
+        <p style={{
+          fontSize: 14, color: "var(--text-secondary)",
+          marginBottom: 36,
+        }}>
+          Agentic AI Digital Forensics Assistant
+        </p>
 
-      <table className="w-full text-xs mb-5" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Report ID", `DFA-${analysisData.upload_id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`],
-          ["Generated", new Date().toLocaleString("en-GB")],
-          ["Upload ID", String(analysisData.upload_id)],
-          ["Filename", upload?.filename || `upload_${analysisData.upload_id}`],
-          ["Analyst", analystName],
-          ["Organization", organization],
-          ["Classification", classification],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1.5 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)" }}>{k}</td>
-            <td className="py-1.5 px-2" style={{ color: "var(--text-primary)" }}>{v}</td>
-          </tr>
-        ))}
-      </table>
-
-      <h2 className="text-sm font-bold mb-3" style={{ color: "#0D9488" }}>
-        1. EXECUTIVE SUMMARY
-      </h2>
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="p-3 rounded border text-center"
-          style={{ borderColor: "var(--border-subtle)" }}>
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Severity</p>
-          <p className="text-xl font-bold" style={{ color }}>{severityLabel}</p>
+        {/* Meta */}
+        <div style={{ marginBottom: 8 }}>
+          <Row label="Report ID" value={`DFA-${uploadId}-${dateTag}`} mono />
+          <Row label="Generated" value={dateStr} />
+          <Row label="Upload ID" value={String(uploadId)} mono />
+          <Row label="Filename" value={filename} mono />
+          <Row label="Analyst" value={analystName} />
+          <Row label="Organization" value={organization} />
+          <Row label="Classification" value={classification} />
         </div>
-        <div className="p-3 rounded border text-center"
-          style={{ borderColor: "var(--border-subtle)" }}>
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Total Incidents</p>
-          <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-            {analysisData.total_incidents}
+
+        {/* 1. Executive Summary */}
+        <SectionHeader>1. Executive Summary</SectionHeader>
+
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
+          marginBottom: 24,
+        }}>
+          <div style={{
+            padding: "16px 20px", borderRadius: 8,
+            border: "1px solid var(--border-subtle)", textAlign: "center",
+          }}>
+            <p style={{
+              fontSize: 11, color: "var(--text-secondary)",
+              margin: "0 0 10px",
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
+              Severity
+            </p>
+            <span style={{
+              display: "inline-block",
+              padding: "4px 16px", borderRadius: 20,
+              fontSize: 13, fontWeight: 700,
+              letterSpacing: "0.04em",
+              ...sevPill,
+            }}>
+              {severityLabel}
+            </span>
+          </div>
+          <div style={{
+            padding: "16px 20px", borderRadius: 8,
+            border: "1px solid var(--border-subtle)", textAlign: "center",
+          }}>
+            <p style={{
+              fontSize: 11, color: "var(--text-secondary)",
+              margin: "0 0 10px",
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
+              Total Incidents
+            </p>
+            <p style={{
+              fontSize: 22, fontWeight: 700,
+              color: "var(--text-primary)", margin: 0,
+            }}>
+              {analysisData.total_incidents}
+            </p>
+          </div>
+        </div>
+
+        {/* 2. Narrative Analysis */}
+        <SectionHeader>2. Narrative Analysis</SectionHeader>
+
+        {displayNarrative ? (
+          <p style={{
+            fontSize: 12, color: "var(--text-primary)",
+            lineHeight: 1.7, marginBottom: 16,
+          }}>
+            {displayNarrative}
           </p>
-        </div>
-      </div>
+        ) : (
+          <p style={{
+            fontSize: 12, color: "var(--text-muted)",
+            fontStyle: "italic", marginBottom: 16,
+          }}>
+            No narrative available.
+          </p>
+        )}
 
-      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
-        2. NARRATIVE ANALYSIS
-      </h2>
-      {displayNarrative ? (
-        <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-primary)" }}>
-          {displayNarrative}
-        </p>
-      ) : (
-        <p className="text-xs italic mb-3" style={{ color: "var(--text-muted)" }}>
-          No narrative available.
-        </p>
-      )}
+        {recommendationText && (
+          <InfoCard borderColor="#FF9500" title="Recommendation" titleColor="#FF9500">
+            {recommendationText}
+          </InfoCard>
+        )}
 
-      {recommendationText && (
-        <div className="p-3 rounded mb-4 border-l-4"
-          style={{ borderColor: "#FF8C42", background: "rgba(255,140,66,0.08)" }}>
-          <p className="text-xs font-bold mb-1" style={{ color: "#FF8C42" }}>⚠ Recommendation</p>
-          <p className="text-xs" style={{ color: "var(--text-primary)" }}>{recommendationText}</p>
-        </div>
-      )}
+        {/* 3. Indicators of Compromise (IoC) */}
+        <SectionHeader>3. Indicators of Compromise (IoC)</SectionHeader>
 
-      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
-        3. INDICATORS OF COMPROMISE (IoC)
-      </h2>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {(analysisData.ioc_summary || []).map((ip, i) => (
-          <span key={i} className="font-mono text-xs px-2 py-1 rounded"
-            style={{ background: "rgba(255,77,106,0.1)", color: "#FF4D6A", border: "1px solid rgba(255,77,106,0.3)" }}>
-            {ip}
-          </span>
-        ))}
-      </div>
-
-      <h2 className="text-sm font-bold mb-2" style={{ color: "#0D9488" }}>
-        4. ATTACK TIMELINE
-      </h2>
-      <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ background: "#0D9488" }}>
-            {["Time", "Event Type", "Source IP", "User", "Status"].map(h => (
-              <th key={h} className="py-1.5 px-2 text-left font-semibold" style={{ color: "#fff" }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {(analysisData.attack_timeline || []).map((e: any, i: number) => (
-            <tr key={i} className={i % 2 === 0 ? "" : "bg-alt"}>
-              <td className="py-1.5 px-2 font-mono">{(e.timestamp || "").slice(11,19)}</td>
-              <td className="py-1.5 px-2">{e.event_type}</td>
-              <td className="py-1.5 px-2 font-mono">{e.source_ip || "—"}</td>
-              <td className="py-1.5 px-2">{e.user || "—"}</td>
-              <td className="py-1.5 px-2">{e.status || "—"}</td>
-            </tr>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+          {(analysisData.ioc_summary || []).map((ip, i) => (
+            <span key={i} className="font-mono" style={{
+              fontSize: 11, padding: "4px 10px", borderRadius: 4,
+              color: "var(--text-primary)",
+              background: "var(--bg-hover)",
+              border: "1px solid var(--border-subtle)",
+            }}>
+              {ip}
+            </span>
           ))}
-        </tbody>
-      </table>
+          {(analysisData.ioc_summary || []).length === 0 && (
+            <p style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
+              No IoC indicators detected.
+            </p>
+          )}
+        </div>
 
-      {/* Chain of Custody */}
-      <h2 className="text-sm font-bold mb-2 mt-5" style={{ color: "#0D9488" }}>
-        5. CHAIN OF CUSTODY
-      </h2>
+        {/* 4. Attack Timeline */}
+        <SectionHeader>4. Attack Timeline</SectionHeader>
 
-      {/* 5.1 Evidence Identity */}
-      <p className="text-xs font-bold mb-1 mt-3" style={{ color: "var(--text-primary)" }}>5.1 Evidence Identity</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Upload ID",      String(analysisData.upload_id)],
-          ["Filename",       upload?.filename || `upload_${analysisData.upload_id}`],
-          ["File Type",      "System Log / Auth Log"],
-          ["Hostname",       "DFA Forensic Analysis Server"],
-          ["Evidence Label", `DFA-EVID-${analysisData.upload_id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        {(analysisData.attack_timeline || []).length > 0 ? (
+          <div style={{ marginBottom: 24, borderRadius: 8, border: "1px solid var(--border-subtle)", overflow: "hidden" }}>
+            {/* Header */}
+            <div style={{
+              display: "flex", padding: "10px 14px",
+              background: "var(--bg-hover)",
+              borderBottom: "1px solid var(--border-subtle)",
+              fontSize: 11, fontWeight: 700,
+              color: "var(--text-secondary)",
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
+              <span style={{ width: "18%" }}>Time</span>
+              <span style={{ width: "28%" }}>Event Type</span>
+              <span style={{ width: "22%" }}>Source IP</span>
+              <span style={{ width: "16%" }}>User</span>
+              <span style={{ width: "16%" }}>Status</span>
+            </div>
+            {/* Rows */}
+            {(analysisData.attack_timeline || []).map((e: any, i: number) => (
+              <div key={i} style={{
+                display: "flex", padding: "9px 14px",
+                borderBottom: i < (analysisData.attack_timeline || []).length - 1 ? "1px solid var(--border-subtle)" : "none",
+                fontSize: 12, color: "var(--text-primary)",
+                background: i % 2 === 0 ? "transparent" : "var(--bg-hover)",
+              }}>
+                <span className="font-mono" style={{ width: "18%" }}>{(e.timestamp || "").slice(11, 19)}</span>
+                <span style={{ width: "28%" }}>{e.event_type}</span>
+                <span className="font-mono" style={{ width: "22%" }}>{e.source_ip || "\u2014"}</span>
+                <span style={{ width: "16%" }}>{e.user || "\u2014"}</span>
+                <span style={{ width: "16%" }}>{e.status || "\u2014"}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic", marginBottom: 24 }}>
+            No timeline data available.
+          </p>
+        )}
 
-      {/* 5.2 Discovery Details */}
-      <p className="text-xs font-bold mb-1 mt-2" style={{ color: "var(--text-primary)" }}>5.2 Discovery Details</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Acquired By",    analystName],
-          ["Organization",   organization],
-          ["Date & Time",    new Date().toLocaleString("en-GB")],
-          ["Location",       `Remote server / Upload portal — Upload #${analysisData.upload_id}`],
-          ["Classification", classification],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        {/* 5. Chain of Custody */}
+        <SectionHeader>5. Chain of Custody</SectionHeader>
 
-      {/* 5.3 Data Integrity (Hash Value) */}
-      <p className="text-xs font-bold mb-1 mt-2" style={{ color: "var(--text-primary)" }}>5.3 Data Integrity (Hash Value)</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Algorithm",          "SHA-256"],
-          ["Hash Value",         "Computed during PDF generation"],
-          ["Source Data",        "Narrative report + IoC list + Attack timeline + Timestamp"],
-          ["Verification Status","PASSED — Integrity verified"],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        <CustodySection
+          title="5.1 Evidence Identity"
+          monoKeys={["Upload ID", "Evidence Label"]}
+          data={[
+            ["Upload ID",      String(uploadId)],
+            ["Filename",       filename],
+            ["File Type",      "System Log / Auth Log"],
+            ["Hostname",       "DFA Forensic Analysis Server"],
+            ["Evidence Label", `DFA-EVID-${uploadId}-${dateTag}`],
+          ]}
+        />
 
-      {/* 5.4 Access & Transfer History */}
-      <p className="text-xs font-bold mb-1 mt-2" style={{ color: "var(--text-primary)" }}>5.4 Access & Transfer History</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Date & Time",       new Date().toLocaleString("en-GB")],
-          ["Check-In By",       analystName],
-          ["Check-In Location", "DFA Forensic Analysis Server — Upload Portal"],
-          ["Purpose",           `AI-powered forensic analysis (Upload #${analysisData.upload_id})`],
-          ["Transfer To",       "AI Analysis Engine (LLM + ChromaDB RAG)"],
-          ["Transfer Date",     new Date().toLocaleString("en-GB")],
-          ["Received By",       "Automated DFA System"],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        <CustodySection
+          title="5.2 Discovery Details"
+          data={[
+            ["Acquired By",    analystName],
+            ["Organization",   organization],
+            ["Date & Time",    dateStr],
+            ["Location",       `Remote server / Upload portal \u2014 Upload #${uploadId}`],
+            ["Classification", classification],
+          ]}
+        />
 
-      {/* 5.5 Storage */}
-      <p className="text-xs font-bold mb-1 mt-2" style={{ color: "var(--text-primary)" }}>5.5 Storage</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Storage Type",     "Digital — PostgreSQL Database + Local Filesystem"],
-          ["Database",         "forensics_db (PostgreSQL)"],
-          ["Table",            "analysis_results"],
-          ["Record ID",        String(analysisData.upload_id)],
-          ["Physical Location","DFA Server — Secure Data Center / VPS"],
-          ["Retention",        "Indefinite (until manually deleted by analyst)"],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        <CustodySection
+          title="5.3 Data Integrity (Hash Value)"
+          monoKeys={["Hash Value"]}
+          data={[
+            ["Algorithm",          "SHA-256"],
+            ["Hash Value",         "Computed during PDF generation"],
+            ["Source Data",        "Narrative report + IoC list + Attack timeline + Timestamp"],
+            ["Verification Status","PASSED \u2014 Integrity verified"],
+          ]}
+        />
 
-      {/* 5.6 Signatures */}
-      <p className="text-xs font-bold mb-1 mt-2" style={{ color: "var(--text-primary)" }}>5.6 Signatures</p>
-      <table className="w-full text-xs mb-3" style={{ borderCollapse: "collapse" }}>
-        {[
-          ["Digitally Signed By", `${analystName} via DFA System`],
-          ["Organization",        organization],
-          ["Timestamp",           new Date().toLocaleString("en-GB")],
-          ["Signature Method",    "SHA-256 hash chain — automated Chain of Custody"],
-          ["Verification",        "Re-compute hash from analysis data to verify integrity"],
-        ].map(([k, v], i) => (
-          <tr key={k} className={i % 2 === 0 ? "" : "bg-alt"}>
-            <td className="py-1 px-2 font-semibold w-1/3" style={{ color: "var(--text-secondary)", fontSize: 11 }}>{k}</td>
-            <td className="py-1 px-2 font-mono" style={{ color: "var(--text-primary)", fontSize: 11 }}>{v}</td>
-          </tr>
-        ))}
-      </table>
+        <CustodySection
+          title="5.4 Access & Transfer History"
+          data={[
+            ["Date & Time",       dateStr],
+            ["Check-In By",       analystName],
+            ["Check-In Location", "DFA Forensic Analysis Server \u2014 Upload Portal"],
+            ["Purpose",           `AI-powered forensic analysis (Upload #${uploadId})`],
+            ["Transfer To",       "AI Analysis Engine (LLM + ChromaDB RAG)"],
+            ["Transfer Date",     dateStr],
+            ["Received By",       "Automated DFA System"],
+          ]}
+        />
 
-      <div className="p-3 rounded mb-4 border-l-4"
-        style={{ borderColor: "#06D6A0", background: "rgba(6,214,160,0.08)" }}>
-        <p className="text-xs font-bold mb-1" style={{ color: "#06D6A0" }}>✓ Chain of Custody Verified</p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <CustodySection
+          title="5.5 Storage"
+          data={[
+            ["Storage Type",     "Digital \u2014 PostgreSQL Database + Local Filesystem"],
+            ["Database",         "forensics_db (PostgreSQL)"],
+            ["Table",            "analysis_results"],
+            ["Record ID",        String(uploadId)],
+            ["Physical Location","DFA Server \u2014 Secure Data Center / VPS"],
+            ["Retention",        "Indefinite (until manually deleted by analyst)"],
+          ]}
+        />
+
+        <CustodySection
+          title="5.6 Signatures"
+          monoKeys={["Digital Signature"]}
+          data={[
+            ["Digitally Signed By", `${analystName} via DFA System`],
+            ["Organization",        organization],
+            ["Timestamp",           dateStr],
+            ["Signature Method",    "SHA-256 hash chain \u2014 automated Chain of Custody"],
+            ["Verification",        "Re-compute hash from analysis data to verify integrity"],
+          ]}
+        />
+
+        {/* Chain of Custody Verified */}
+        <InfoCard borderColor="#34C759" title="Chain of Custody Verified" titleColor="#34C759">
           All evidence handling procedures have been followed. The integrity of this evidence is cryptographically verifiable via SHA-256.
+        </InfoCard>
+
+        {/* Footer */}
+        <hr style={{ border: "none", borderTop: "1px solid var(--border-subtle)", margin: "32px 0 12px" }} />
+        <p style={{
+          fontSize: 10, color: "var(--text-muted)", textAlign: "center",
+          letterSpacing: "0.02em",
+        }}>
+          Generated by DFA \u2014 Agentic AI Digital Forensics Assistant &middot; {classification}
         </p>
       </div>
-
-      <hr className="mt-4 mb-2" style={{ borderColor: "var(--border-subtle)" }} />
-      <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-        Generated by DFA — Agentic AI Digital Forensics Assistant · {classification}
-      </p>
     </div>
   )
 }
@@ -421,8 +563,8 @@ export default function ReportPage() {
           )}
           {notAnalyzed && selectedId && (
             <div className="p-3 rounded-lg border-l-4 text-xs"
-              style={{ borderColor: "#c9a52e", background: "rgba(255,209,102,0.08)" }}>
-              <p className="font-semibold mb-1" style={{ color: "#c9a52e" }}>
+              style={{ borderColor: "#FF9500", background: "rgba(255,149,0,0.08)" }}>
+              <p className="font-semibold mb-1" style={{ color: "#FF9500" }}>
                 ⚠ Not yet analyzed
               </p>
               <p style={{ color: "var(--text-secondary)" }} className="mb-2">

@@ -17,11 +17,11 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-bg: var(--accent-bg);
-  --color-critical: #FF4D6A;
-  --color-high: #FF8C42;
-  --color-medium: #FFD166;
-  --color-low: #06D6A0;
-  --color-info: #4ECDC4;
+  --color-critical: #FF3B30;
+  --color-high: #FF9500;
+  --color-medium: #FFCC00;
+  --color-low: #34C759;
+  --color-info: #5AC8FA;
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -38,12 +38,12 @@
   --accent: #0096B7;
   --accent-hover: #007A96;
   --accent-bg: rgba(0, 150, 183, 0.10);
-  --severity-critical: #FF4D6A;
-  --severity-high: #FF8C42;
-  --severity-medium: #FFD166;
-  --severity-medium-text: #c9a52e;
-  --severity-low: #06D6A0;
-  --severity-info: #4ECDC4;
+  --severity-critical: #FF3B30;
+  --severity-high: #FF9500;
+  --severity-medium: #FFCC00;
+  --severity-medium-text: #1D1D1F;
+  --severity-low: #34C759;
+  --severity-info: #5AC8FA;
 }
 
 .dark {
@@ -87,11 +87,11 @@ body {
   border: 1px solid;
   white-space: nowrap;
 }
-.badge-critical { background: rgba(255,77,106,0.12);  color: #FF4D6A; border-color: rgba(255,77,106,0.3); }
-.badge-high     { background: rgba(255,140,66,0.12);  color: #FF8C42; border-color: rgba(255,140,66,0.3); }
-.badge-medium   { background: rgba(255,209,102,0.12); color: var(--severity-medium-text); border-color: rgba(255,209,102,0.3); }
-.badge-low      { background: rgba(6,214,160,0.12);   color: #06D6A0; border-color: rgba(6,214,160,0.3); }
-.badge-info     { background: rgba(78,205,196,0.12);  color: #4ECDC4; border-color: rgba(78,205,196,0.3); }
+.badge-critical { background: rgba(255,59,48,0.12);  color: #FF3B30; border-color: rgba(255,59,48,0.3); }
+.badge-high     { background: rgba(255,149,0,0.12);  color: #FF9500; border-color: rgba(255,149,0,0.3); }
+.badge-medium   { background: rgba(255,204,0,0.12);  color: var(--severity-medium-text); border-color: rgba(255,204,0,0.3); }
+.badge-low      { background: rgba(52,199,89,0.12);   color: #34C759; border-color: rgba(52,199,89,0.3); }
+.badge-info     { background: rgba(90,200,250,0.12);  color: #5AC8FA; border-color: rgba(90,200,250,0.3); }
 .badge-type     { background: var(--accent-bg); color: var(--accent); border-color: transparent; }
 
 /* Scrollbar */
@@ -117,22 +117,13 @@ body {
   background: var(--border-subtle);
 }
 
-/* Alternating table row for report preview */
-.bg-alt { background: var(--bg-hover); }
-
-/* Classification header — auto-adapts to theme */
-.classification-header {
-  background: var(--text-primary);
-  color: var(--bg-base);
-}
-
 /* Table row severity styles */
 .row-success td:first-child { box-shadow: inset 3px 0 0 var(--severity-low); }
 .row-warn td:first-child { box-shadow: inset 3px 0 0 var(--severity-high); }
 .row-critical td:first-child { box-shadow: inset 3px 0 0 var(--severity-critical); }
-.row-success { background: rgba(6,214,160,0.05); }
-.row-warn { background: rgba(255,140,66,0.06); }
-.row-critical { background: rgba(255,77,106,0.06); }
+.row-success { background: rgba(52,199,89,0.05); }
+.row-warn { background: rgba(255,149,0,0.06); }
+.row-critical { background: rgba(255,59,48,0.06); }
 
 /* Severity card */
 .severity-card { border-left: 4px solid var(--severity-high); }
