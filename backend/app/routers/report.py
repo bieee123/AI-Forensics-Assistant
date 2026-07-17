@@ -100,12 +100,15 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     section_style = ParagraphStyle(
         "SectionHeader",
         parent=styles["Heading2"],
-        fontSize=11, textColor=DARK_TEXT, spaceBefore=20, spaceAfter=10,
+        fontSize=11, textColor=DARK_TEXT, spaceBefore=20, spaceAfter=4,
         fontName="Helvetica-Bold",
-        borderPadding=(0, 0, 6, 0),
-        borderWidth=1,
-        borderColor=HAIRLINE,
     )
+
+    def section(text):
+        return [
+            Paragraph(text, section_style),
+            HRFlowable(width="100%", thickness=0.5, color=HAIRLINE, spaceAfter=10),
+        ]
     body_style = ParagraphStyle(
         "Body",
         parent=styles["Normal"],
@@ -152,16 +155,26 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     timestamp_fmt = now.strftime("%d %B %Y, %H:%M UTC")
     date_tag      = now.strftime("%Y%m%d")
 
-    # ── Classification tag (inline, bordered) ────────────────
+    # ── Classification tag (centered, auto-width) ────────────
     tag_col = classification_color(req.classification)
-    story.append(Paragraph(
-        f"<font color='{tag_col.hexval()}'><b>{req.classification}</b></font>",
-        ParagraphStyle("ClassTag", parent=styles["Normal"],
+    class_p = Paragraph(
+        f"<b>{req.classification}</b>",
+        ParagraphStyle("ClassTagText", parent=styles["Normal"],
             fontSize=8, fontName="Helvetica-Bold",
-            borderColor=tag_col, borderWidth=1.2, borderPadding=4,
-            spaceAfter=18, leading=10,
+            textColor=tag_col, leading=10,
         )
-    ))
+    )
+    class_table = Table([[class_p]], colWidths=[None])
+    class_table.setStyle(TableStyle([
+        ("BOX",             (0,0), (-1,-1), 1.2, tag_col),
+        ("TOPPADDING",      (0,0), (-1,-1), 3),
+        ("BOTTOMPADDING",   (0,0), (-1,-1), 3),
+        ("LEFTPADDING",     (0,0), (-1,-1), 8),
+        ("RIGHTPADDING",    (0,0), (-1,-1), 8),
+    ]))
+    class_table.hAlign = "CENTER"
+    story.append(class_table)
+    story.append(Spacer(1, 18))
 
     # ── Title ─────────────────────────────────────────────────
     story.append(Paragraph("Incident Report", title_style))
@@ -199,7 +212,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.append(Spacer(1, 18))
 
     # ── 1. Executive Summary ──────────────────────────────────
-    story.append(Paragraph("1. Executive Summary", section_style))
+    story.extend(section("1. Executive Summary"))
 
     sev_tag = Paragraph(
         f"<font color='{WHITE.hexval()}'><b>{severity}</b></font>",
@@ -234,7 +247,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.append(Spacer(1, 14))
 
     # ── 2. Narrative Analysis ─────────────────────────────────
-    story.append(Paragraph("2. Narrative Analysis", section_style))
+    story.extend(section("2. Narrative Analysis"))
 
     narrative_main = narrative
     recommendation = ""
@@ -269,7 +282,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.append(Spacer(1, 12))
 
     # ── 3. IoC Summary ────────────────────────────────────────
-    story.append(Paragraph("3. Indicators of Compromise (IoC)", section_style))
+    story.extend(section("3. Indicators of Compromise (IoC)"))
 
     if ioc_list:
         ioc_data = [["#", "IP Address", "Classification"]]
@@ -297,7 +310,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.append(Spacer(1, 12))
 
     # ── 4. Attack Timeline ───────────────────────────────────
-    story.append(Paragraph("4. Attack Timeline", section_style))
+    story.extend(section("4. Attack Timeline"))
 
     if timeline:
         tl_data = [["Time", "Event Type", "Source IP", "User", "Status"]]
@@ -333,7 +346,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.append(Spacer(1, 14))
 
     # ── 5. Chain of Custody ───────────────────────────────────
-    story.append(Paragraph("5. Chain of Custody", section_style))
+    story.extend(section("5. Chain of Custody"))
 
     # Compute SHA-256 fingerprint
     custody_raw = f"{narrative}|{json.dumps(ioc_list, sort_keys=True)}|{json.dumps(timeline, sort_keys=True)}|{now.isoformat()}"
