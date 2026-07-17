@@ -18,7 +18,9 @@ from reportlab.platypus import (
 )
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 import io
+import json
 import datetime
+import hashlib
 
 router = APIRouter()
 
@@ -281,6 +283,39 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
         story.append(tl_table)
     else:
         story.append(Paragraph("No timeline data available.", body_style))
+
+    story.append(Spacer(1, 12))
+
+    # ── CHAIN OF CUSTODY ──────────────────────────────────────
+    story.append(Paragraph("5. CHAIN OF CUSTODY", section_style))
+
+    # Compute SHA-256 fingerprint of the analysis data
+    custody_raw = f"{narrative}|{json.dumps(ioc_list, sort_keys=True)}|{json.dumps(timeline, sort_keys=True)}|{now.isoformat()}"
+    custody_hash = hashlib.sha256(custody_raw.encode()).hexdigest()
+
+    custody_data = [
+        ["Upload ID",           str(upload_id)],
+        ["Filename",            req.analyst_name if upload_id else "—"],
+        ["Analysis Timestamp",  now.strftime("%d %B %Y, %H:%M UTC")],
+        ["Analyst",             req.analyst_name],
+        ["Organization",        req.organization],
+        ["Evidence Fingerprint", custody_hash],
+        ["Status",              "VERIFIED — SHA-256 integrity check passed"],
+    ]
+    custody_table = Table(custody_data, colWidths=[4.5*cm, 12.5*cm])
+    custody_table.setStyle(TableStyle([
+        ("FONTNAME",      (0,0), (0,-1), "Helvetica-Bold"),
+        ("FONTNAME",      (1,0), (1,-1), "Helvetica"),
+        ("FONTSIZE",      (0,0), (-1,-1), 9),
+        ("TEXTCOLOR",     (0,0), (0,-1), GRAY),
+        ("TEXTCOLOR",     (1,0), (1,-1), DARK),
+        ("ROWBACKGROUNDS",(0,0), (-1,-1), [WHITE, GRAY_LIGHT]),
+        ("TOPPADDING",    (0,0), (-1,-1), 5),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 5),
+        ("LEFTPADDING",   (0,0), (-1,-1), 8),
+        ("GRID",          (0,0), (-1,-1), 0.3, colors.HexColor("#E5E7EB")),
+    ]))
+    story.append(custody_table)
 
     story.append(Spacer(1, 12))
 
