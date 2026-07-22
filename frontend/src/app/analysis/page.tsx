@@ -9,7 +9,8 @@ import { api, AnalysisResult, AnalysisHistoryItem } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { severityBadgeClass, eventRowClass, eventBadgeClass, formatEventType, fmtTime } from "@/lib/utils";
 import { getSessionCache, setSessionCache } from "@/lib/cache"
-import { startAnalysisJob, updateProgress, completeJob, failJob, getActiveJob, getElapsedMs, AnalysisJob } from "@/lib/analysisStore"
+import { getActiveJob, getElapsedMs, AnalysisJob } from "@/lib/analysisStore"
+import { triggerAnalysis } from "@/lib/analysisService"
 
 function AnalysisPageContent() {
   const searchParams = useSearchParams();
@@ -20,8 +21,10 @@ function AnalysisPageContent() {
   const [lang, setLangState] = useState<Lang>("en");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(() => {
+    const id = parseInt(uploadId || "0")
+    if (getSessionCache(id)) return false
     const job = getActiveJob()
-    return job?.status === "running" && job.uploadId === parseInt(uploadId || "0")
+    return job?.status === "running" && job.uploadId === id
   })
   const [error, setError] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -56,7 +59,6 @@ function AnalysisPageContent() {
     const tryLoadFromCache = async () => {
       const id = parseInt(uploadId)
 
-      // Don't start a new analysis if one is already running for this upload
       const existing = getActiveJob()
       if (existing?.status === "running" && existing.uploadId === id) {
         return
@@ -76,7 +78,6 @@ function AnalysisPageContent() {
         setSessionCache(id, saved as AnalysisResult)
         return
       } catch {
-        // Not in DB
       }
       if (shouldRun) {
         runAnalysis()
@@ -152,24 +153,7 @@ function AnalysisPageContent() {
     const upload = uploads.find(u => u.upload_id === parseInt(uploadId))
     const filename = upload?.filename || `upload_${uploadId}`
 
-    startAnalysisJob(parseInt(uploadId), filename)
-
-    const jobStartTime = Date.now()
-    const progressInterval = setInterval(() => {
-      const elapsed = Date.now() - jobStartTime
-      const simulated = Math.min(88, Math.floor((elapsed / 70000) * 88))
-      updateProgress(simulated)
-    }, 500)
-
-    try {
-      const data = await api.analyze(parseInt(uploadId))
-      clearInterval(progressInterval)
-      completeJob(data)
-      setSessionCache(parseInt(uploadId), data)
-    } catch (err: any) {
-      clearInterval(progressInterval)
-      failJob("Analysis failed")
-    }
+    triggerAnalysis(parseInt(uploadId), filename)
   }
 
   const toggleRow = (id: number) => {

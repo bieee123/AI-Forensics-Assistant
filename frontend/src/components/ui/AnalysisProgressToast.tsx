@@ -74,6 +74,8 @@ export default function AnalysisProgressToast() {
         onClick={() => {
           if (job.status === "done" && job.result) {
             router.push(`/analysis?upload_id=${job.uploadId}`)
+          } else if (job.status === "running") {
+            router.push(`/analysis?upload_id=${job.uploadId}`)
           }
           setCollapsed(false)
         }}
@@ -128,9 +130,11 @@ export default function AnalysisProgressToast() {
           onClick={() => {
             if (job.status === "done") {
               router.push(`/analysis?upload_id=${job.uploadId}`)
+            } else if (job.status === "running") {
+              router.push(`/analysis?upload_id=${job.uploadId}`)
             }
           }}
-          style={{ cursor: job.status === "done" ? "pointer" : "default" }}>
+          style={{ cursor: job.status === "done" || job.status === "running" ? "pointer" : "default" }}>
           <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>
             {job.status === "done" ? "✓ Analysis complete!"
               : job.status === "error" ? "✗ Analysis failed"

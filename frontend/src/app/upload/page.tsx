@@ -8,6 +8,7 @@ import { api, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { fmtDate, fileTypeBadge } from "@/lib/utils";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
+import { triggerAnalysis } from "@/lib/analysisService";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -346,7 +347,7 @@ export default function UploadPage() {
                             {tr.upload.view}
                           </button>
                           <button
-                            onClick={() => router.push(`/analysis?upload_id=${u.upload_id}&run=true`)}
+                            onClick={() => { triggerAnalysis(u.upload_id, u.filename); router.push(`/analysis?upload_id=${u.upload_id}`); }}
                             className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-all"
                             style={{ background: "var(--accent)", color: "#fff" }}
                             onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}

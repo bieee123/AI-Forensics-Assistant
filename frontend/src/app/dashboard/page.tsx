@@ -11,6 +11,7 @@ import StatCard from "@/components/ui/StatCard";
 import { api, Summary, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
+import { triggerAnalysis } from "@/lib/analysisService";
 
 const SEV_COLORS: Record<string, string> = {
   CRITICAL: "#FF4D6A",
@@ -538,7 +539,7 @@ export default function DashboardPage() {
                           <td className="font-mono whitespace-nowrap">{new Date(u.uploaded_at).toLocaleDateString("en-GB")}</td>
                           <td>
                             <div className="flex items-center gap-1.5 whitespace-nowrap">
-                              <button onClick={() => router.push(`/analysis?upload_id=${u.upload_id}&run=true`)}
+                              <button onClick={() => { triggerAnalysis(u.upload_id, u.filename); router.push(`/analysis?upload_id=${u.upload_id}`); }}
                                 className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-all"
                                 style={{ background: "var(--accent)", color: "#fff" }}
                                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}
@@ -580,7 +581,7 @@ export default function DashboardPage() {
                     <Upload size={14} />
                     {tr.dashboard.uploadLog}
                   </button>
-                  <button onClick={() => { const latest = data?.recent_uploads?.[0]; if (latest) router.push(`/analysis?upload_id=${latest.upload_id}&run=true`); else router.push("/upload"); }}
+                  <button onClick={() => { const latest = data?.recent_uploads?.[0]; if (latest) { triggerAnalysis(latest.upload_id, latest.filename); router.push(`/analysis?upload_id=${latest.upload_id}`); } else router.push("/upload"); }}
                     className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border border-border-subtle"
                     style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}
                     onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
