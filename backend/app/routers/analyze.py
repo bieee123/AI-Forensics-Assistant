@@ -13,7 +13,7 @@ from app.config import OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_EMBEDDING_MODEL
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
-import json, os, logging, time
+import json, os, logging, time, threading
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,10 @@ CHROMA_DIR = os.path.join(os.path.dirname(__file__), "../../../chroma_db")
 
 class AnalyzeRequest(BaseModel):
     upload_id: int
+
+class AcceptedResponse(BaseModel):
+    upload_id: int
+    status: str
 
 class AnalyzedIncident(BaseModel):
     timestamp: str
@@ -114,7 +118,6 @@ def parse_llm_output(text: str) -> dict:
     for line in text.strip().splitlines():
         stripped = line.strip()
         if _match_label(line, "SEVERITY:"):
-            # Severity is always single-word — flush previous section and set immediately
             if current_key and current_value:
                 result[current_key] = " ".join(current_value).strip()
             result["severity"] = _extract_value(line, "SEVERITY:")
@@ -144,16 +147,15 @@ def parse_llm_output(text: str) -> dict:
     return result
 
 
-@router.post("/", response_model=AnalyzeResponse)
-async def analyze_log(request: AnalyzeRequest):
+def _run_analysis_background(upload_id: int) -> None:
     start_time = time.time()
     db: Session = SessionLocal()
     try:
         auth_entries = db.query(ParsedLogEntryDB).filter(
-            ParsedLogEntryDB.upload_id == request.upload_id
+            ParsedLogEntryDB.upload_id == upload_id
         ).all()
         telemetry_entries = db.query(ParsedTelemetryEntryDB).filter(
-            ParsedTelemetryEntryDB.upload_id == request.upload_id
+            ParsedTelemetryEntryDB.upload_id == upload_id
         ).all()
     finally:
         db.close()
@@ -162,129 +164,132 @@ async def analyze_log(request: AnalyzeRequest):
     has_telemetry = bool(telemetry_entries)
 
     if not has_auth and not has_telemetry:
-        raise HTTPException(status_code=404, detail=f"No log entries found for upload_id {request.upload_id}")
+        logger.warning("Background analysis: no log entries found for upload_id %s", upload_id)
+        return
 
     is_telemetry = has_telemetry and not has_auth
 
-    if is_telemetry:
-        # ── Telemetry entry analysis ──
-        entries_as_dicts = [
-            {
-                "timestamp": e.timestamp,
-                "host": e.source,
-                "event_type": e.event_type,
-                "source_ip": "",
-                "user": "",
-                "status": "",
-                "raw_message": e.details,
-            }
-            for e in telemetry_entries
-        ]
-        sorted_entries = sorted(entries_as_dicts, key=lambda x: x.get("timestamp", ""))
-
-        combined_text = " ".join(e.get("raw_message", "") for e in sorted_entries)
-        try:
-            ioc_result = regex_extract_ioc.invoke({"text": combined_text})
-            ioc_list = ioc_result.get("ips_found", [])
-        except Exception:
-            ioc_list = []
-
-        severity = "MEDIUM" if len(telemetry_entries) > 5 else "INFO"
-
-        rag_query = "security telemetry analysis incident response runbook"
-        rag_context = get_rag_context(rag_query)
-
-        log_text = "\n".join(
-            f"[{e['timestamp']}] {e['event_type']} | Source: {e['host']} | Details: {e['raw_message']}"
-            for e in sorted_entries
-        )
-    else:
-        # ── Auth log entry analysis (original logic) ──
-        entries_as_dicts = [
-            {
-                "timestamp": str(e.timestamp),
-                "host": e.host,
-                "event_type": e.event_type,
-                "source_ip": e.source_ip,
-                "user": e.user,
-                "status": e.status,
-                "raw_message": e.raw_message,
-            }
-            for e in auth_entries
-        ]
-        sorted_entries = timestamp_sorter.invoke({"entries": entries_as_dicts})
-
-        combined_text = " ".join(
-            f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
-            for e in sorted_entries
-        )
-        try:
-            ioc_result = regex_extract_ioc.invoke({"text": combined_text})
-            ioc_list = ioc_result.get("ips_found", [])
-        except Exception:
-            ioc_list = []
-
-        severity = classify_severity(auth_entries)
-
-        rag_query = f"SSH {severity.lower()} attack incident response runbook"
-        rag_context = get_rag_context(rag_query)
-
-        log_text = "\n".join(
-            f"[{e['timestamp']}] {e['event_type']} | IP: {e['source_ip']} | User: {e['user']} | Status: {e['status']}"
-            for e in sorted_entries
-        )
-
-    prompt = FORENSIC_PROMPT.format(
-        log_entries=log_text,
-        rag_context=rag_context or "No runbook context available.",
-        ioc_list=", ".join(ioc_list) if ioc_list else "None detected",
-    )
-
     try:
-        llm        = OllamaLLM(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
+        if is_telemetry:
+            entries_as_dicts = [
+                {
+                    "timestamp": e.timestamp,
+                    "host": e.source,
+                    "event_type": e.event_type,
+                    "source_ip": "",
+                    "user": "",
+                    "status": "",
+                    "raw_message": e.details,
+                }
+                for e in telemetry_entries
+            ]
+            sorted_entries = sorted(entries_as_dicts, key=lambda x: x.get("timestamp", ""))
+
+            combined_text = " ".join(e.get("raw_message", "") for e in sorted_entries)
+            try:
+                ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+                ioc_list = ioc_result.get("ips_found", [])
+            except Exception:
+                ioc_list = []
+
+            severity = "MEDIUM" if len(telemetry_entries) > 5 else "INFO"
+
+            rag_query = "security telemetry analysis incident response runbook"
+            rag_context = get_rag_context(rag_query)
+
+            log_text = "\n".join(
+                f"[{e['timestamp']}] {e['event_type']} | Source: {e['host']} | Details: {e['raw_message']}"
+                for e in sorted_entries
+            )
+        else:
+            entries_as_dicts = [
+                {
+                    "timestamp": str(e.timestamp),
+                    "host": e.host,
+                    "event_type": e.event_type,
+                    "source_ip": e.source_ip,
+                    "user": e.user,
+                    "status": e.status,
+                    "raw_message": e.raw_message,
+                }
+                for e in auth_entries
+            ]
+            sorted_entries = timestamp_sorter.invoke({"entries": entries_as_dicts})
+
+            combined_text = " ".join(
+                f"{e.get('source_ip', '')} {e.get('raw_message', '')}"
+                for e in sorted_entries
+            )
+            try:
+                ioc_result = regex_extract_ioc.invoke({"text": combined_text})
+                ioc_list = ioc_result.get("ips_found", [])
+            except Exception:
+                ioc_list = []
+
+            severity = classify_severity(auth_entries)
+
+            rag_query = f"SSH {severity.lower()} attack incident response runbook"
+            rag_context = get_rag_context(rag_query)
+
+            log_text = "\n".join(
+                f"[{e['timestamp']}] {e['event_type']} | IP: {e['source_ip']} | User: {e['user']} | Status: {e['status']}"
+                for e in sorted_entries
+            )
+
+        prompt = FORENSIC_PROMPT.format(
+            log_entries=log_text,
+            rag_context=rag_context or "No runbook context available.",
+            ioc_list=", ".join(ioc_list) if ioc_list else "None detected",
+        )
+
+        llm = OllamaLLM(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
         llm_output = llm.invoke(prompt)
+        parsed = parse_llm_output(llm_output)
+
+        narrative = (
+            f"{parsed['attack_timeline']} "
+            f"{parsed['ioc_explanation']} "
+            f"Recommendation: {parsed['recommendation']}"
+        ).strip()
+
+        total_incidents = len(auth_entries) + len(telemetry_entries)
+        duration = int(time.time() - start_time)
+
+        db_save: Session = SessionLocal()
+        try:
+            upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == upload_id).first()
+            filename = upload.filename if upload else f"upload_{upload_id}"
+            result_dict = {
+                "severity_overall": severity,
+                "total_incidents": total_incidents,
+                "narrative_report": narrative,
+                "ioc_summary": ioc_list,
+                "attack_timeline": sorted_entries,
+            }
+            save_analysis_result(db_save, upload_id, filename, result_dict, duration)
+        except Exception as e:
+            logger.warning("Background analysis: failed to save result for upload_id %s: %s", upload_id, e)
+        finally:
+            db_save.close()
+
     except Exception as e:
-        logger.error("LLM invocation failed: %s", e)
-        raise HTTPException(
-            status_code=503,
-            detail=f"LLM analysis failed — is Ollama running with model '{OLLAMA_MODEL}'? Error: {e}"
-        )
-    parsed     = parse_llm_output(llm_output)
+        logger.error("Background analysis failed for upload_id %s: %s", upload_id, e)
 
-    narrative = (
-        f"{parsed['attack_timeline']} "
-        f"{parsed['ioc_explanation']} "
-        f"Recommendation: {parsed['recommendation']}"
-    ).strip()
 
-    # Auto-save result to PostgreSQL
-    total_incidents = len(auth_entries) + len(telemetry_entries)
-    duration = int(time.time() - start_time)
-    db_save = SessionLocal()
+@router.post("/", response_model=AcceptedResponse, status_code=202)
+def analyze_log(request: AnalyzeRequest):
+    db: Session = SessionLocal()
     try:
-        upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == request.upload_id).first()
-        filename = upload.filename if upload else f"upload_{request.upload_id}"
-        result_dict = {
-            "severity_overall": severity,
-            "total_incidents": total_incidents,
-            "narrative_report": narrative,
-            "ioc_summary": ioc_list,
-            "attack_timeline": sorted_entries,
-        }
-        save_analysis_result(db_save, request.upload_id, filename, result_dict, duration)
-    except Exception as e:
-        logger.warning(f"Failed to save analysis result: {e}")
+        upload = db.query(LogUploadDB).filter(LogUploadDB.id == request.upload_id).first()
+        if not upload:
+            raise HTTPException(status_code=404, detail=f"upload_id {request.upload_id} not found")
     finally:
-        db_save.close()
+        db.close()
 
-    return AnalyzeResponse(
-        upload_id=request.upload_id,
-        total_incidents=total_incidents,
-        attack_timeline=sorted_entries,
-        ioc_summary=ioc_list,
-        narrative_report=narrative,
-        severity_overall=severity,
-    )
+    t = threading.Thread(target=_run_analysis_background, args=(request.upload_id,), daemon=True)
+    t.start()
+
+    return AcceptedResponse(upload_id=request.upload_id, status="accepted")
 
 
 @router.get("/history")
@@ -350,4 +355,4 @@ def delete_analysis_result(upload_id: int):
         db.commit()
         return {"deleted": True, "upload_id": upload_id}
     finally:
-        db.close()
+        db.close()

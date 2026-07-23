@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { RefreshCw, Download, Copy, AlertCircle, Clock, Database, FileText, Plus, Eye } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
@@ -42,7 +42,7 @@ function AnalysisPageContent() {
   })
   const [progressPercent, setProgressPercent] = useState(0)
 
-  const mountTime = useRef(Date.now()).current
+
 
   useEffect(() => { setLangState(getLang()); }, []);
   useEffect(() => {
@@ -64,6 +64,11 @@ function AnalysisPageContent() {
         return
       }
 
+      if (shouldRun) {
+        runAnalysis()
+        return
+      }
+
       const session = getSessionCache(id)
       if (session) {
         setResult(session)
@@ -78,9 +83,6 @@ function AnalysisPageContent() {
         setSessionCache(id, saved as AnalysisResult)
         return
       } catch {
-      }
-      if (shouldRun) {
-        runAnalysis()
       }
     }
 
@@ -98,22 +100,14 @@ function AnalysisPageContent() {
     }
   }, [uploadId])
 
-  // Timer for horizontal timeline — restores from store if already running
   useEffect(() => {
     if (!loading) {
       setElapsedMs(0)
-      setProgressPercent(0)
       return
     }
-
-    const baseElapsed = getElapsedMs()
-
     const timer = setInterval(() => {
-      const total = baseElapsed + (Date.now() - mountTime)
-      setElapsedMs(total)
-      setProgressPercent(Math.min(95, Math.floor((total / 70000) * 95)))
+      setElapsedMs(getElapsedMs())
     }, 200)
-
     return () => clearInterval(timer)
   }, [loading])
 

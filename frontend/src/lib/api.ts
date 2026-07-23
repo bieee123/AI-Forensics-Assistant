@@ -42,6 +42,12 @@ export const api = {
     inflight.set(key, promise)
     return promise
   },
+  analyzeAsync: (uploadId: number) =>
+    req<{ upload_id: number; status: string }>("/analyze/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ upload_id: uploadId }),
+    }),
   acquireArtifact: (data: AcquireRequest) =>
     req<AcquireResponse>("/acquire/", {
       method: "POST",
