@@ -26,7 +26,6 @@ function CircularProgress({ percent, status }: { percent: number; status: string
 
 export default function AnalysisProgressToast() {
   const [job, setJob] = useState<AnalysisJob | null>(() => getActiveJob())
-  const [dismissed, setDismissed] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
   // Drag state — position stored as { x, y } = distance from bottom-right corner
@@ -59,7 +58,6 @@ export default function AnalysisProgressToast() {
         // If a new job is registered
         if (detail && prev?.uploadId !== detail.uploadId) {
           setPos(DEFAULT_POS)
-          setDismissed(false)
           setCollapsed(false)
           startCollapseTimer()
         }
@@ -137,7 +135,7 @@ export default function AnalysisProgressToast() {
     }
   }, [expandToast])
 
-  if (!job || dismissed) return null
+  if (!job) return null
 
   const bgColor = job.status === "done" ? "var(--severity-low)"
     : job.status === "error" ? "var(--severity-critical)"
