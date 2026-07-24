@@ -11,6 +11,7 @@ import { severityBadgeClass, eventRowClass, eventBadgeClass, formatEventType, fm
 import { getSessionCache, setSessionCache } from "@/lib/cache"
 import { getActiveJob, getElapsedMs, AnalysisJob } from "@/lib/analysisStore"
 import { triggerAnalysis } from "@/lib/analysisService"
+import { SkeletonCard, SkeletonTable } from "@/components/ui/Skeleton";
 
 function AnalysisPageContent() {
   const searchParams = useSearchParams();
@@ -233,7 +234,13 @@ function AnalysisPageContent() {
                 </button>
               </div>
 
-              {historyLoading && <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading...</p>}
+              {historyLoading && (
+                <div className="space-y-3">
+                  <SkeletonCard lines={2} showHeader={false} />
+                  <SkeletonCard lines={2} showHeader={false} />
+                  <SkeletonCard lines={2} showHeader={false} />
+                </div>
+              )}
 
               {!historyLoading && historyItems.length === 0 && (
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>

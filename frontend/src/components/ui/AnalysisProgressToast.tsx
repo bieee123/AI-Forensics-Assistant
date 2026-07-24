@@ -32,12 +32,14 @@ export default function AnalysisProgressToast() {
   // Drag state — position stored as { x, y } = distance from bottom-right corner
   const [pos, setPos] = useState(DEFAULT_POS)
   const [isDragging, setIsDragging] = useState(false)
-  const dragStart = useRef<{ mouseX: number; mouseY: number; posX: number; posY: number } | null>(null)
+  
+  // Track pointer down details to distinguish click vs drag
+  const pointerDownRef = useRef<{ clientX: number; clientY: number; posX: number; posY: number; hasMoved: boolean } | null>(null)
 
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
-  // --- Collapse timer logic (Fix 3) ---
+  // --- Collapse timer logic ---
   const scheduleCollapse = useCallback((startedAt: string) => {
     if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
     const startMs = new Date(startedAt).getTime()
@@ -54,7 +56,6 @@ export default function AnalysisProgressToast() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as AnalysisJob | null
       setJob(prev => {
-        // Reset position to default when a brand-new job starts
         if (detail && prev?.uploadId !== detail.uploadId) {
           setPos(DEFAULT_POS)
         }
@@ -81,28 +82,42 @@ export default function AnalysisProgressToast() {
     }
   }, [scheduleCollapse])
 
-  // --- Drag handlers (Fix 5) ---
+  // --- Drag & Click Handler ---
   const onBubbleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
-    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: pos.x, posY: pos.y }
-    setIsDragging(true)
+    pointerDownRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      posX: pos.x,
+      posY: pos.y,
+      hasMoved: false,
+    }
   }, [pos])
 
   useEffect(() => {
-    if (!isDragging) return
-
     const onMouseMove = (e: MouseEvent) => {
-      if (!dragStart.current) return
-      const dx = e.clientX - dragStart.current.mouseX
-      const dy = e.clientY - dragStart.current.mouseY
-      // Moving right → decrease right offset; moving down → decrease bottom offset
-      const newX = Math.max(8, dragStart.current.posX - dx)
-      const newY = Math.max(8, dragStart.current.posY - dy)
-      setPos({ x: newX, y: newY })
+      if (!pointerDownRef.current) return
+      const dx = e.clientX - pointerDownRef.current.clientX
+      const dy = e.clientY - pointerDownRef.current.clientY
+
+      // If moved more than 4px, treat as dragging
+      if (Math.hypot(dx, dy) > 4) {
+        pointerDownRef.current.hasMoved = true
+        setIsDragging(true)
+        const newX = Math.max(8, pointerDownRef.current.posX - dx)
+        const newY = Math.max(8, pointerDownRef.current.posY - dy)
+        setPos({ x: newX, y: newY })
+      }
     }
 
     const onMouseUp = () => {
-      dragStart.current = null
+      if (pointerDownRef.current) {
+        // If it didn't move, it's a click! Expand the bubble immediately.
+        if (!pointerDownRef.current.hasMoved) {
+          setCollapsed(false)
+        }
+        pointerDownRef.current = null
+      }
       setIsDragging(false)
     }
 
@@ -112,7 +127,7 @@ export default function AnalysisProgressToast() {
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
     }
-  }, [isDragging])
+  }, [])
 
   if (!job || dismissed) return null
 
@@ -120,7 +135,7 @@ export default function AnalysisProgressToast() {
     : job.status === "error" ? "var(--severity-critical)"
     : "var(--accent)"
 
-  // Collapsed bubble (Fix 4: click expands, not navigates; Fix 5: draggable)
+  // Collapsed bubble (Clean circular bubble without X button)
   if (collapsed) {
     return (
       <div
@@ -137,43 +152,18 @@ export default function AnalysisProgressToast() {
             ? "0 8px 32px rgba(0,0,0,0.45)"
             : "0 4px 20px rgba(0,0,0,0.3)",
           transition: isDragging ? "box-shadow 0.15s ease" : "all 0.3s ease",
-          cursor: isDragging ? "grabbing" : "grab",
+          cursor: isDragging ? "grabbing" : "pointer",
           userSelect: "none",
         }}
         onMouseDown={onBubbleMouseDown}
-        onClick={(e) => {
-          // Only expand on click (not after drag)
-          if (!isDragging && dragStart.current === null) {
-            setCollapsed(false)
-          }
-        }}
-        title={`Analyzing ${job.filename} — ${job.progress}%`}
+        title={`Analyzing ${job.filename} — ${job.progress}% (Click to expand)`}
       >
         <CircularProgress percent={job.progress} status={job.status} />
-        {/* Dismiss on bubble — small X in corner */}
-        <button
-          onMouseDown={e => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
-          style={{
-            position: "absolute",
-            top: -4, right: -4,
-            width: 18, height: 18,
-            borderRadius: "50%",
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border-subtle)",
-            cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 0,
-            color: "var(--text-muted)",
-          }}
-        >
-          <X size={10} />
-        </button>
       </div>
     )
   }
 
-  // Expanded toast card — at fixed position (bottom-right, using pos offsets)
+  // Expanded toast card
   return (
     <div
       className="fixed z-[9999] rounded-xl shadow-2xl overflow-hidden"
@@ -209,7 +199,8 @@ export default function AnalysisProgressToast() {
             </text>
           </svg>
         </div>
-        {/* Clicking filename/status area navigates (Fix 4) */}
+
+        {/* Info & Navigation */}
         <div className="flex-1 min-w-0"
           onClick={() => {
             if (job.status === "done" || job.status === "running") {
@@ -234,6 +225,7 @@ export default function AnalysisProgressToast() {
             </div>
           )}
         </div>
+
         <button
           onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
           className="flex-shrink-0 p-1 rounded"

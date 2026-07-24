@@ -7,6 +7,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { api, Upload, SavedAnalysisResult } from "@/lib/api";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
+import { SkeletonCard, SkeletonTable } from "@/components/ui/Skeleton";
 
 const SEV_COLORS: Record<string, string> = {
   CRITICAL: "#FF3B30", HIGH: "#FF9500", MEDIUM: "#FFCC00", LOW: "#34C759", INFO: "#5AC8FA"
@@ -635,10 +636,10 @@ export default function ReportPage() {
         {/* RIGHT: Live preview */}
         <div className="flex-1 p-5 overflow-hidden">
           {loadingAnalysis ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-                <Loader2 size={16} className="animate-spin" /> Loading preview...
-              </div>
+            <div className="max-w-[780px] mx-auto space-y-4">
+              <SkeletonCard lines={3} />
+              <SkeletonTable rows={4} cols={4} />
+              <SkeletonCard lines={4} />
             </div>
           ) : (
             <ReportPreview
