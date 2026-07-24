@@ -238,8 +238,9 @@ export default function AnalysisProgressToast() {
         </div>
 
         <button
-          onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
+          onClick={(e) => { e.stopPropagation(); setCollapsed(true); }}
           className="flex-shrink-0 p-1 rounded"
+          title="Minimize to bubble"
           style={{ color: "var(--text-muted)", border: "none", background: "transparent", cursor: "pointer" }}
           onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
