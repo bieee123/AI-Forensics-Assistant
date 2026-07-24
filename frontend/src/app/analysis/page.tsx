@@ -195,10 +195,10 @@ function AnalysisPageContent() {
             <>
               <button
                 onClick={runAnalysis}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-border-subtle bg-bg-elevated cursor-pointer font-sans"
-                style={{ color: "var(--text-secondary)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
+                className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-medium cursor-pointer border-none font-sans"
+                style={{ background: "var(--accent)", color: "#fff" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
               >
                 <RefreshCw size={14} />
                 {tr.analysis.reanalyze}

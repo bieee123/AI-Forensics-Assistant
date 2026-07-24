@@ -8,6 +8,7 @@ import { api, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { fmtDate, fileTypeBadge } from "@/lib/utils";
 import { triggerAnalysis } from "@/lib/analysisService";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -69,8 +70,8 @@ export default function HistoryPage() {
         </div>
 
         {loading && (
-          <div className="empty-state">
-            <span>Loading...</span>
+          <div className="bg-bg-elevated border border-border-subtle rounded-lg overflow-hidden">
+            <SkeletonTable rows={6} cols={6} colWidths={["5%", "35%", "12%", "12%", "14%", "18%"]} />
           </div>
         )}
 

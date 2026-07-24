@@ -6,6 +6,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { api, AcquireResponse, Artifact } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { fmtDate } from "@/lib/utils";
+import { SkeletonArtifactList } from "@/components/ui/Skeleton";
 
 export default function AcquisitionPage() {
   const [lang, setLangState] = useState<Lang>("en");
@@ -224,10 +225,7 @@ export default function AcquisitionPage() {
             </div>
 
             {loadingArtifacts && (
-              <div className="px-4 py-6 flex items-center justify-center gap-2" style={{ color: "var(--text-muted)" }}>
-                <Loader2 size={14} className="animate-spin" />
-                <span className="text-xs">Loading artifacts...</span>
-              </div>
+              <SkeletonArtifactList count={3} />
             )}
 
             {!loadingArtifacts && artifacts.length === 0 && (

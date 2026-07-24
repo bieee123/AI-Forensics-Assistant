@@ -9,6 +9,7 @@ import { getLang, t, Lang } from "@/lib/i18n";
 import { fmtDate, fileTypeBadge } from "@/lib/utils";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
 import { triggerAnalysis } from "@/lib/analysisService";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function UploadPage() {
   const [pasteText, setPasteText] = useState("");
   const [uploads, setUploads] = useState<UploadType[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loadingUploads, setLoadingUploads] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [uploadType, setUploadType] = useState<"system" | "disk">("system");
   const [exportingId, setExportingId] = useState<number | null>(null);
@@ -32,10 +34,12 @@ export default function UploadPage() {
   const tr = t(lang);
 
   const fetchUploads = async () => {
+    setLoadingUploads(true);
     try {
       const data = await api.getUploads();
       setUploads(data);
     } catch { /* silent */ }
+    finally { setLoadingUploads(false); }
   };
 
   useEffect(() => { fetchUploads(); }, []);
@@ -312,7 +316,9 @@ export default function UploadPage() {
           <div className="px-5 py-4 border-b border-border-subtle font-semibold text-[13px] text-text-primary">
             {tr.upload.recent}
           </div>
-          {uploads.length > 0 ? (
+          {loadingUploads ? (
+            <SkeletonTable rows={5} cols={6} colWidths={["5%", "28%", "10%", "10%", "12%", "30%"]} />
+          ) : uploads.length > 0 ? (
             <table>
               <thead>
                 <tr>

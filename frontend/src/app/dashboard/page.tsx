@@ -12,6 +12,7 @@ import { api, Summary, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
 import { triggerAnalysis } from "@/lib/analysisService";
+import { Sk, SkeletonStatCards, SkeletonTable } from "@/components/ui/Skeleton";
 
 const SEV_COLORS: Record<string, string> = {
   CRITICAL: "#FF4D6A",
@@ -57,7 +58,6 @@ export default function DashboardPage() {
   const tr = t(lang);
 
   const fetchData = async () => {
-    setLoading(true);
     setError("");
     try {
       const summary = await api.getSummary();
@@ -69,6 +69,7 @@ export default function DashboardPage() {
     }
   };
 
+  // Fetch in background — UI renders immediately with placeholders
   useEffect(() => { fetchData(); }, []);
 
   const handleExportPDF = async (upload: UploadType) => {
@@ -136,6 +137,7 @@ export default function DashboardPage() {
 
   const maxSeverity = data ? Math.max(...Object.values(data.severity_breakdown), 1) : 1;
 
+
   return (
     <AppShell>
       <PageHeader
@@ -155,31 +157,30 @@ export default function DashboardPage() {
         }
       />
       <div className="p-6">
-        {loading && (
-          <div className="empty-state">
-            <RefreshCw size={32} className="animate-spin" style={{ color: "var(--text-muted)" }} />
-            <p>Loading...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="empty-state">
-            <AlertCircle size={32} style={{ color: "var(--severity-critical)" }} />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && data && (
-          <div className="flex flex-col gap-4">
+        {/* Always render layout — placeholders show while loading, inline errors if fetch fails */}
+        <div className="flex flex-col gap-4">
             {/* Row 1: Stat Cards */}
-            <div className="grid grid-cols-6 gap-4 max-[1200px]:grid-cols-3 max-[700px]:grid-cols-2">
-              <StatCard label="Total Uploads" value={data.total_uploads} icon={Upload} />
-              <StatCard label="Total Analyses" value={data.total_analyses} icon={Brain} />
-              <StatCard label="Total Incidents" value={data.total_incidents.toLocaleString()} icon={AlertTriangle} />
-              <StatCard label="Critical Alerts" value={data.critical_alerts} icon={AlertCircle} iconColor="var(--severity-critical)" />
-              <StatCard label="Artifacts Acquired" value={data.total_artifacts} icon={HardDrive} />
-              <StatCard label="Total Log Entries" value={data.total_log_entries.toLocaleString()} icon={FileText} />
-            </div>
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                style={{ background: "rgba(255,77,106,0.08)", border: "1px solid rgba(255,77,106,0.2)", color: "var(--severity-critical)" }}>
+                <AlertCircle size={13} /> Failed to load dashboard data. <button onClick={fetchData} className="underline cursor-pointer bg-transparent border-none" style={{ color: "inherit" }}>Retry</button>
+              </div>
+            )}
+            {/* Row 1: Stat Cards */}
+            {loading ? (
+              <div className="grid grid-cols-6 gap-4 max-[1200px]:grid-cols-3 max-[700px]:grid-cols-2">
+                <SkeletonStatCards count={6} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-6 gap-4 max-[1200px]:grid-cols-3 max-[700px]:grid-cols-2">
+                <StatCard label="Total Uploads" value={data?.total_uploads ?? "—"} icon={Upload} />
+                <StatCard label="Total Analyses" value={data?.total_analyses ?? "—"} icon={Brain} />
+                <StatCard label="Total Incidents" value={data?.total_incidents?.toLocaleString() ?? "—"} icon={AlertTriangle} />
+                <StatCard label="Critical Alerts" value={data?.critical_alerts ?? "—"} icon={AlertCircle} iconColor="var(--severity-critical)" />
+                <StatCard label="Artifacts Acquired" value={data?.total_artifacts ?? "—"} icon={HardDrive} />
+                <StatCard label="Total Log Entries" value={data?.total_log_entries?.toLocaleString() ?? "—"} icon={FileText} />
+              </div>
+            )}
 
             {/* Latest Incident Triage */}
             <div className="bg-bg-elevated border border-border-subtle rounded-lg">
@@ -189,7 +190,7 @@ export default function DashboardPage() {
                   <span className="font-normal text-text-muted">({tr.dashboard.suspiciousActivity})</span>
                 </span>
                 <button onClick={() => {
-                  const id = data.latest_triage?.upload_id;
+                  const id = data?.latest_triage?.upload_id;
                   router.push(id ? `/analysis?upload_id=${id}` : "/analysis");
                 }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border-none cursor-pointer bg-transparent"
@@ -200,7 +201,16 @@ export default function DashboardPage() {
                 </button>
               </div>
               <div className="p-5">
-                {data.latest_triage ? (
+                {loading ? (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <Sk h={14} w="55%" />
+                      <Sk h={20} w={70} rounded="full" />
+                    </div>
+                    <Sk h={13} w="80%" />
+                    <Sk h={13} w="60%" />
+                  </div>
+                ) : data?.latest_triage ? (
                   <div className={`incident-card sev-${data.latest_triage.severity.toLowerCase()}`}>
                     <div className="flex items-center justify-between gap-2.5 flex-wrap font-semibold text-sm mb-1.5">
                       <span className="flex items-center gap-1.5">
@@ -254,23 +264,37 @@ export default function DashboardPage() {
                     <BarChart3 size={15} />
                     Severity Breakdown
                   </div>
-                  {Object.entries(data.severity_breakdown).map(([sev, count]) => {
-                    const pct = maxSeverity > 0 ? (count / maxSeverity) * 100 : 0;
-                    return (
-                      <div key={sev} className="flex items-center gap-2.5 mb-2 last:mb-0">
-                        <span className="text-[12px] font-mono w-16 shrink-0" style={{ color: "var(--text-secondary)" }}>{sev}</span>
-                        <div className="flex-1 h-[18px] rounded-sm" style={{ background: "var(--bg-base)" }}>
-                          <div className="h-full rounded-sm transition-all duration-500" style={{
-                            width: `${Math.max(pct, count > 0 ? 3 : 0)}%`,
-                            background: SEV_COLORS[sev] || "#8B92A9",
-                          }} />
+                  {loading ? (
+                    <div className="flex flex-col gap-2">
+                      {["CRITICAL","HIGH","MEDIUM","LOW"].map(s => (
+                        <div key={s} className="flex items-center gap-2.5">
+                          <Sk h={12} w={56} rounded="sm" />
+                          <Sk h={18} className="flex-1" rounded="sm" />
+                          <Sk h={12} w={32} rounded="sm" />
                         </div>
-                        <span className="text-[12px] font-mono w-10 text-right" style={{ color: "var(--text-primary)" }}>{count}</span>
-                      </div>
-                    );
-                  })}
-                  {Object.values(data.severity_breakdown).every(v => v === 0) && (
-                    <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No analysis data yet.</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {Object.entries(data?.severity_breakdown ?? {}).map(([sev, count]) => {
+                        const pct = maxSeverity > 0 ? (count / maxSeverity) * 100 : 0;
+                        return (
+                          <div key={sev} className="flex items-center gap-2.5 mb-2 last:mb-0">
+                            <span className="text-[12px] font-mono w-16 shrink-0" style={{ color: "var(--text-secondary)" }}>{sev}</span>
+                            <div className="flex-1 h-[18px] rounded-sm" style={{ background: "var(--bg-base)" }}>
+                              <div className="h-full rounded-sm transition-all duration-500" style={{
+                                width: `${Math.max(pct, count > 0 ? 3 : 0)}%`,
+                                background: SEV_COLORS[sev] || "#8B92A9",
+                              }} />
+                            </div>
+                            <span className="text-[12px] font-mono w-10 text-right" style={{ color: "var(--text-primary)" }}>{count}</span>
+                          </div>
+                        );
+                      })}
+                      {Object.values(data?.severity_breakdown ?? {}).every(v => v === 0) && (
+                        <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No analysis data yet.</p>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -283,7 +307,9 @@ export default function DashboardPage() {
                       View All
                     </button>
                   </div>
-                  {data.recent_analyses.length > 0 ? (
+                  {loading ? (
+                    <SkeletonTable rows={3} cols={5} colWidths={["18%","30%","14%","16%","16%"]} showHeader={false} />
+                  ) : (data?.recent_analyses ?? []).length > 0 ? (
                     <table>
                       <colgroup>
                         <col style={{ width: 100 }} />
@@ -302,7 +328,7 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.recent_analyses.map((a) => (
+                        {(data?.recent_analyses ?? []).map((a) => (
                           <tr key={a.upload_id} className="row-hover cursor-pointer" onClick={() => router.push(`/analysis?upload_id=${a.upload_id}`)}>
                             <td>
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
@@ -345,21 +371,32 @@ export default function DashboardPage() {
                     <HardDrive size={15} />
                     Acquisition Summary
                   </div>
-                  {data.total_artifacts > 0 ? (
+                  {loading ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <Sk h={12} w="50%" rounded="sm" />
+                        <Sk h={13} w={50} rounded="sm" />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Sk h={12} w="40%" rounded="sm" />
+                        <Sk h={13} w={60} rounded="sm" />
+                      </div>
+                    </div>
+                  ) : (data?.total_artifacts ?? 0) > 0 ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between items-center">
                         <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Artifacts</span>
-                        <span className="font-mono text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data.total_artifacts}</span>
+                        <span className="font-mono text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data?.total_artifacts}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Data Size</span>
-                        <span className="font-mono text-[13px]" style={{ color: "var(--text-primary)" }}>{formatBytes(data.acquisition_data_size)}</span>
+                        <span className="font-mono text-[13px]" style={{ color: "var(--text-primary)" }}>{formatBytes(data?.acquisition_data_size ?? 0)}</span>
                       </div>
-                      {data.recent_artifacts.length > 0 && (
+                      {(data?.recent_artifacts ?? []).length > 0 && (
                         <div className="mt-1">
                           <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>RECENT</span>
                           <div className="flex flex-col gap-1.5 mt-2">
-                            {data.recent_artifacts.slice(0, 3).map((art, i) => (
+                            {(data?.recent_artifacts ?? []).slice(0, 3).map((art, i) => (
                               <div key={i} className="flex items-center justify-between text-[12px]">
                                 <span className="truncate max-w-[140px]" title={art.filename} style={{ color: "var(--text-secondary)" }}>{art.filename}</span>
                                 <span className="font-mono shrink-0" style={{ color: "var(--text-muted)" }}>{formatBytes(art.size_bytes)}</span>
@@ -391,22 +428,28 @@ export default function DashboardPage() {
                     <Globe size={15} />
                     IoC Overview
                   </div>
-                  {data.recent_iocs.length > 0 ? (
+                  {loading ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[100,80,110,90,75,95].map((w,i) => (
+                        <Sk key={i} h={26} w={w} rounded="md" />
+                      ))}
+                    </div>
+                  ) : (data?.recent_iocs ?? []).length > 0 ? (
                     <>
                       <div className="flex flex-wrap gap-1.5">
-                        {data.recent_iocs.slice(0, 10).map((ip, i) => (
+                        {(data?.recent_iocs ?? []).slice(0, 10).map((ip, i) => (
                           <span key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md"
                             style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
                             {ip}
                           </span>
                         ))}
-                        {data.recent_iocs.length > 10 && (
+                        {(data?.recent_iocs ?? []).length > 10 && (
                           <div className="self-center" style={{ position: "relative", display: "inline-block" }}
                             onMouseEnter={handleMoreEnter}
                             onMouseLeave={handleMoreLeave}
                           >
                             <span className="text-[11px] inline-block" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)", cursor: "pointer" }}>
-                              +{data.recent_iocs.length - 10} more
+                              +{data!.recent_iocs.length - 10} more
                             </span>
                             {moreHover && (
                               <div style={{
@@ -426,7 +469,7 @@ export default function DashboardPage() {
                               }}>
                                 <div className="flex items-center justify-between mb-2.5">
                                   <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                    All IPs ({data.recent_iocs.length})
+                                    All IPs ({data!.recent_iocs.length})
                                   </span>
                                   <button onClick={() => setMoreHover(false)}
                                     className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
@@ -437,7 +480,7 @@ export default function DashboardPage() {
                                   </button>
                                 </div>
                                 <div className="flex flex-col gap-0.5">
-                                  {data.recent_iocs.map((ip, i) => (
+                                  {data!.recent_iocs.map((ip, i) => (
                                     <div key={i} className="font-mono text-[12px] px-2 py-1 rounded flex items-center justify-between transition-all"
                                       onClick={() => navigator.clipboard.writeText(ip)}
                                       style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
@@ -454,7 +497,7 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
-                        {data.recent_iocs.length} unique IPs from recent analyses
+                        {(data?.recent_iocs ?? []).length} unique IPs from recent analyses
                       </p>
                     </>
                   ) : (
@@ -473,10 +516,19 @@ export default function DashboardPage() {
                 <Clock size={15} />
                 Activity Timeline (Last 7 Days)
               </div>
-              {data.timeline_daily_counts.some(d => d.count > 0) ? (
+              {loading ? (
                 <div className="flex items-end gap-2" style={{ height: 120 }}>
-                  {data.timeline_daily_counts.map((day) => {
-                    const maxCount = Math.max(...data.timeline_daily_counts.map(d => d.count), 1);
+                  {[40,65,22,80,55,35,70].map((h, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <Sk h={80} w="100%" rounded="sm" style={{ opacity: 0.5 + i * 0.07 }} />
+                      <Sk h={10} w={24} rounded="sm" />
+                    </div>
+                  ))}
+                </div>
+              ) : (data?.timeline_daily_counts ?? []).some(d => d.count > 0) ? (
+                <div className="flex items-end gap-2" style={{ height: 120 }}>
+                  {(data?.timeline_daily_counts ?? []).map((day) => {
+                    const maxCount = Math.max(...(data?.timeline_daily_counts ?? []).map(d => d.count), 1);
                     const barH = (day.count / maxCount) * 100;
                     const shortDay = new Date(day.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" });
                     return (
@@ -512,7 +564,9 @@ export default function DashboardPage() {
                     {tr.dashboard.viewAll}
                   </button>
                 </div>
-                {data.recent_uploads.length > 0 ? (
+                {loading ? (
+                  <SkeletonTable rows={5} cols={5} colWidths={["6%","35%","13%","14%","28%"]} showHeader={false} />
+                ) : (data?.recent_uploads ?? []).length > 0 ? (
                   <table>
                     <colgroup>
                       <col style={{ width: 40 }} />
@@ -531,7 +585,7 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.recent_uploads.slice(0, 5).map((u) => (
+                      {(data?.recent_uploads ?? []).slice(0, 5).map((u) => (
                         <tr key={u.upload_id} className="row-hover">
                           <td className="font-mono whitespace-nowrap">{u.upload_id}</td>
                           <td className="truncate max-w-0">{u.filename}</td>
@@ -581,7 +635,7 @@ export default function DashboardPage() {
                     <Upload size={14} />
                     {tr.dashboard.uploadLog}
                   </button>
-                  <button onClick={() => { const latest = data?.recent_uploads?.[0]; if (latest) { triggerAnalysis(latest.upload_id, latest.filename); router.push(`/analysis?upload_id=${latest.upload_id}`); } else router.push("/upload"); }}
+                  <button onClick={() => { const latest = (data?.recent_uploads ?? [])[0]; if (latest) { triggerAnalysis(latest.upload_id, latest.filename); router.push(`/analysis?upload_id=${latest.upload_id}`); } else router.push("/upload"); }}
                     className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium cursor-pointer border border-border-subtle"
                     style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}
                     onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
@@ -635,14 +689,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        )}
-
-        {!loading && !error && !data && (
-          <div className="empty-state">
-            <Upload size={32} />
-            <span>{tr.dashboard.noData}</span>
-          </div>
-        )}
       </div>
     </AppShell>
   );

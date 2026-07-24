@@ -7,6 +7,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { api, LogEntry, Upload as UploadType } from "@/lib/api";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { eventDotColor, formatEventType, eventBadgeClass, fmtTime, fmtDateShort, fileTypeBadge } from "@/lib/utils";
+import { SkeletonTable, SkeletonIncidentList } from "@/components/ui/Skeleton";
 
 function TimelinePageContent() {
   const searchParams = useSearchParams();
@@ -73,9 +74,7 @@ function TimelinePageContent() {
         <div className="p-6">
           <div className="bg-bg-elevated border border-border-subtle rounded-lg overflow-hidden">
             {uploadsLoading ? (
-              <div className="empty-state">
-                <span>Loading uploads...</span>
-              </div>
+              <SkeletonTable rows={5} cols={5} colWidths={["8%", "40%", "14%", "14%", "18%"]} />
             ) : uploads.length === 0 ? (
               <div className="empty-state">
                 <span>No uploads found.</span>
@@ -143,9 +142,7 @@ function TimelinePageContent() {
         </div>
 
         {loading && (
-          <div className="empty-state">
-            <span>Loading...</span>
-          </div>
+          <SkeletonIncidentList count={4} />
         )}
 
         {error && (
@@ -216,9 +213,17 @@ function TimelinePageContent() {
   );
 }
 
+function TimelineSuspenseFallback() {
+  return (
+    <div style={{ padding: "24px" }}>
+      <SkeletonTable rows={5} cols={5} colWidths={["8%", "40%", "14%", "14%", "18%"]} />
+    </div>
+  );
+}
+
 export default function TimelinePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="empty-state"><span>Loading...</span></div></div>}>
+    <Suspense fallback={<TimelineSuspenseFallback />}>
       <TimelinePageContent />
     </Suspense>
   );

@@ -8,6 +8,7 @@ import {
 import AppShell from "@/components/layout/AppShell";
 import { getLang, t, Lang } from "@/lib/i18n";
 import { api, ProfileResponse, ActivityLogItem } from "@/lib/api";
+import { SkeletonProfileHero, SkeletonStatRow, SkeletonCard, Sk } from "@/components/ui/Skeleton";
 
 function getToken(): string {
   if (typeof document === "undefined") return "";
@@ -84,8 +85,18 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="p-6 max-w-5xl mx-auto flex items-center justify-center h-64">
-          <div className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>Loading...</div>
+        <div className="p-6 max-w-5xl mx-auto">
+          {/* Hero skeleton */}
+          <SkeletonProfileHero />
+          {/* 3 stat cards skeleton */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <SkeletonStatRow count={3} />
+          </div>
+          {/* 2-col panels skeleton */}
+          <div className="grid grid-cols-2 gap-5">
+            <SkeletonCard lines={5} />
+            <SkeletonCard lines={4} />
+          </div>
         </div>
       </AppShell>
     );
