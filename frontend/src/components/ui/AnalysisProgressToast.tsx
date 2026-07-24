@@ -8,16 +8,16 @@ const COLLAPSE_AFTER_MS = 20_000
 const DEFAULT_POS = { x: 24, y: 24 } // bottom-right offsets in px
 
 function CircularProgress({ percent, status }: { percent: number; status: string }) {
-  const r = 20, circ = 2 * Math.PI * r
+  const r = 18, circ = 2 * Math.PI * r
   const dash = circ - (circ * Math.min(percent, 100)) / 100
   return (
-    <svg width="52" height="52" viewBox="0 0 52 52">
-      <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
-      <circle cx="26" cy="26" r={r} fill="none" stroke="white" strokeWidth="3"
+    <svg width="48" height="48" viewBox="0 0 48 48" className="select-none" style={{ display: "block" }}>
+      <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" />
+      <circle cx="24" cy="24" r={r} fill="none" stroke="#ffffff" strokeWidth="3.5"
         strokeDasharray={circ} strokeDashoffset={dash} strokeLinecap="round"
-        transform="rotate(-90 26 26)"
+        transform="rotate(-90 24 24)"
         style={{ transition: "stroke-dashoffset 0.4s ease" }} />
-      <text x="26" y="31" textAnchor="middle" fontSize="11" fill="white" fontWeight="700">
+      <text x="24" y="24" textAnchor="middle" dominantBaseline="central" fontSize="11" fill="#ffffff" fontWeight="700">
         {status === "done" ? "✓" : status === "error" ? "✗" : `${percent}%`}
       </text>
     </svg>
@@ -35,38 +35,38 @@ export default function AnalysisProgressToast() {
   
   // Track pointer down details to distinguish click vs drag
   const pointerDownRef = useRef<{ clientX: number; clientY: number; posX: number; posY: number; hasMoved: boolean } | null>(null)
-
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
-  // --- Collapse timer logic ---
-  const scheduleCollapse = useCallback((startedAt: string) => {
+  // --- Start / Reset 20s collapse timer ---
+  const startCollapseTimer = useCallback(() => {
     if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
-    const startMs = new Date(startedAt).getTime()
-    const elapsed = Date.now() - startMs
-    const remaining = COLLAPSE_AFTER_MS - elapsed
-    if (remaining <= 0) {
+    collapseTimerRef.current = setTimeout(() => {
       setCollapsed(true)
-    } else {
-      collapseTimerRef.current = setTimeout(() => setCollapsed(true), remaining)
-    }
+    }, COLLAPSE_AFTER_MS)
   }, [])
+
+  // Expand toast and start 20s auto-collapse countdown
+  const expandToast = useCallback(() => {
+    setCollapsed(false)
+    startCollapseTimer()
+  }, [startCollapseTimer])
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as AnalysisJob | null
       setJob(prev => {
+        // If a new job is registered
         if (detail && prev?.uploadId !== detail.uploadId) {
           setPos(DEFAULT_POS)
+          setDismissed(false)
+          setCollapsed(false)
+          startCollapseTimer()
         }
         return detail
       })
+
       if (detail) {
-        setDismissed(false)
-        setCollapsed(false)
-        if (detail.status === "running") {
-          scheduleCollapse(detail.startedAt)
-        }
         if (detail.status === "done" || detail.status === "error") {
           setCollapsed(false)
           if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
@@ -75,12 +75,20 @@ export default function AnalysisProgressToast() {
         if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
       }
     }
+
     window.addEventListener("analysis-job-update", handler)
     return () => {
       window.removeEventListener("analysis-job-update", handler)
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
     }
-  }, [scheduleCollapse])
+  }, [startCollapseTimer])
+
+  // Initial timer setup if a running job exists on page mount
+  useEffect(() => {
+    if (job?.status === "running") {
+      startCollapseTimer()
+    }
+  }, [])
 
   // --- Drag & Click Handler ---
   const onBubbleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -112,9 +120,9 @@ export default function AnalysisProgressToast() {
 
     const onMouseUp = () => {
       if (pointerDownRef.current) {
-        // If it didn't move, it's a click! Expand the bubble immediately.
+        // If it didn't move, it's a click! Expand the bubble & reset 20s collapse timer
         if (!pointerDownRef.current.hasMoved) {
-          setCollapsed(false)
+          expandToast()
         }
         pointerDownRef.current = null
       }
@@ -127,7 +135,7 @@ export default function AnalysisProgressToast() {
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
     }
-  }, [])
+  }, [expandToast])
 
   if (!job || dismissed) return null
 
@@ -135,7 +143,7 @@ export default function AnalysisProgressToast() {
     : job.status === "error" ? "var(--severity-critical)"
     : "var(--accent)"
 
-  // Collapsed bubble (Clean circular bubble without X button)
+  // Collapsed bubble (Clean circular bubble, centered, with subtle inner highlight)
   if (collapsed) {
     return (
       <div
@@ -149,11 +157,14 @@ export default function AnalysisProgressToast() {
           borderRadius: "50%",
           background: bgColor,
           boxShadow: isDragging
-            ? "0 8px 32px rgba(0,0,0,0.45)"
-            : "0 4px 20px rgba(0,0,0,0.3)",
-          transition: isDragging ? "box-shadow 0.15s ease" : "all 0.3s ease",
+            ? "0 10px 30px rgba(0,0,0,0.4), 0 0 0 1.5px rgba(255,255,255,0.3) inset"
+            : "0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.2) inset",
+          transition: isDragging ? "box-shadow 0.15s ease" : "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           cursor: isDragging ? "grabbing" : "pointer",
           userSelect: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
         onMouseDown={onBubbleMouseDown}
         title={`Analyzing ${job.filename} — ${job.progress}% (Click to expand)`}
@@ -191,7 +202,7 @@ export default function AnalysisProgressToast() {
               strokeLinecap="round"
               transform="rotate(-90 18 18)"
               style={{ transition: "stroke-dashoffset 0.4s ease" }} />
-            <text x="18" y="22" textAnchor="middle" fontSize="8"
+            <text x="18" y="18" textAnchor="middle" dominantBaseline="central" fontSize="8"
               fill="white" fontWeight="700">
               {job.status === "done" ? "✓"
                 : job.status === "error" ? "✗"
