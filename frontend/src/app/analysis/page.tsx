@@ -196,10 +196,16 @@ function AnalysisPageContent() {
             <>
               <button
                 onClick={runAnalysis}
-                className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-medium cursor-pointer border-none font-sans"
+                className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-semibold cursor-pointer border-none font-sans transition-all"
                 style={{ background: "var(--accent)", color: "#fff" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-hover)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "var(--accent)")}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--accent-hover)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "var(--accent)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               >
                 <RefreshCw size={14} />
                 {tr.analysis.reanalyze}
@@ -275,8 +281,20 @@ function AnalysisPageContent() {
                       </button>
                       <button
                         onClick={() => router.push(`/analysis?upload_id=${item.upload_id}&run=true`)}
-                        className="text-xs px-3 py-1.5 rounded-md border transition-colors"
-                        style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
+                        className="inline-flex items-center gap-1 px-3 py-[6px] rounded-md text-[12.5px] font-semibold cursor-pointer border transition-all"
+                        style={{ background: "transparent", color: "var(--accent)", borderColor: "var(--accent)" }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = "var(--accent)";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--accent)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        <RefreshCw size={13} />
                         Re-analyze
                       </button>
                     </div>

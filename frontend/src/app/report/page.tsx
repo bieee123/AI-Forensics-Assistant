@@ -573,8 +573,17 @@ export default function ReportPage() {
               </p>
               <button
                 onClick={() => router.push(`/analysis?upload_id=${selectedId}&run=true`)}
-                className="text-xs px-3 py-1.5 rounded-md"
-                style={{ background: "var(--accent)", color: "#fff" }}>
+                className="text-xs px-3 py-1.5 rounded-md font-semibold cursor-pointer border-none transition-all"
+                style={{ background: "var(--accent)", color: "#fff" }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--accent-hover)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "var(--accent)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
                 Run Analysis →
               </button>
             </div>
