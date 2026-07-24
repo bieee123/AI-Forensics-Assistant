@@ -37,19 +37,18 @@ export default function AnalysisProgressToast() {
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
-  // --- Start / Reset 20s collapse timer ---
-  const startCollapseTimer = useCallback(() => {
-    if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
-    collapseTimerRef.current = setTimeout(() => {
-      setCollapsed(true)
-    }, COLLAPSE_AFTER_MS)
-  }, [])
-
-  // Expand toast and start 20s auto-collapse countdown
-  const expandToast = useCallback(() => {
-    setCollapsed(false)
-    startCollapseTimer()
-  }, [startCollapseTimer])
+  // Automatically collapse expanded toast to bubble after 20 seconds
+  useEffect(() => {
+    if (!collapsed && job) {
+      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
+      collapseTimerRef.current = setTimeout(() => {
+        setCollapsed(true)
+      }, COLLAPSE_AFTER_MS)
+    }
+    return () => {
+      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
+    }
+  }, [collapsed, job?.uploadId])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -59,7 +58,6 @@ export default function AnalysisProgressToast() {
         if (detail && prev?.uploadId !== detail.uploadId) {
           setPos(DEFAULT_POS)
           setCollapsed(false)
-          startCollapseTimer()
         }
         return detail
       })
@@ -67,10 +65,7 @@ export default function AnalysisProgressToast() {
       if (detail) {
         if (detail.status === "done" || detail.status === "error") {
           setCollapsed(false)
-          if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
         }
-      } else {
-        if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
       }
     }
 
@@ -78,13 +73,6 @@ export default function AnalysisProgressToast() {
     return () => {
       window.removeEventListener("analysis-job-update", handler)
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
-    }
-  }, [startCollapseTimer])
-
-  // Initial timer setup if a running job exists on page mount
-  useEffect(() => {
-    if (job?.status === "running") {
-      startCollapseTimer()
     }
   }, [])
 
@@ -120,7 +108,7 @@ export default function AnalysisProgressToast() {
       if (pointerDownRef.current) {
         // If it didn't move, it's a click! Expand the bubble & reset 20s collapse timer
         if (!pointerDownRef.current.hasMoved) {
-          expandToast()
+          setCollapsed(false)
         }
         pointerDownRef.current = null
       }
@@ -133,7 +121,7 @@ export default function AnalysisProgressToast() {
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
     }
-  }, [expandToast])
+  }, [])
 
   if (!job) return null
 

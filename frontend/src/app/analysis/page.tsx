@@ -166,15 +166,51 @@ function AnalysisPageContent() {
     setTimeout(() => setCopiedIdx(null), 2000);
   };
 
-  const exportResult = () => {
+  const [exportingPDF, setExportingPDF] = useState(false);
+
+  const exportResult = async () => {
     if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `analysis_${result.upload_id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setExportingPDF(true);
+    try {
+      const blob = await api.generateReport({
+        upload_id: result.upload_id,
+        analyst_name: "DFA System",
+        organization: "PT Teknologi Nasional Indonesia Siber",
+        classification: "CONFIDENTIAL",
+        narrative_report: result.narrative_report,
+        severity_overall: result.severity_overall,
+        ioc_summary: result.ioc_summary,
+        attack_timeline: result.attack_timeline,
+        total_incidents: result.total_incidents,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `incident_report_${result.upload_id}_${new Date().toISOString().slice(0,10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      const exportData = {
+        upload_id: result.upload_id,
+        severity: result.severity_overall,
+        total_incidents: result.total_incidents,
+        narrative_report: result.narrative_report,
+        ioc_summary: result.ioc_summary,
+        attack_timeline: result.attack_timeline,
+        exported_at: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `incident_report_${result.upload_id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   const narrativeText = result?.narrative_report || ""
@@ -212,13 +248,20 @@ function AnalysisPageContent() {
               </button>
               <button
                 onClick={exportResult}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-border-subtle bg-bg-elevated cursor-pointer font-sans"
+                disabled={exportingPDF}
+                className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-semibold cursor-pointer border border-border-subtle bg-bg-elevated font-sans transition-all disabled:opacity-50"
                 style={{ color: "var(--text-secondary)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--bg-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "var(--bg-elevated)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
               >
-                <Download size={14} />
-                {tr.analysis.export}
+                <Download size={14} className={exportingPDF ? "animate-spin" : ""} />
+                {exportingPDF ? "Exporting..." : tr.analysis.export}
               </button>
             </>
           ) : undefined

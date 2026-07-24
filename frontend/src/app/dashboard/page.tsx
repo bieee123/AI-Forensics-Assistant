@@ -56,8 +56,10 @@ export default function DashboardPage() {
   }, []);
 
   const tr = t(lang);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
+    setRefreshing(true);
     setError("");
     try {
       const summary = await api.getSummary();
@@ -66,6 +68,7 @@ export default function DashboardPage() {
       setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -146,13 +149,14 @@ export default function DashboardPage() {
         actions={
           <button
             onClick={fetchData}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-border-subtle bg-bg-elevated cursor-pointer font-sans"
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-border-subtle bg-bg-elevated cursor-pointer font-sans disabled:opacity-60 transition-all"
             style={{ color: "var(--text-secondary)" }}
             onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
             onMouseLeave={e => (e.currentTarget.style.background = "var(--bg-elevated)")}
           >
-            <RefreshCw size={14} />
-            {tr.dashboard.refresh}
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? (lang === "id" ? "Memuat..." : "Refreshing...") : tr.dashboard.refresh}
           </button>
         }
       />

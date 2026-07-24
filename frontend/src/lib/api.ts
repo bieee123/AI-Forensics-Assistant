@@ -22,7 +22,7 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getSummary:  () => req<Summary>("/logs/summary"),
+  getSummary:  () => req<Summary>(`/logs/summary?_t=${Date.now()}`, { cache: "no-store" }),
   getUploads:  () => req<Upload[]>("/logs/uploads"),
   getEntries:  (id: number) => req<LogEntry[]>(`/logs/entries?upload_id=${id}`),
   getTelemetry:(id: number) => req<TelemetryEntry[]>(`/logs/telemetry?upload_id=${id}`),
