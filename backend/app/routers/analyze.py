@@ -339,20 +339,3 @@ def get_analysis_result(upload_id: int):
         }
     finally:
         db.close()
-
-
-@router.delete("/result/{upload_id}")
-def delete_analysis_result(upload_id: int):
-    """Delete saved analysis result to allow re-analysis."""
-    db: Session = SessionLocal()
-    try:
-        record = db.query(AnalysisResultDB).filter(
-            AnalysisResultDB.upload_id == upload_id
-        ).first()
-        if not record:
-            raise HTTPException(status_code=404, detail="Not found")
-        db.delete(record)
-        db.commit()
-        return {"deleted": True, "upload_id": upload_id}
-    finally:
-        db.close()

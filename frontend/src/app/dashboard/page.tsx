@@ -658,7 +658,7 @@ export default function DashboardPage() {
                       </span>
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full inline-block" style={{ background: "var(--severity-low)" }} />
-                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>llama3:8b</span>
+                        <span className="font-mono text-xs" style={{ color: "var(--severity-low)" }}>Llama-3-8B-Instruct</span>
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

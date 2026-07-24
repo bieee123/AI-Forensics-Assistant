@@ -76,8 +76,6 @@ export const api = {
     }),
   getAnalysisHistory: () => req<AnalysisHistoryItem[]>("/analyze/history"),
   getAnalysisResult:  (uploadId: number) => req<SavedAnalysisResult>(`/analyze/result/${uploadId}`),
-  deleteAnalysisResult: (uploadId: number) =>
-    req<{ deleted: boolean }>(`/analyze/result/${uploadId}`, { method: "DELETE" }),
 
   // Auth
   login: (username: string, password: string) =>

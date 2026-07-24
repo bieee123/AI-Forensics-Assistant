@@ -92,7 +92,7 @@ export default function SettingsPage() {
                 <span className={`w-2 h-2 rounded-full inline-block ${health?.ollama_connected ? "status-dot-active" : ""}`}
                   style={{ background: health?.ollama_connected ? "var(--severity-low)" : "var(--severity-critical)" }} />
                 <span className="font-mono text-xs" style={{ color: health?.ollama_connected ? "var(--severity-low)" : "var(--severity-critical)" }}>
-                  llama3:8b
+                  Llama-3-8B-Instruct
                 </span>
               </span>
             </div>
@@ -129,7 +129,7 @@ export default function SettingsPage() {
           <div className="flex flex-col gap-2.5 text-[13px]">
             <div className="flex justify-between">
               <span style={{ color: "var(--text-secondary)" }}>{tr.settings.llmModel}</span>
-              <span className="font-mono">llama3:8b</span>
+              <span className="font-mono">Llama-3-8B-Instruct</span>
             </div>
             <div className="flex justify-between">
               <span style={{ color: "var(--text-secondary)" }}>{tr.settings.embeddingModel}</span>
@@ -147,8 +147,17 @@ export default function SettingsPage() {
           <div className="font-semibold text-[13px] text-text-primary mb-3.5">{tr.settings.about}</div>
           <div className="flex flex-col gap-2 text-[13px]" style={{ color: "var(--text-secondary)" }}>
             <div>{tr.settings.version}: <span className="font-mono">{tr.settings.versionText}</span></div>
-            <div>{tr.settings.client}: {tr.settings.client}</div>
-            <div>{tr.settings.project}: {tr.settings.project}</div>
+            <div>Build: <span className="font-mono">{tr.settings.buildDate}</span></div>
+            <div>Team: <span className="font-mono">{tr.settings.team}</span></div>
+            <div>Client: <span className="font-mono">{tr.settings.client}</span></div>
+            <div>Project: <span className="font-mono">{tr.settings.project}</span></div>
+            <div>Ollama:
+              <span className="flex items-center gap-1.5 font-mono" style={{ display: "inline-flex", marginLeft: 8 }}>
+                <span className="w-2 h-2 rounded-full inline-block"
+                  style={{ background: health?.ollama_connected ? "var(--severity-low)" : "var(--severity-critical)" }} />
+                Llama-3-8B-Instruct
+              </span>
+            </div>
           </div>
         </div>
       </div>
