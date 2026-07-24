@@ -7,6 +7,10 @@ import { AnalysisJob, getActiveJob } from "@/lib/analysisStore"
 const COLLAPSE_AFTER_MS = 20_000
 const DEFAULT_POS = { x: 24, y: 24 } // bottom-right offsets in px
 
+// Global session state to persist collapsed state and position across Next.js page navigations
+let globalCollapsed = false
+let globalPos = DEFAULT_POS
+
 function CircularProgress({ percent, status }: { percent: number; status: string }) {
   const r = 18, circ = 2 * Math.PI * r
   const dash = circ - (circ * Math.min(percent, 100)) / 100
@@ -26,10 +30,27 @@ function CircularProgress({ percent, status }: { percent: number; status: string
 
 export default function AnalysisProgressToast() {
   const [job, setJob] = useState<AnalysisJob | null>(() => getActiveJob())
-  const [collapsed, setCollapsed] = useState(false)
+  
+  // Persisted state across page navigation
+  const [collapsed, setCollapsedState] = useState<boolean>(() => globalCollapsed)
+  const [pos, setPosState] = useState<{ x: number; y: number }>(() => globalPos)
 
-  // Drag state — position stored as { x, y } = distance from bottom-right corner
-  const [pos, setPos] = useState(DEFAULT_POS)
+  const setCollapsed = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    setCollapsedState(prev => {
+      const next = typeof val === "function" ? val(prev) : val
+      globalCollapsed = next
+      return next
+    })
+  }, [])
+
+  const setPos = useCallback((val: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => {
+    setPosState(prev => {
+      const next = typeof val === "function" ? val(prev) : val
+      globalPos = next
+      return next
+    })
+  }, [])
+
   const [isDragging, setIsDragging] = useState(false)
   
   // Track pointer down details to distinguish click vs drag
@@ -48,25 +69,19 @@ export default function AnalysisProgressToast() {
     return () => {
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
     }
-  }, [collapsed, job?.uploadId])
+  }, [collapsed, job?.uploadId, setCollapsed])
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as AnalysisJob | null
       setJob(prev => {
-        // If a new job is registered
+        // If a brand new job starts, reset position and state
         if (detail && prev?.uploadId !== detail.uploadId) {
           setPos(DEFAULT_POS)
           setCollapsed(false)
         }
         return detail
       })
-
-      if (detail) {
-        if (detail.status === "done" || detail.status === "error") {
-          setCollapsed(false)
-        }
-      }
     }
 
     window.addEventListener("analysis-job-update", handler)
@@ -74,7 +89,7 @@ export default function AnalysisProgressToast() {
       window.removeEventListener("analysis-job-update", handler)
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current)
     }
-  }, [])
+  }, [setCollapsed, setPos])
 
   // --- Drag & Click Handler ---
   const onBubbleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -121,7 +136,7 @@ export default function AnalysisProgressToast() {
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
     }
-  }, [])
+  }, [setCollapsed, setPos])
 
   if (!job) return null
 
@@ -176,8 +191,13 @@ export default function AnalysisProgressToast() {
     >
       <div className="h-1" style={{ background: bgColor }} />
       <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: bgColor }}>
+        <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+          style={{ background: bgColor }}
+          onClick={() => {
+            if (job.status === "done" || job.status === "running") {
+              router.push(`/analysis?upload_id=${job.uploadId}`)
+            }
+          }}>
           <svg width="36" height="36" viewBox="0 0 36 36">
             <circle cx="18" cy="18" r="13" fill="none"
               stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" />
@@ -198,21 +218,39 @@ export default function AnalysisProgressToast() {
         </div>
 
         {/* Info & Navigation */}
-        <div className="flex-1 min-w-0"
-          onClick={() => {
-            if (job.status === "done" || job.status === "running") {
-              router.push(`/analysis?upload_id=${job.uploadId}`)
-            }
-          }}
-          style={{ cursor: job.status === "done" || job.status === "running" ? "pointer" : "default" }}>
-          <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold truncate cursor-pointer"
+            style={{ color: "var(--text-primary)" }}
+            onClick={() => {
+              if (job.status === "done" || job.status === "running") {
+                router.push(`/analysis?upload_id=${job.uploadId}`)
+              }
+            }}>
             {job.status === "done" ? "✓ Analysis complete!"
               : job.status === "error" ? "✗ Analysis failed"
               : "Analyzing..."}
           </p>
           <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
-            {job.filename}
-            {job.status === "done" ? " · Click to view results" : ""}
+            <span
+              className="cursor-pointer hover:underline"
+              onClick={() => {
+                if (job.status === "done" || job.status === "running") {
+                  router.push(`/analysis?upload_id=${job.uploadId}`)
+                }
+              }}>
+              {job.filename}
+            </span>
+            {job.status === "done" && (
+              <span
+                className="ml-1 cursor-pointer font-medium hover:underline transition-all"
+                style={{ color: "var(--accent)" }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/analysis?upload_id=${job.uploadId}`)
+                }}>
+                · Click to view results
+              </span>
+            )}
           </p>
           {job.status === "running" && (
             <div className="mt-1.5 h-0.5 rounded-full overflow-hidden"
