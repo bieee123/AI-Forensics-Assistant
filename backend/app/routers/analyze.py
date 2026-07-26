@@ -75,6 +75,13 @@ def get_rag_context(query: str) -> str:
 FORENSIC_PROMPT = PromptTemplate.from_template("""
 You are a digital forensics analyst. Analyze the following security log entries and provide a concise incident report.
 
+HARD FACTS (these are exact — use them verbatim, do not recalculate):
+Total events logged: {hard_count}
+Time window: {hard_window} UTC
+Duration: {hard_duration}
+Distinct source IPs: {hard_ips}
+Distinct target users: {hard_users}
+
 LOG ENTRIES (chronological):
 {log_entries}
 
@@ -84,9 +91,9 @@ RELEVANT RUNBOOK CONTEXT:
 EXTRACTED IoCs (IP addresses found):
 {ioc_list}
 
-Provide your analysis in this exact format:
+Provide your analysis in this exact format. Use the HARD FACTS above for any numbers:
 SEVERITY: [CRITICAL/HIGH/MEDIUM/LOW/INFO]
-ATTACK_TIMELINE: [2-4 sentences describing what happened chronologically]
+ATTACK_TIMELINE: [2-4 sentences describing what happened chronologically — use exact event count, time window, and duration from HARD FACTS]
 IOC_EXPLANATION: [1-2 sentences explaining what the IP addresses and indicators suggest]
 RECOMMENDATION: [1-2 sentences on immediate actions]
 """)
@@ -236,10 +243,47 @@ def _run_analysis_background(upload_id: int) -> None:
                 for e in sorted_entries
             )
 
+        # Compute hard facts from actual data — LLM must use these verbatim
+        hard_count = len(sorted_entries)
+        timestamps = sorted(
+            str(e.get("timestamp", "")) for e in sorted_entries if e.get("timestamp")
+        )
+        hard_window = "–"
+        hard_duration = "unknown"
+        if len(timestamps) >= 2:
+            t_first, t_last = timestamps[0], timestamps[-1]
+            tf = t_first[11:19] if len(t_first) > 10 else t_first
+            tl = t_last[11:19] if len(t_last) > 10 else t_last
+            hard_window = f"{tf} – {tl}"
+            try:
+                import datetime as _dt
+                fmt = "%Y-%m-%d %H:%M:%S" if len(t_first) > 10 else "%H:%M:%S"
+                dur = (_dt.datetime.strptime(t_last[:19], fmt) -
+                       _dt.datetime.strptime(t_first[:19], fmt))
+                hard_duration = f"{int(dur.total_seconds())} seconds"
+            except Exception:
+                hard_duration = "unknown"
+        elif len(timestamps) == 1:
+            t_only = timestamps[0][11:19] if len(timestamps[0]) > 10 else timestamps[0]
+            hard_window = t_only
+            hard_duration = "single event"
+
+        distinct_ips = sorted({
+            e.get("source_ip") for e in sorted_entries if e.get("source_ip")
+        })
+        distinct_users = sorted({
+            e.get("user") for e in sorted_entries if e.get("user")
+        })
+
         prompt = FORENSIC_PROMPT.format(
             log_entries=log_text,
             rag_context=rag_context or "No runbook context available.",
             ioc_list=", ".join(ioc_list) if ioc_list else "None detected",
+            hard_count=hard_count,
+            hard_window=hard_window,
+            hard_duration=hard_duration,
+            hard_ips=", ".join(distinct_ips) if distinct_ips else "none",
+            hard_users=", ".join(distinct_users) if distinct_users else "none",
         )
 
         llm = OllamaLLM(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
@@ -251,6 +295,18 @@ def _run_analysis_background(upload_id: int) -> None:
             f"{parsed['ioc_explanation']} "
             f"Recommendation: {parsed['recommendation']}"
         ).strip()
+
+        # Validate: if narrative claims numbers that contradict hard facts, log warning
+        import re as _re
+        claim_counts = _re.findall(r'\b(\d+)\s+(attempt|event|fail|login|incident|source|ip)', narrative, _re.I)
+        for num_str, _ in claim_counts:
+            claimed = int(num_str)
+            if claimed != hard_count and claimed <= hard_count * 3:
+                logger.warning(
+                    "Narrative claims %d events but actual count is %d (upload_id=%s)",
+                    claimed, hard_count, upload_id
+                )
+                break
 
         total_incidents = len(auth_entries) + len(telemetry_entries)
         duration = int(time.time() - start_time)

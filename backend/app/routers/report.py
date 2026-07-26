@@ -7,7 +7,8 @@ ready for regulatory submission.
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.routers.analyze import analyze_log, AnalyzeRequest
+from sqlalchemy.orm import Session
+from app.models.schemas import SessionLocal, AnalysisResultDB
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -537,7 +538,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
 
 
 @router.post("/")
-async def generate_report(req: ReportRequest):
+def generate_report(req: ReportRequest):
     if req.narrative_report:
         analysis_dict = {
             "upload_id":       req.upload_id,
@@ -548,11 +549,27 @@ async def generate_report(req: ReportRequest):
             "total_incidents": req.total_incidents or 0,
         }
     else:
+        db: Session = SessionLocal()
         try:
-            analysis_result = await analyze_log(AnalyzeRequest(upload_id=req.upload_id))
-            analysis_dict   = analysis_result.model_dump()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+            record = db.query(AnalysisResultDB).filter(
+                AnalysisResultDB.upload_id == req.upload_id
+            ).first()
+            if not record:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No analysis found for upload_id {req.upload_id}. Run analysis first."
+                )
+            analysis_dict = {
+                "upload_id":        record.upload_id,
+                "narrative_report": record.narrative_report,
+                "severity_overall": record.severity,
+                "ioc_summary":      json.loads(record.ioc_summary or "[]"),
+                "attack_timeline":  json.loads(record.attack_timeline or "[]"),
+                "total_incidents":  record.total_incidents or 0,
+                "filename":         record.filename,
+            }
+        finally:
+            db.close()
 
     try:
         pdf_bytes = build_pdf(analysis_dict, req)
