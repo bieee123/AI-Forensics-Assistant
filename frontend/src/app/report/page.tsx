@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { FileText, Loader2, Download } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
@@ -8,6 +9,9 @@ import { getLang, t, Lang } from "@/lib/i18n";
 import { api, Upload, SavedAnalysisResult } from "@/lib/api";
 import { getSessionCache, setSessionCache } from "@/lib/cache";
 import { SkeletonCard, SkeletonTable } from "@/components/ui/Skeleton";
+
+// Dynamically import PDF viewer (client-side only) to avoid DOMMatrix SSR error
+const PdfViewer = dynamic(() => import("@/components/PdfViewer"), { ssr: false });
 
 const SEV_COLORS: Record<string, string> = {
   CRITICAL: "#FF3B30", HIGH: "#FF9500", MEDIUM: "#FFCC00", LOW: "#34C759", INFO: "#5AC8FA"
@@ -724,11 +728,7 @@ export default function ReportPage() {
               <SkeletonCard lines={4} />
             </div>
           ) : pdfBlobUrl ? (
-            <iframe
-              src={pdfBlobUrl}
-              className="w-full h-full border-0"
-              style={{ borderRadius: 8 }}
-            />
+            <PdfViewer blobUrl={pdfBlobUrl} />
           ) : analysisData && pdfGenerating ? (
             <div className="max-w-[780px] mx-auto space-y-4">
               <SkeletonCard lines={3} />
