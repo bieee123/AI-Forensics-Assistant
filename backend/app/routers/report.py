@@ -21,6 +21,7 @@ import io
 import json
 import datetime
 import hashlib
+from collections import Counter
 
 router = APIRouter()
 
@@ -61,6 +62,20 @@ def severity_color(s: str):
     return SEVERITY_COLORS.get(s.upper(), SECONDARY_TEXT)
 
 
+def ioc_classification(ip: str, timeline: list[dict]) -> str:
+    """Derive a factual, data-backed classification for an IoC entry instead
+    of a placeholder string. Counts correlated events for this IP directly
+    from the attack timeline that is already part of this report."""
+    events = [e for e in timeline if e.get("source_ip") == ip]
+    if not events:
+        return "Flagged by analysis — no correlated timeline events in this report"
+    status_counts = Counter(e.get("status", "Unknown") for e in events)
+    breakdown = ", ".join(f"{count} {status.lower()}" for status, count in status_counts.items())
+    users = sorted({e.get("user") for e in events if e.get("user")})
+    user_note = f" targeting {', '.join(users)}" if users else ""
+    return f"{len(events)} correlated event(s){user_note} ({breakdown})"
+
+
 def classification_color(c: str):
     mapping = {
         "CONFIDENTIAL": APPLE_RED,
@@ -69,6 +84,31 @@ def classification_color(c: str):
         "PUBLIC":       APPLE_GREEN,
     }
     return mapping.get(c.upper(), SECONDARY_TEXT)
+
+
+def summarize_timeline(timeline: list[dict]) -> dict | None:
+    """Compute a factual incident-window summary directly from timeline
+    events, so the Executive Summary carries real numbers instead of only
+    a severity/count pair."""
+    if not timeline:
+        return None
+    timestamps = sorted(str(e.get("timestamp", "")) for e in timeline if e.get("timestamp"))
+    if not timestamps:
+        return None
+    first_ts, last_ts = timestamps[0], timestamps[-1]
+
+    def _time_only(ts):
+        return ts[11:19] if len(ts) > 10 else ts
+
+    ips = [e.get("source_ip") for e in timeline if e.get("source_ip")]
+    primary_ip = Counter(ips).most_common(1)[0][0] if ips else "—"
+    users = sorted({e.get("user") for e in timeline if e.get("user")})
+
+    return {
+        "window": f"{_time_only(first_ts)} – {_time_only(last_ts)} UTC",
+        "primary_ip": primary_ip,
+        "affected_accounts": ", ".join(users) if users else "—",
+    }
 
 
 def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
@@ -244,6 +284,32 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
         ("BOTTOMPADDING",(0,0),(-1,-1), 10),
     ]))
     story.append(sev_table)
+
+    tl_summary = summarize_timeline(timeline)
+    if tl_summary:
+        detail_val_style = ParagraphStyle("DetailVal", parent=styles["Normal"],
+            fontSize=9, textColor=DARK_TEXT, fontName="Helvetica")
+        detail_data = [
+            [Paragraph("<b>Incident Window</b>", label_style),
+             Paragraph("<b>Primary Source IP</b>", label_style),
+             Paragraph("<b>Affected Accounts</b>", label_style)],
+            [Paragraph(tl_summary["window"], detail_val_style),
+             Paragraph(tl_summary["primary_ip"], ParagraphStyle("DetailMono", parent=detail_val_style, fontName="Courier")),
+             Paragraph(tl_summary["affected_accounts"], detail_val_style)],
+        ]
+        detail_table = Table(detail_data, colWidths=[5.67*cm, 5.67*cm, 5.66*cm])
+        detail_table.setStyle(TableStyle([
+            ("BOX",          (0,0), (-1,-1), 0.5, HAIRLINE),
+            ("LINEBELOW",    (0,0), (-1,0), 0.5, HAIRLINE),
+            ("LINEAFTER",    (0,0), (0,-1), 0.5, HAIRLINE),
+            ("LINEAFTER",    (1,0), (1,-1), 0.5, HAIRLINE),
+            ("TOPPADDING",   (0,0), (-1,-1), 6),
+            ("BOTTOMPADDING",(0,0), (-1,-1), 6),
+            ("LEFTPADDING",  (0,0), (-1,-1), 8),
+            ("RIGHTPADDING", (0,0), (-1,-1), 8),
+        ]))
+        story.append(detail_table)
+
     story.append(Spacer(1, 14))
 
     # ── 2. Narrative Analysis ─────────────────────────────────
@@ -287,7 +353,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     if ioc_list:
         ioc_data = [["#", "IP Address", "Classification"]]
         for i, ip in enumerate(ioc_list, 1):
-            ioc_data.append([str(i), ip, "Suspicious IP — requires threat intelligence lookup"])
+            ioc_data.append([str(i), ip, ioc_classification(ip, timeline)])
         ioc_table = Table(ioc_data, colWidths=[1.2*cm, 5*cm, 10.8*cm])
         ioc_table.setStyle(TableStyle([
             ("BACKGROUND",   (0,0), (-1,0), LIGHT_BG),
@@ -419,8 +485,12 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
         ("Retention",        "Indefinite (until manually deleted by analyst)"),
     ]))
 
+    analyst_is_system_default = req.analyst_name.strip().lower() in ("", "dfa system")
+    reviewed_by = "Pending Analyst Review" if analyst_is_system_default else req.analyst_name
+
     story.extend(custody_section("5.6 Signatures", [
-        ("Digitally Signed By",  f"{req.analyst_name} via DFA System"),
+        ("Prepared By",          "DFA System (Automated Analysis Engine)"),
+        ("Reviewed By",          reviewed_by),
         ("Organization",         req.organization),
         ("Digital Signature",    f"SHA-256:{custody_hash[:16]}...{custody_hash[-16:]}"),
         ("Timestamp",            timestamp_fmt),
