@@ -177,16 +177,11 @@ def _cover_watermark(canvas, doc):
     """Cover-page watermark — border frame + diagonal classification text."""
     canvas.saveState()
     cl = getattr(doc, "_classification", "CONFIDENTIAL")
-    # Outer border
     canvas.setStrokeColor(NAVY)
     canvas.setLineWidth(1.5)
-    canvas.rect(1.5*cm, 1.5*cm, A4[0] - 3*cm, A4[1] - 3*cm)
-    canvas.stroke()
-    # Inner border
+    canvas.rect(1.5*cm, 1.5*cm, A4[0] - 3*cm, A4[1] - 3*cm, stroke=1, fill=0)
     canvas.setLineWidth(0.5)
-    canvas.rect(1.8*cm, 1.8*cm, A4[0] - 3.6*cm, A4[1] - 3.6*cm)
-    canvas.stroke()
-    # Watermark text
+    canvas.rect(1.8*cm, 1.8*cm, A4[0] - 3.6*cm, A4[1] - 3.6*cm, stroke=1, fill=0)
     canvas.setFont("Helvetica-Bold", 54)
     canvas.setFillColor(colors.HexColor("#E5E7EB"))
     canvas.translate(A4[0]/2, A4[1]/2)
