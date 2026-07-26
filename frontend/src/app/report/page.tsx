@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2, Download } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
@@ -440,6 +440,65 @@ export default function ReportPage() {
   const [analystName, setAnalystName] = useState("DFA System")
   const [organization, setOrganization] = useState("PT Teknologi Nasional Indonesia Siber")
   const [classification, setClassification] = useState("CONFIDENTIAL")
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const blobUrlRef = useRef<string | null>(null)
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+    }
+  }, [])
+
+  // Auto-fetch PDF preview when data or settings change
+  useEffect(() => {
+    if (!analysisData || !selectedId) {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+      setPdfBlobUrl(null)
+      return
+    }
+
+    let cancelled = false
+
+    const fetchPreview = async () => {
+      setPdfGenerating(true)
+      try {
+        const BASE = process.env.NEXT_PUBLIC_API_URL || `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:8000`
+        const res = await fetch(`${BASE}/report/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            upload_id:        selectedId,
+            analyst_name:     analystName,
+            organization:     organization,
+            classification:   classification,
+            narrative_report: analysisData.narrative_report,
+            severity_overall: analysisData.severity_overall,
+            ioc_summary:      analysisData.ioc_summary,
+            attack_timeline:  analysisData.attack_timeline,
+            total_incidents:  analysisData.total_incidents,
+          }),
+        })
+        if (!res.ok || cancelled) return
+        const blob = await res.blob()
+        if (cancelled) return
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+        const url = URL.createObjectURL(blob)
+        blobUrlRef.current = url
+        setPdfBlobUrl(url)
+      } catch {
+        // keep HTML preview as fallback
+      } finally {
+        if (!cancelled) setPdfGenerating(false)
+      }
+    }
+
+    fetchPreview()
+
+    return () => { cancelled = true }
+  }, [analysisData, selectedId, analystName, organization, classification])
 
   useEffect(() => { setLangState(getLang()); }, []);
   useEffect(() => {
@@ -485,6 +544,18 @@ export default function ReportPage() {
 
   const handleGeneratePDF = async () => {
     if (!analysisData || !selectedId) return
+
+    // If cached preview blob exists, download directly
+    if (pdfBlobUrl) {
+      const a = document.createElement("a")
+      a.href = pdfBlobUrl
+      a.download = `incident_report_${selectedId}_${new Date().toISOString().slice(0,10)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     setGenerating(true)
     try {
       const BASE = process.env.NEXT_PUBLIC_API_URL || `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:8000`
@@ -506,13 +577,15 @@ export default function ReportPage() {
       if (!res.ok) throw new Error("Failed")
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = url
+      setPdfBlobUrl(url)
       const a = document.createElement("a")
       a.href = url
       a.download = `incident_report_${selectedId}_${new Date().toISOString().slice(0,10)}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
     } catch {
       alert("PDF generation failed. Please try again.")
     } finally {
@@ -642,9 +715,21 @@ export default function ReportPage() {
           )}
         </div>
 
-        {/* RIGHT: Live preview */}
+        {/* RIGHT: Live preview — actual PDF via iframe */}
         <div className="flex-1 p-5 overflow-hidden">
           {loadingAnalysis ? (
+            <div className="max-w-[780px] mx-auto space-y-4">
+              <SkeletonCard lines={3} />
+              <SkeletonTable rows={4} cols={4} />
+              <SkeletonCard lines={4} />
+            </div>
+          ) : pdfBlobUrl ? (
+            <iframe
+              src={pdfBlobUrl}
+              className="w-full h-full border-0"
+              style={{ borderRadius: 8 }}
+            />
+          ) : analysisData && pdfGenerating ? (
             <div className="max-w-[780px] mx-auto space-y-4">
               <SkeletonCard lines={3} />
               <SkeletonTable rows={4} cols={4} />
