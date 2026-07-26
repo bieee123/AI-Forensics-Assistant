@@ -142,11 +142,11 @@ def _page_header_footer(canvas, doc):
                            f"{report_id}  |  Page {page_num}")
 
     # Footer line
-    canvas.line(2.2*cm, 1.3*cm, A4[0] - 2.2*cm, 1.3*cm)
+    canvas.line(2.2*cm, 1.5*cm, A4[0] - 2.2*cm, 1.5*cm)
 
     # Footer text
-    canvas.drawString(2.2*cm, 1.1*cm, gen_str)
-    canvas.drawRightString(A4[0] - 2.2*cm, 1.1*cm, f"{class_tag}  |  DFA Forensics Assistant")
+    canvas.drawString(2.2*cm, 0.9*cm, gen_str)
+    canvas.drawRightString(A4[0] - 2.2*cm, 0.9*cm, f"{class_tag}  |  DFA Forensics Assistant")
 
     canvas.restoreState()
 
@@ -203,15 +203,16 @@ def build_cover_page(story, req, analysis, now, styles):
     class_p = Paragraph(
         f"<b>{req.classification}</b>",
         ParagraphStyle("CvrClassTag", fontSize=9, fontName="Helvetica-Bold",
-                       textColor=tag_col, leading=11),
+                       textColor=tag_col, alignment=TA_CENTER, leading=11),
     )
-    class_table = Table([[class_p]], colWidths=[None])
+    class_table = Table([[class_p]], colWidths=[4.5*cm])
     class_table.setStyle(TableStyle([
         ("BOX",           (0,0), (-1,-1), 1.2, tag_col),
+        ("ALIGN",         (0,0), (-1,-1), "CENTER"),
         ("TOPPADDING",    (0,0), (-1,-1), 4),
         ("BOTTOMPADDING", (0,0), (-1,-1), 4),
-        ("LEFTPADDING",   (0,0), (-1,-1), 10),
-        ("RIGHTPADDING",  (0,0), (-1,-1), 10),
+        ("LEFTPADDING",   (0,0), (-1,-1), 6),
+        ("RIGHTPADDING",  (0,0), (-1,-1), 6),
     ]))
     class_table.hAlign = "CENTER"
 
@@ -243,11 +244,7 @@ def build_cover_page(story, req, analysis, now, styles):
     ]
     for line in meta_lines:
         story.append(Paragraph(line, cvr_meta_style))
-    story.append(Spacer(1, 2*cm))
-
-    # Separator
-    story.append(HRFlowable(width="40%", thickness=0.8, color=NAVY, spaceAfter=1.5*cm,
-                             hAlign="CENTER"))
+    story.append(Spacer(1, 3*cm))
 
     story.append(Paragraph(
         "Prepared by DFA — Agentic AI Digital Forensics Assistant",
@@ -419,13 +416,23 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     story.extend(_section_bar("1. Executive Summary"))
 
     # Top row: severity + total incidents
-    sev_tag = Paragraph(
+    sev_text = Paragraph(
         f"<font color='{WHITE.hexval()}'><b>{severity}</b></font>",
         ParagraphStyle("SevPill", parent=pill_style,
-            backColor=sev_color, borderPadding=(3, 8, 3, 8),
-            textColor=WHITE, fontSize=11, leading=14, alignment=TA_CENTER,
-        )
+            textColor=WHITE, fontSize=11, leading=14, alignment=TA_CENTER),
     )
+    sev_pill = Table([[sev_text]], colWidths=[5*cm])
+    sev_pill.setStyle(TableStyle([
+        ("BACKGROUND",     (0,0), (-1,-1), sev_color),
+        ("ALIGN",          (0,0), (-1,-1), "CENTER"),
+        ("VALIGN",         (0,0), (-1,-1), "MIDDLE"),
+        ("TOPPADDING",     (0,0), (-1,-1), 5),
+        ("BOTTOMPADDING",  (0,0), (-1,-1), 5),
+        ("LEFTPADDING",    (0,0), (-1,-1), 4),
+        ("RIGHTPADDING",   (0,0), (-1,-1), 4),
+    ]))
+    sev_pill.hAlign = "CENTER"
+
     total_val = Paragraph(
         f"<b>{total}</b>",
         ParagraphStyle("TotVal", parent=pill_style,
@@ -435,7 +442,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     sev_data = [
         [Paragraph("<b>Severity</b>", label_style),
          Paragraph("<b>Total Incidents</b>", label_style)],
-        [sev_tag, total_val],
+        [sev_pill, total_val],
     ]
     sev_table = Table(sev_data, colWidths=[8.5*cm, 8.5*cm])
     sev_table.setStyle(TableStyle([
@@ -565,6 +572,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     # ═══════════════════════════════════════════════════════════
     # 4. ATTACK TIMELINE
     # ═══════════════════════════════════════════════════════════
+    story.append(PageBreak())
     story.extend(_section_bar("4. Attack Timeline"))
 
     if timeline:
@@ -615,6 +623,7 @@ def build_pdf(analysis: dict, req: ReportRequest) -> bytes:
     # ═══════════════════════════════════════════════════════════
     # 5. CHAIN OF CUSTODY
     # ═══════════════════════════════════════════════════════════
+    story.append(PageBreak())
     story.extend(_section_bar("5. Chain of Custody"))
 
     custody_raw = f"{narrative}|{json.dumps(ioc_list, sort_keys=True)}|{json.dumps(timeline, sort_keys=True)}|{now.isoformat()}"
