@@ -84,10 +84,10 @@ def ioc_classification(ip: str, timeline: list[dict]) -> str:
 
 def classification_color(c: str):
     mapping = {
-        "CONFIDENTIAL": APPLE_RED,
-        "RESTRICTED":   APPLE_ORANGE,
-        "INTERNAL":     APPLE_BLUE,
-        "PUBLIC":       APPLE_GREEN,
+        "CONFIDENTIAL": RED,
+        "RESTRICTED":   ORANGE,
+        "INTERNAL":     BLUE_INFO,
+        "PUBLIC":       GREEN,
     }
     return mapping.get(c.upper(), SECONDARY_TEXT)
 
