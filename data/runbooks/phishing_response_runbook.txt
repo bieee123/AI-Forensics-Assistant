@@ -1,0 +1,48 @@
+RUNBOOK: Phishing Incident Response
+
+Indicators:
+- Emails with urgent language requesting credential verification, payment, or sensitive information
+- Sender address spoofing legitimate domains (e.g., rnicrosoft.com vs microsoft.com)
+- Suspicious attachments: PDFs, Office documents with macros, compressed archives
+- Links in emails pointing to lookalike domains when hovered over
+- Emails with unexpected requests from known contacts (CEO fraud, vendor payment redirection)
+- Emails bypassing SPF, DKIM, or DMARC authentication checks
+- Unsolicited password reset or account verification notifications
+
+Immediate Actions:
+1. Determine the scope: is this a targeted attack or broad campaign? Check email logs for all recipients
+2. If the phishing bypassed email security controls, identify why and update rules
+3. Block the sender domain and any malicious URLs at the email gateway and proxy
+4. Identify users who clicked the link or opened the attachment — these are compromised user candidates
+5. Force password reset for affected users and require MFA re-enrollment
+6. Check for email forwarding rules created on affected accounts (attackers often set up inbox rules)
+7. Review login activity for affected accounts for 48 hours before and after the phishing event
+
+Severity Classification:
+- Medium: Phishing detected, user did not interact, no compromise
+- High: User clicked link or opened attachment but credentials were not entered
+- Critical: User credentials were entered, malware was installed, or account was compromised
+
+Phishing Types:
+- Credential Phishing: Fake login page to steal usernames and passwords
+- Spear Phishing: Targeted attack against specific individuals with personalized content
+- Whaling: CEO/CXO targeting for wire fraud or sensitive corporate data
+- Smishing: SMS-based phishing targeting mobile numbers
+- Business Email Compromise: Impersonating vendors or executives for payment fraud
+
+User Compromise Response:
+If credentials were stolen, the attacker likely has access to the user's email, which may contain password reset links, sensitive documents, and access to other systems. Assume all accounts and services accessible through self-service password reset are compromised. Reset passwords for ALL associated accounts, not just email.
+
+Forensic Collection:
+- Full email headers and message content (preserve as evidence)
+- Browser history from affected users to identify landing pages
+- Network logs showing connections to phishing domains
+- Screenshots of the phishing page (if still accessible)
+
+Post-Incident:
+- Conduct security awareness training with real-world examples
+- Implement DMARC rejection policies for unauthorized senders
+- Deploy phishing-resistant MFA (FIDO2/WebAuthn) for high-risk users
+- Establish clear reporting procedures for suspected phishing
+
+(End of file - total 41 lines)

@@ -1,0 +1,37 @@
+RUNBOOK: Ransomware Incident Response
+
+Indicators:
+- Mass file encryption with new extensions (.encrypted, .locked, .crypted)
+- Ransom note files (README_TO_RESTORE.html, DECRYPT_INSTRUCTIONS.txt)
+- Volume Shadow Copy deletion (vssadmin.exe delete shadows /all /quiet)
+- Disabled security services (Windows Defender, antivirus, backup agents)
+- Unusual outbound traffic to known C2 infrastructure
+- High CPU/disk I/O from unknown processes performing file operations
+- Registry Run keys modified to establish persistence
+
+Immediate Actions:
+1. Isolate the affected host from the network immediately — pull the network cable if necessary
+2. Do NOT power off the machine — preserve volatile memory evidence
+3. Identify the ransomware variant by collecting ransom note and encrypted file samples
+4. Check for lateral spread — scan network shares and adjacent hosts for encrypted files
+5. Capture memory dump using FTK Imager or similar tool before remediation
+6. Preserve encrypted files, ransom notes, and any suspicious binaries in secure storage
+7. Determine the scope: how many hosts, what data types, whether backups are also affected
+
+Severity Classification:
+- High: Single host encrypted, no lateral spread, backups unaffected, no critical data loss
+- Critical: Multiple hosts or network shares encrypted, backups compromised, critical business data affected
+
+Containment Strategy:
+Isolate the affected subnet at the network level. Do not pay the ransom — paying does not guarantee data recovery and funds criminal operations. Engage law enforcement (FBI IC3, BSSN for Indonesia) immediately.
+
+Recovery Considerations:
+- Restore from known-good backups taken before the infection date
+- Verify backup integrity before mass restoration
+- Patch the initial compromise vector before returning systems to production
+- Reset all domain passwords and review privileged access
+
+Regulatory Reporting:
+Ransomware affecting PII data requires notification to data protection authorities. Preserve all forensic evidence for law enforcement. Document the full incident timeline for insurance claims and regulatory compliance.
+
+(End of file - total 31 lines)

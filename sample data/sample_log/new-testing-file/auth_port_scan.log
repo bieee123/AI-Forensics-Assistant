@@ -1,0 +1,27 @@
+Jul 28 01:23:45 ids-server fail2ban[1045]: [sshd] Ban 91.240.118.22
+Jul 28 01:23:46 ids-server fail2ban[1046]: [sshd] Ban 91.240.118.23
+Jul 28 01:23:47 ids-server fail2ban[1047]: [sshd] Ban 91.240.118.24
+Jul 28 01:23:48 ids-server fail2ban[1048]: [sshd] Ban 91.240.118.25
+Jul 28 01:23:49 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.22 DST=10.0.0.1 PROTO=TCP DPT=22
+Jul 28 01:23:50 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.23 DST=10.0.0.1 PROTO=TCP DPT=443
+Jul 28 01:23:51 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.24 DST=10.0.0.1 PROTO=TCP DPT=80
+Jul 28 01:23:52 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.25 DST=10.0.0.1 PROTO=TCP DPT=8080
+Jul 28 01:24:00 ids-server fail2ban[1050]: [sshd] Found 91.240.118.22 - 5 attempts in 60 secs
+Jul 28 01:24:05 ids-server sshd[1055]: Failed password for root from 91.240.118.22 port 49582 ssh2
+Jul 28 01:24:07 ids-server sshd[1056]: Failed password for root from 91.240.118.22 port 49584 ssh2
+Jul 28 01:24:09 ids-server sshd[1057]: Failed password for root from 91.240.118.22 port 49586 ssh2
+Jul 28 01:24:11 ids-server sshd[1058]: Failed password for admin from 91.240.118.22 port 49588 ssh2
+Jul 28 01:24:13 ids-server sshd[1059]: Failed password for admin from 91.240.118.22 port 49590 ssh2
+Jul 28 01:24:15 ids-server sshd[1060]: Failed password for postgres from 91.240.118.22 port 49592 ssh2
+Jul 28 01:24:17 ids-server snort[1100]: [1:1000001:1] ET SCAN NMAP -sS window 2048 <-> ICMP (type:8, code:0) 91.240.118.22 -> 10.0.0.1
+Jul 28 01:24:20 ids-server snort[1100]: [1:1000002:1] ET SCAN NMAP OS detection probe 91.240.118.22 -> 10.0.0.1
+Jul 28 01:24:25 ids-server fail2ban[1065]: [sshd] Ban 91.240.118.26
+Jul 28 01:24:30 ids-server sshd[1070]: Failed password for invalid user oracle from 91.240.118.26 port 60123 ssh2
+Jul 28 01:24:32 ids-server sshd[1071]: Failed password for invalid user test from 91.240.118.26 port 60125 ssh2
+Jul 28 01:24:34 ids-server sshd[1072]: Failed password for invalid user git from 91.240.118.26 port 60127 ssh2
+Jul 28 01:24:36 ids-server fail2ban[1075]: [sshd] Total banned today: 47 IPs
+Jul 28 01:25:00 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.27 DST=10.0.0.1 PROTO=TCP DPT=3306
+Jul 28 01:25:01 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.27 DST=10.0.0.1 PROTO=TCP DPT=5432
+Jul 28 01:25:02 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.27 DST=10.0.0.1 PROTO=TCP DPT=6379
+Jul 28 01:25:03 ids-server kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:1a:2b:3c:4d:5e SRC=91.240.118.27 DST=10.0.0.1 PROTO=TCP DPT=27017
+Jul 28 01:26:00 ids-server fail2ban[1080]: [sshd] Unban 91.240.118.22 (ban duration expired)

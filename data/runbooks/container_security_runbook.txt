@@ -1,0 +1,38 @@
+RUNBOOK: Container and Kubernetes Security Incident Response
+
+Indicators:
+- Container breakout attempts: mounting host filesystem, accessing /proc/1/cgroup, checking capabilities
+- Docker socket abuse: curl commands targeting /var/run/docker.sock from within containers
+- Privileged container detection: containers running with --privileged flag or added capabilities
+- Unusual kubectl commands: get secrets, create clusterrolebinding, describe nodes
+- Unknown pods or containers deployed outside of CI/CD pipeline
+- Resource abuse: container consuming excessive CPU/memory for cryptomining
+- Kubelet API exposed to unauthorized networks
+
+Immediate Actions:
+1. Identify which container or pod is compromised — review container logs and audit logs
+2. Check if the container has escaped to the host — look for processes running as root on the host
+3. If host compromise is confirmed, isolate the entire Kubernetes node
+4. Revoke any service account tokens that may have been extracted from the compromised pod
+5. Review Kubernetes audit logs for unauthorized API calls (kubectl, API server access)
+6. Scan container images for known vulnerabilities that may have been exploited
+7. Check RBAC configurations for overly permissive roles or bindings
+
+Severity Classification:
+- High: Container compromised but no host escape, no access to cluster-level secrets
+- Critical: Container escape confirmed, host compromised, or cluster-admin access obtained
+
+Containment for Kubernetes:
+- Apply network policies to restrict pod-to-pod communication
+- Use Kubernetes Namespace isolation for affected workloads
+- Rotate all service account tokens and cluster certificates if cluster-admin was compromised
+- Consider draining the affected node and re-provisioning it
+
+Best Practices for Prevention:
+- Run containers with read-only root filesystem and drop all capabilities
+- Use pod security standards (restricted profile) and OPA/Gatekeeper policies
+- Never mount the Docker socket into a container
+- Enable Kubernetes audit logging and send logs to SIEM
+- Regularly scan container images for CVEs in CI/CD pipeline
+
+(End of file - total 35 lines)

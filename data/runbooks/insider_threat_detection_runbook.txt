@@ -1,0 +1,43 @@
+RUNBOOK: Insider Threat Detection and Response
+
+Indicators:
+- Accessing sensitive files outside normal working hours or from unusual locations
+- Downloading large volumes of data to personal devices or external storage
+- Emailing corporate data to personal email accounts
+- Repeated failed attempts to access systems or data the user has no authorization for
+- Unusual database queries: SELECT * without WHERE clauses, full table exports
+- Printing or screenshotting sensitive documents before resignation or role change
+- Accessing HR records, financial data, or intellectual property without job justification
+- Using remote desktop or SSH from non-corporate networks outside business hours
+- Short tenure combined with escalated access privileges in sensitive areas
+
+Immediate Actions:
+1. Do NOT confront the individual immediately — premature confrontation may lead to data destruction
+2. Preserve all logs: authentication logs, file access logs, email logs, DLP alerts
+3. Capture a forensic image of the user's workstation without alerting them
+4. Review the user's recent activity timeline (7-30 days) for pattern analysis
+5. Engage HR and legal counsel before any investigative actions that involve employee interaction
+6. Temporarily restrict the user's access while investigation is underway (with HR and management approval)
+7. Interview the user's manager and peers discreetly to assess behavioral concerns
+
+Severity Classification:
+- Medium: Policy violations, limited data accessed, no evidence of data exfiltration
+- High: Sensitive data accessed or exfiltrated, clear policy violations, potential IP theft
+- Critical: Large-scale data theft, sabotage, collaboration with external actors, or competitor involvement
+
+Evidence Preservation:
+Chain of custody is critical for insider threat cases because of legal and employment implications. All forensic evidence must be properly documented and preserved for potential legal proceedings. Engage digital forensics specialists for proper evidence collection.
+
+Response Scenarios:
+- Data Theft: Engage legal immediately, preserve network logs, determine data valuation
+- Sabotage: Isolate affected systems, check for backdoors or logic bombs, review code repositories
+- Collusion: Check communication logs (email, chat) for unauthorized information sharing
+- Account Compromise: Verify whether activity is truly the insider or an external attacker using stolen credentials
+
+Post-Incident:
+- Update user offboarding procedures to include immediate access revocation
+- Implement User and Entity Behavior Analytics (UEBA) tools
+- Review privileged access management (PAM) policies
+- Conduct security awareness training focused on data protection policies
+
+(End of file - total 36 lines)

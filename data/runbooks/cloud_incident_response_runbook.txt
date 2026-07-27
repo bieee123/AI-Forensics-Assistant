@@ -1,0 +1,41 @@
+RUNBOOK: Cloud Infrastructure Security Incident Response
+
+Indicators:
+- Unusual API calls from unfamiliar IPs or user agents in CloudTrail or audit logs
+- IAM keys created or used from unexpected geographic locations
+- S3 buckets or storage containers accessed from anonymous IPs
+- New resources deployed in regions where the organization has no operations
+- Security group or firewall rule modifications that broaden ingress access
+- Unusual billing activity suggesting resource abuse for cryptomining
+- Service principal or role assignments to unauthorized accounts
+- Credential leaks detected on public repositories or paste sites
+
+Immediate Actions:
+1. Identify the compromised credential or access path — review IAM last used timestamps
+2. Revoke the compromised credentials immediately (rotate keys, disable access keys)
+3. Review CloudTrail, Azure Activity Log, or GCP Audit Log for scope of unauthorized access
+4. Check for new resources created by the attacker: EC2 instances, Lambda functions, Kubernetes clusters
+5. Review S3/Blob Storage access logs for data exfiltration
+6. Check for modifications to logging or monitoring configurations (attacker trying to cover tracks)
+7. Lock down the root/administrator account and require MFA for all privileged users
+
+Severity Classification:
+- High: Compromised IAM user with limited scope, no data access, contained quickly
+- Critical: Root/Admin account compromise, data exfiltration, or infrastructure deleted/modified
+
+Cloud-Specific Containment:
+- Apply a service control policy (SCP) to restrict all actions to the affected account
+- Remove cross-account access roles that may have been abused
+- Enable AWS GuardDuty, Azure Defender, or GCP Security Command Center for enhanced detection
+- Review VPC flow logs for unusual network traffic from affected resources
+
+Forensic Considerations:
+Cloud forensic evidence must be preserved before remediation. Take snapshots of affected EBS volumes, export CloudTrail logs, and preserve Lambda function versions. Cloud providers maintain their own chain of custody for investigatory support.
+
+Post-Incident Improvements:
+- Implement least-privilege IAM policies with regular access reviews
+- Enable CloudTrail/Monitoring logs across all regions and organizations
+- Deploy CASB or cloud security posture management tools
+- Implement infrastructure as code (IaC) with security scanning in CI/CD
+
+(End of file - total 34 lines)

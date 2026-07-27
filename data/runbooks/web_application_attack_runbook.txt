@@ -1,0 +1,36 @@
+RUNBOOK: Web Application Attack Response
+
+Indicators:
+- SQL injection attempts: UNION SELECT, OR 1=1, WAITFOR DELAY patterns in request URLs or POST bodies
+- Cross-site scripting: script tags, img onerror, svg/onload payloads in input fields
+- Path traversal: ../ patterns, encoded directory traversal sequences
+- SSRF attempts: requests to 169.254.169.254 (cloud metadata), 127.0.0.1, internal IP ranges
+- File upload abuse: PHP files uploaded via image upload endpoints, double extensions (.jpg.php)
+- Unusually high 401/403 response rates from a single IP
+- API endpoints receiving unexpected data types or malformed requests
+
+Immediate Actions:
+1. Identify the attacking IP(s) and block at the WAF or firewall level
+2. Review web server access logs to determine which endpoints were targeted and what data may have been accessed
+3. Check database query logs for evidence of successful SQL injection — look for SELECTs on system tables
+4. If file upload abuse is detected, scan the web root for unknown files, especially in upload directories
+5. Review application error logs for stack traces or debugging output that may have leaked information
+6. Check for post-exploitation activity: webshells, reverse shells, or outbound connections from the web server
+
+Severity Classification:
+- Medium: Automated scanning detected, no successful exploitation confirmed, no data accessed
+- High: Successful exploitation of non-critical endpoint, limited data exposure, no privilege escalation
+- Critical: Successful database extraction, server compromise, or lateral movement from web server
+
+Common Attack Vectors:
+- OWASP Top 10: Injection, Broken Authentication, Sensitive Data Exposure, XXE, Broken Access Control
+- API-specific: Mass assignment, IDOR, rate limiting bypass, schema leakage
+- Framework-specific: Known CVEs in CMS platforms (WordPress, Drupal) or application frameworks
+
+Post-Incident Hardening:
+- Deploy/update WAF rules specific to the detected attack patterns
+- Implement input validation and parameterized queries for all database operations
+- Enable rate limiting on authentication and API endpoints
+- Conduct a full application security review and penetration test
+
+(End of file - total 29 lines)

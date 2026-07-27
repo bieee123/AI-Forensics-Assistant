@@ -1,0 +1,38 @@
+RUNBOOK: DNS Tunneling Detection and Response
+
+Indicators:
+- High volume of DNS queries to a single domain from one internal host
+- DNS query subdomains containing base64-encoded strings (alphanumeric with padding)
+- TXT record queries with unusually large response sizes
+- DNS queries to domains with high entropy names (DGA-like patterns)
+- Queries for non-existent domains (NXDOMAIN responses) at high rates
+- DNS traffic volume exceeding 100 queries per second from a single source IP
+- Queries during off-hours from internal servers that normally have low DNS activity
+- Response sizes exceeding 512 bytes over UDP (suggests EDNS0 tunneling)
+
+Immediate Actions:
+1. Identify the internal host generating the suspicious DNS traffic
+2. Collect a full PCAP of DNS traffic from the affected host for analysis
+3. Determine what data is being exfiltrated — decode base64 subdomain payloads
+4. Identify the destination DNS server receiving the queries
+5. Block the malicious domain at the recursive DNS resolver level
+6. Check the affected host for tunneling tools: iodine, dnscat2, dns2tcp, Heyoka
+
+Severity Classification:
+- Medium: DNS tunneling detected, small data volume, exfiltration just started
+- High: DNS tunneling with confirmed data exfiltration, unknown volume
+- Critical: DNS tunneling combined with other attack indicators, or long-duration exfiltration
+
+Detection Methods:
+- Monitor DNS query entropy: legitimate domains have entropy < 2.5, tunneling > 3.0
+- Track DNS query volume per host per minute — establish baseline for your environment
+- Check DNS query sizes: tunneling queries are typically 200-300 bytes vs normal 40-60 bytes
+- Monitor out-of-hours DNS activity from non-user systems
+
+Mitigation:
+- Configure DNS resolvers to block high-entropy domain queries
+- Restrict DNS resolution to authorized DNS servers only (no external DNS direct)
+- Deploy DNS traffic analysis tools (DNS firewall, Response Policy Zones)
+- Enforce TLS for DNS (DoT/DoH) to prevent unencrypted tunneling
+
+(End of file - total 32 lines)

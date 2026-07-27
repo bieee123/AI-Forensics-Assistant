@@ -1,0 +1,40 @@
+RUNBOOK: Supply Chain Compromise Response
+
+Indicators:
+- CI/CD pipeline executing unexpected commands or downloading external scripts
+- Package manager (npm, pip, apt, gem) warnings about dependency integrity mismatches
+- Modified source code in repositories without author attribution
+- Unexpected outbound connections from build servers during build process
+- Unusual package versions or dependencies introduced without code review
+- GPG key warnings or key changes for trusted package repositories
+- Docker base images showing unexpected modifications or unknown layers
+- Compromised developer credentials used to push code outside normal hours
+
+Immediate Actions:
+1. Halt the CI/CD pipeline immediately to prevent malicious artifacts from reaching production
+2. Identify the compromised dependency or supply chain component
+3. Trace the origin: was it a direct dependency compromise or transitive (dependency of a dependency)?
+4. Check for similar compromises in other projects within the organization
+5. Review all commits merged in the affected time window for unauthorized changes
+6. Rotate all credentials used by the CI/CD system (API tokens, SSH keys, cloud credentials)
+7. Audit package lock files for integrity mismatches against known-good hashes
+
+Severity Classification:
+- High: Compromised development dependency identified before reaching production
+- Critical: Compromised artifact deployed to production, affecting customers or production data
+
+Containment and Remediation:
+- Pin all dependency versions with integrity hashes in package lock files
+- Remove compromised dependencies and replace with verified alternatives
+- Reset all CI/CD secrets and deploy keys
+- Review all artifacts built during the compromise window for backdoors
+- Implement mandatory code signing for all CI/CD artifacts
+
+Long-Term Hardening:
+- Use private package registries with manual approval for new packages
+- Implement Software Bill of Materials (SBOM) generation for all builds
+- Enable GitHub/GitLab Dependabot or similar dependency scanning
+- Require multi-party approval for changes to CI/CD configuration
+- Regularly audit all third-party dependencies for known vulnerabilities
+
+(End of file - total 33 lines)

