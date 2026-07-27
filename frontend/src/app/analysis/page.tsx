@@ -122,6 +122,10 @@ function AnalysisPageContent() {
       if (job.status === "done" && job.result) {
         setLoading(false)
         setResult(job.result)
+        const analyzedAt = (job.result as any).analyzed_at
+        if (analyzedAt) {
+          setCachedAt(analyzedAt)
+        }
         setSessionCache(parseInt(uploadId!), job.result)
       } else if (job.status === "error") {
         api.getAnalysisResult(parseInt(uploadId!)).then(saved => {
@@ -226,10 +230,14 @@ function AnalysisPageContent() {
   const severityLabel = (result?.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
   let recommendationText = ""
   let displayNarrative = narrativeText
-  if (narrativeText.includes("Recommendation:")) {
-    const idx = narrativeText.indexOf("Recommendation:")
-    recommendationText = narrativeText.slice(idx + "Recommendation:".length).trim()
-    displayNarrative = narrativeText.substring(0, idx).trim()
+  const recIndex = narrativeText.toLowerCase().indexOf("recommendation:")
+  if (recIndex !== -1) {
+    const recLabel = narrativeText.slice(recIndex, recIndex + 14)
+    const idx = narrativeText.indexOf(recLabel, recIndex)
+    if (idx !== -1) {
+      recommendationText = narrativeText.slice(idx + recLabel.length).trim()
+      displayNarrative = narrativeText.substring(0, idx).trim()
+    }
   }
 
   return (
@@ -443,17 +451,17 @@ function AnalysisPageContent() {
             {/* Severity header */}
             <div
               className="severity-card bg-bg-elevated border border-border-subtle rounded-lg px-5 py-4 flex items-center gap-2.5 flex-wrap"
-              style={{ borderLeftColor: severityLabel === "CRITICAL" ? "var(--severity-critical)" : severityLabel === "HIGH" ? "var(--severity-high)" : "var(--severity-medium)" }}
+              style={{ borderLeftColor: severityLabel === "CRITICAL" ? "var(--severity-critical)" : severityLabel === "HIGH" ? "var(--severity-high)" : severityLabel === "MEDIUM" ? "var(--severity-medium)" : "var(--severity-low)" }}
             >
               <span className={severityBadgeClass(severityLabel)}>{severityLabel}</span>
               <span className="font-semibold text-text-primary">Severity: {severityLabel}</span>
               <span style={{ color: "var(--text-muted)" }}>·</span>
               <span className="font-mono" style={{ color: "var(--text-secondary)" }}>{result.total_incidents} {tr.analysis.incidents}</span>
-              {fromCache && cachedAt && (
+              {cachedAt && (
                 <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-md"
                   style={{ background: "var(--accent-bg)", color: "var(--text-muted)" }}>
                   <Database size={11} />
-                  Saved · {new Date(cachedAt).toLocaleString()}
+                  {fromCache ? "Saved" : "Analyzed"} · {new Date(cachedAt).toLocaleString()}
                 </span>
               )}
             </div>
@@ -545,10 +553,10 @@ function AnalysisPageContent() {
                           >
                             <td className="font-mono">{fmtTime(entry.timestamp)}</td>
                             <td><span className={eventBadgeClass(entry.event_type)}>{formatEventType(entry.event_type)}</span></td>
-                            <td className="font-mono">{entry.source_ip}</td>
-                            <td className="font-mono">{entry.user}</td>
-                            <td className="font-mono">{entry.auth_method || "—"}</td>
-                            <td>{entry.status}</td>
+                            <td className="font-mono">{entry.source_ip || "—"}</td>
+                            <td className="font-mono">{entry.user || "—"}</td>
+                            <td className="font-mono">{"—"}</td>
+                            <td>{entry.status || "—"}</td>
                           </tr>
                           {expandedRows.has(idx) && (
                             <tr>

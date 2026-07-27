@@ -40,10 +40,10 @@ function TimelinePageContent() {
 
   // Fetch entries when activeUploadId changes
   useEffect(() => {
+    setEntries([]);
     if (activeUploadId) {
       setLoading(true);
       setError("");
-      setEntries([]);
       api.getEntries(activeUploadId)
         .then(data => setEntries(data))
         .catch(() => setError("Failed to load timeline"))
@@ -182,9 +182,9 @@ function TimelinePageContent() {
                   </div>
                   <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
                     {entry.source_ip ? (
-                      <>User <span className="font-mono">&apos;{entry.user}&apos;</span> via {entry.auth_method} from {entry.source_ip}</>
+                      <>User <span className="font-mono">&apos;{entry.user || "—"}&apos;</span> via {entry.auth_method || "—"} from {entry.source_ip}</>
                     ) : (
-                      <>Source: <span className="font-mono">{entry.source}</span></>
+                      <>Source: <span className="font-mono">{entry.source || "—"}</span></>
                     )}
                   </p>
                   <button
