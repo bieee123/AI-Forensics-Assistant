@@ -448,12 +448,15 @@ export default function DashboardPage() {
                     <>
                       <div className="flex flex-wrap gap-1.5">
                         {(data?.recent_iocs ?? []).slice(0, 10).map((ip, i) => (
-                          <div key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md inline-flex items-center gap-1.5"
+                          <span key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md"
                             style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", cursor: "pointer" }}
                             onClick={() => copyIoc(ip, i)}>
-                            <span>{ip}</span>
-                            {copiedIocIdx === i ? <span className="text-[10px]" style={{color:"var(--severity-low)"}}>✓</span> : <Copy size={11} style={{ opacity: 0.5 }} />}
-                          </div>
+                            {ip}
+                            {copiedIocIdx === i
+                              ? <span style={{ color: "var(--severity-low)", fontSize: 10, marginLeft: 3 }}>✓</span>
+                              : <Copy size={11} style={{ opacity: 0.5, marginLeft: 3, verticalAlign: "middle" }} />
+                            }
+                          </span>
                         ))}
                         {(data?.recent_iocs ?? []).length > 10 && (
                           <div className="self-center" style={{ position: "relative", display: "inline-block" }}
