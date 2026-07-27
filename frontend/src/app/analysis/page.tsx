@@ -124,8 +124,17 @@ function AnalysisPageContent() {
         setResult(job.result)
         setSessionCache(parseInt(uploadId!), job.result)
       } else if (job.status === "error") {
-        setLoading(false)
-        setError("Analysis failed. Please try again.")
+        api.getAnalysisResult(parseInt(uploadId!)).then(saved => {
+          if (saved && saved.severity_overall) {
+            setLoading(false)
+            setResult(saved)
+            setSessionCache(parseInt(uploadId!), saved)
+            return
+          }
+        }).catch(() => {
+          setLoading(false)
+          setError("Analysis failed. Please try again.")
+        })
       } else if (job.status === "running") {
         setLoading(true)
         setProgressPercent(job.progress)

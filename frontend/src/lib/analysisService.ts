@@ -3,7 +3,7 @@ import { startAnalysisJob, updateProgress, completeJob, failJob } from "./analys
 import { setSessionCache } from "./cache"
 
 const POLL_INTERVAL_MS = 2000
-const MAX_TIMEOUT_MS = 180000
+const MAX_TIMEOUT_MS = 300000
 
 const inflight = new Map<number, Promise<void>>()
 
@@ -35,6 +35,15 @@ export function triggerAnalysis(uploadId: number, filename: string): Promise<voi
         if (Date.now() - pollStart > MAX_TIMEOUT_MS) {
           clearInterval(poller)
           clearInterval(progressInterval)
+          try {
+            const lastCheck = await api.getAnalysisResult(uploadId)
+            if (lastCheck && lastCheck.severity_overall) {
+              completeJob(lastCheck as any)
+              setSessionCache(uploadId, lastCheck as any)
+              resolve()
+              return
+            }
+          } catch {}
           failJob("Analysis timed out")
           resolve()
           return
