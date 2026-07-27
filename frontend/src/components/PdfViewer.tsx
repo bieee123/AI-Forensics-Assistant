@@ -1,8 +1,15 @@
 "use client";
 import { useState } from "react";
-import { Document, Page } from "react-pdf";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SkeletonCard, SkeletonTable } from "@/components/ui/Skeleton";
+
+const pdfWorkerVersion = pdfjs.version || "6.1.200";
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfWorkerVersion}/pdf.worker.min.mjs`;
+}
 
 export default function PdfViewer({ blobUrl }: { blobUrl: string }) {
   const [numPages, setNumPages] = useState<number | null>(null);
