@@ -448,15 +448,16 @@ export default function DashboardPage() {
                     <>
                       <div className="flex flex-wrap gap-1.5">
                         {(data?.recent_iocs ?? []).slice(0, 10).map((ip, i) => (
-                          <span key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md"
-                            style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", cursor: "pointer" }}
-                            onClick={() => copyIoc(ip, i)}>
-                            {ip}
-                            {copiedIocIdx === i
-                              ? <span style={{ color: "var(--severity-low)", fontSize: 10, marginLeft: 3 }}>✓</span>
-                              : <Copy size={11} style={{ opacity: 0.5, marginLeft: 3, verticalAlign: "middle" }} />
-                            }
-                          </span>
+                          <div key={i} className="chip inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px]"
+                            style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
+                            <span className="font-mono">{ip}</span>
+                            <button onClick={() => copyIoc(ip, i)}
+                              className="border-none bg-none cursor-pointer p-0 flex items-center"
+                              style={{ color: "var(--text-muted)" }}
+                              title="Copy to clipboard">
+                              {copiedIocIdx === i ? <span style={{ color: "var(--severity-low)", fontSize: 12 }}>✓</span> : <Copy size={13} />}
+                            </button>
+                          </div>
                         ))}
                         {(data?.recent_iocs ?? []).length > 10 && (
                           <div className="self-center" style={{ position: "relative", display: "inline-block" }}
@@ -504,7 +505,7 @@ export default function DashboardPage() {
                                       <span className="truncate mr-2">{ip}</span>
                                       {copiedIocIdx === i
                                         ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓ Copied</span>
-                                        : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                                        : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)" }} />
                                       }
                                     </div>
                                   ))}
