@@ -5,7 +5,9 @@ import { X } from "lucide-react"
 import { AnalysisJob, getActiveJob } from "@/lib/analysisStore"
 
 const COLLAPSE_AFTER_MS = 20_000
-const DEFAULT_POS = { x: 24, y: 24 } // bottom-right offsets in px
+const DEFAULT_POS = { x: 24, y: 24 }
+const BUBBLE_SIZE = 56
+const MIN_MARGIN = 8
 
 // Global session state to persist collapsed state and position across Next.js page navigations
 let globalCollapsed = false
@@ -56,6 +58,8 @@ export default function AnalysisProgressToast() {
   // Track pointer down details to distinguish click vs drag
   const pointerDownRef = useRef<{ clientX: number; clientY: number; posX: number; posY: number; hasMoved: boolean } | null>(null)
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const posRef = useRef(pos)
+  posRef.current = pos
   const router = useRouter()
 
   // Automatically collapse expanded toast to bubble after 20 seconds
@@ -109,21 +113,31 @@ export default function AnalysisProgressToast() {
       const dx = e.clientX - pointerDownRef.current.clientX
       const dy = e.clientY - pointerDownRef.current.clientY
 
-      // If moved more than 4px, treat as dragging
       if (Math.hypot(dx, dy) > 4) {
         pointerDownRef.current.hasMoved = true
         setIsDragging(true)
-        const newX = Math.max(8, pointerDownRef.current.posX - dx)
-        const newY = Math.max(8, pointerDownRef.current.posY - dy)
+        const winW = window.innerWidth
+        const winH = window.innerHeight
+        const maxX = winW - BUBBLE_SIZE - MIN_MARGIN
+        const maxY = winH - BUBBLE_SIZE - MIN_MARGIN
+        const newX = Math.max(MIN_MARGIN, Math.min(maxX, pointerDownRef.current.posX - dx))
+        const newY = Math.max(MIN_MARGIN, Math.min(maxY, pointerDownRef.current.posY - dy))
         setPos({ x: newX, y: newY })
       }
     }
 
     const onMouseUp = () => {
       if (pointerDownRef.current) {
-        // If it didn't move, it's a click! Expand the bubble & reset 20s collapse timer
         if (!pointerDownRef.current.hasMoved) {
           setCollapsed(false)
+        } else {
+          // Snap to nearest horizontal edge (Messenger-style)
+          const cp = posRef.current
+          const winW = window.innerWidth
+          const distRight = cp.x
+          const distLeft = winW - cp.x - BUBBLE_SIZE
+          const snapX = distRight < distLeft ? MIN_MARGIN : winW - BUBBLE_SIZE - MIN_MARGIN
+          setPos({ x: snapX, y: cp.y })
         }
         pointerDownRef.current = null
       }
