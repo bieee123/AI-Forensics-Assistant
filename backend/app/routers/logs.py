@@ -148,15 +148,23 @@ def get_summary():
             AnalysisResultDB.analyzed_at.desc()
         ).limit(5).all()
 
-        # ── IoC overview: collect unique IPs from recent analyses ──
-        recent_iocs = set()
+        # ── IoC overview: collect IPs with source context from recent analyses ──
+        seen_ips = set()
+        recent_iocs = []
         for r in recent_analyses:
             if r.ioc_summary:
                 try:
                     ips = json.loads(r.ioc_summary)
                     if isinstance(ips, list):
                         for ip in ips:
-                            recent_iocs.add(ip)
+                            if ip not in seen_ips:
+                                seen_ips.add(ip)
+                                recent_iocs.append({
+                                    "ip": ip,
+                                    "upload_id": r.upload_id,
+                                    "filename": r.filename,
+                                    "severity": r.severity,
+                                })
                 except (json.JSONDecodeError, TypeError):
                     pass
 
@@ -280,7 +288,7 @@ def get_summary():
             "critical_alerts": critical_alerts,
             "severity_breakdown": severity_breakdown,
             "recent_analyses": [serialize_analysis(a) for a in recent_analyses],
-            "recent_iocs": list(recent_iocs),
+            "recent_iocs": recent_iocs,
 
             "total_artifacts": total_artifacts,
             "acquisition_data_size": acquisition_data_size,

@@ -446,16 +446,20 @@ export default function DashboardPage() {
                     </div>
                   ) : (data?.recent_iocs ?? []).length > 0 ? (
                     <>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(data?.recent_iocs ?? []).slice(0, 10).map((ip, i) => (
-                          <div key={i} className="chip inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px]"
+                      <div className="flex flex-col gap-2">
+                        {(data?.recent_iocs ?? []).slice(0, 10).map((ioc, i) => (
+                          <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between gap-3"
                             style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
-                            <span className="font-mono">{ip}</span>
-                            <button onClick={() => copyIoc(ip, i)}
-                              className="border-none bg-none cursor-pointer p-0 flex items-center"
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="font-mono text-[12px]" style={{ color: "var(--text-primary)" }}>{ioc.ip}</span>
+                              <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }} title={ioc.filename}>{ioc.filename}</span>
+                              <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "1px 6px", letterSpacing: "0.04em" }}>{ioc.severity}</span>
+                            </div>
+                            <button onClick={() => copyIoc(ioc.ip, i)}
+                              className="border-none bg-none cursor-pointer p-1 flex items-center shrink-0 rounded"
                               style={{ color: "var(--text-muted)" }}
                               title="Copy to clipboard">
-                              {copiedIocIdx === i ? <span style={{ color: "var(--severity-low)", fontSize: 12 }}>✓</span> : <Copy size={13} />}
+                              {copiedIocIdx === i ? <span style={{ color: "var(--severity-low)", fontSize: 12 }}>✓</span> : <Copy size={12} />}
                             </button>
                           </div>
                         ))}
@@ -479,13 +483,13 @@ export default function DashboardPage() {
                                 padding: "14px 16px",
                                 boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
                                 zIndex: 50,
-                                minWidth: 320,
-                                maxHeight: 240,
+                                minWidth: 380,
+                                maxHeight: 280,
                                 overflowY: "auto",
                               }}>
                                 <div className="flex items-center justify-between mb-2.5">
                                   <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                    All IPs ({data!.recent_iocs.length})
+                                    All IoCs ({data!.recent_iocs.length})
                                   </span>
                                   <button onClick={() => setMoreHover(false)}
                                     className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
@@ -495,16 +499,19 @@ export default function DashboardPage() {
                                     ✕
                                   </button>
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                  {data!.recent_iocs.map((ip, i) => (
-                                    <div key={i} className="font-mono text-[12px] px-2 py-1 rounded flex items-center justify-between transition-all"
-                                      onClick={() => copyIoc(ip, i)}
+                                <div className="flex flex-col gap-1">
+                                  {data!.recent_iocs.map((ioc, i) => (
+                                    <div key={i} className="px-2 py-1.5 rounded flex items-center justify-between gap-2 transition-all"
                                       style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
                                       onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
                                       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
-                                      <span className="truncate mr-2">{ip}</span>
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <span className="font-mono text-[12px]" onClick={() => copyIoc(ioc.ip, i)}>{ioc.ip}</span>
+                                        <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{ioc.filename}</span>
+                                        <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "0 5px" }}>{ioc.severity}</span>
+                                      </div>
                                       {copiedIocIdx === i
-                                        ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓ Copied</span>
+                                        ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓</span>
                                         : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)" }} />
                                       }
                                     </div>
@@ -516,7 +523,7 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
-                        {(data?.recent_iocs ?? []).length} unique IPs from recent analyses
+                        {(data?.recent_iocs ?? []).length} indicators from recent analyses
                       </p>
                     </>
                   ) : (

@@ -151,7 +151,7 @@ export interface Summary {
   critical_alerts: number;
   severity_breakdown: Record<string, number>;
   recent_analyses: RecentAnalysis[];
-  recent_iocs: string[];
+  recent_iocs: RecentIoc[];
   total_artifacts: number;
   acquisition_data_size: number;
   last_acquisition: string | null;
@@ -183,6 +183,12 @@ export interface RecentArtifact {
   filename: string;
   size_bytes: number;
   sha256: string;
+}
+export interface RecentIoc {
+  ip: string;
+  upload_id: number;
+  filename: string;
+  severity: string;
 }
 export interface TimelineDailyCount {
   date: string;
