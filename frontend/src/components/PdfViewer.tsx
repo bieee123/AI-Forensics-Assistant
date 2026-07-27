@@ -50,8 +50,11 @@ export default function PdfViewer({ blobUrl }: { blobUrl: string }) {
             </div>
           }>
           {numPages && Array.from({ length: numPages }, (_, i) => (
-            <Page key={i + 1} pageNumber={i + 1} width={pageWidth}
-                  renderTextLayer renderAnnotationLayer />
+            <div key={i + 1}
+                 style={{ margin: "0 auto 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.12)", borderRadius: 2 }}>
+              <Page pageNumber={i + 1} width={pageWidth}
+                    renderTextLayer renderAnnotationLayer />
+            </div>
           ))}
         </Document>
       </div>
