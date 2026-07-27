@@ -264,275 +264,269 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Row 3: Two columns — Left: Severity + Recent Analyses, Right: Acquisition + IoC */}
-            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
-              {/* Left column */}
-              <div className="flex flex-col gap-4">
-                {/* Severity Breakdown */}
-                <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-                  <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-4">
-                    <BarChart3 size={15} />
-                    Severity Breakdown
+            {/* Row 3: 2×2 grid — Left: Severity + Recent Analyses, Right: Acquisition + IoC */}
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto 1fr" }}>
+              {/* Row 1, Col 1 — Severity Breakdown */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
+                <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-4">
+                  <BarChart3 size={15} />
+                  Severity Breakdown
+                </div>
+                {loading ? (
+                  <div className="flex flex-col gap-2">
+                    {["CRITICAL","HIGH","MEDIUM","LOW"].map(s => (
+                      <div key={s} className="flex items-center gap-2.5">
+                        <Sk h={12} w={56} rounded="sm" />
+                        <Sk h={18} className="flex-1" rounded="sm" />
+                        <Sk h={12} w={32} rounded="sm" />
+                      </div>
+                    ))}
                   </div>
-                  {loading ? (
-                    <div className="flex flex-col gap-2">
-                      {["CRITICAL","HIGH","MEDIUM","LOW"].map(s => (
-                        <div key={s} className="flex items-center gap-2.5">
-                          <Sk h={12} w={56} rounded="sm" />
-                          <Sk h={18} className="flex-1" rounded="sm" />
-                          <Sk h={12} w={32} rounded="sm" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <>
-                      {Object.entries(data?.severity_breakdown ?? {}).map(([sev, count]) => {
-                        const pct = maxSeverity > 0 ? (count / maxSeverity) * 100 : 0;
-                        return (
-                          <div key={sev} className="flex items-center gap-2.5 mb-2 last:mb-0">
-                            <span className="text-[12px] font-mono w-16 shrink-0" style={{ color: "var(--text-secondary)" }}>{sev}</span>
-                            <div className="flex-1 h-[18px] rounded-sm" style={{ background: "var(--bg-base)" }}>
-                              <div className="h-full rounded-sm transition-all duration-500" style={{
-                                width: `${Math.max(pct, count > 0 ? 3 : 0)}%`,
-                                background: SEV_COLORS[sev] || "#8B92A9",
-                              }} />
-                            </div>
-                            <span className="text-[12px] font-mono w-10 text-right" style={{ color: "var(--text-primary)" }}>{count}</span>
+                ) : (
+                  <>
+                    {Object.entries(data?.severity_breakdown ?? {}).map(([sev, count]) => {
+                      const pct = maxSeverity > 0 ? (count / maxSeverity) * 100 : 0;
+                      return (
+                        <div key={sev} className="flex items-center gap-2.5 mb-2 last:mb-0">
+                          <span className="text-[12px] font-mono w-16 shrink-0" style={{ color: "var(--text-secondary)" }}>{sev}</span>
+                          <div className="flex-1 h-[18px] rounded-sm" style={{ background: "var(--bg-base)" }}>
+                            <div className="h-full rounded-sm transition-all duration-500" style={{
+                              width: `${Math.max(pct, count > 0 ? 3 : 0)}%`,
+                              background: SEV_COLORS[sev] || "#8B92A9",
+                            }} />
                           </div>
-                        );
-                      })}
-                      {Object.values(data?.severity_breakdown ?? {}).every(v => v === 0) && (
-                        <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No analysis data yet.</p>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Recent Analyses */}
-                <div className="bg-bg-elevated border border-border-subtle rounded-lg">
-                  <div className="flex justify-between items-center px-5 py-4 border-b border-border-subtle">
-                    <span className="font-semibold text-[13px] text-text-primary">Recent Analysis Results</span>
-                    <button onClick={() => router.push("/analysis")}
-                      className="text-xs border-none bg-transparent cursor-pointer" style={{ color: "var(--text-secondary)" }}>
-                      View All
-                    </button>
-                  </div>
-                  {loading ? (
-                    <SkeletonTable rows={3} cols={5} colWidths={["18%","30%","14%","16%","16%"]} showHeader={false} />
-                  ) : (data?.recent_analyses ?? []).length > 0 ? (
-                    <table>
-                      <colgroup>
-                        <col style={{ width: 100 }} />
-                        <col />
-                        <col style={{ width: 80 }} />
-                        <col style={{ width: 90 }} />
-                        <col style={{ width: 100 }} />
-                      </colgroup>
-                      <thead>
-                        <tr>
-                          <th>Severity</th>
-                          <th>Filename</th>
-                          <th>Incidents</th>
-                          <th>Date</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(data?.recent_analyses ?? []).map((a) => (
-                          <tr key={a.upload_id} className="row-hover cursor-pointer" onClick={() => router.push(`/analysis?upload_id=${a.upload_id}`)}>
-                            <td>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
-                                style={{ background: `${SEV_COLORS[a.severity] || "#8B92A9"}20`, color: SEV_COLORS[a.severity] || "#8B92A9" }}>
-                                {a.severity}
-                              </span>
-                            </td>
-                            <td className="truncate max-w-0">{a.filename}</td>
-                            <td className="font-mono">{a.total_incidents}</td>
-                            <td className="font-mono text-[12px]">{new Date(a.analyzed_at).toLocaleDateString("en-GB")}</td>
-                            <td>
-                              <button onClick={(e) => { e.stopPropagation(); router.push(`/analysis?upload_id=${a.upload_id}`); }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer border-none transition-all"
-                                style={{ background: "var(--accent)", color: "#fff" }}
-                                onMouseEnter={e => e.currentTarget.style.background = "var(--accent-hover)"}
-                                onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
-                              >
-                                <Brain size={12} />
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="empty-state">
-                      <Brain size={28} />
-                      <span>No analyses performed yet.</span>
-                    </div>
-                  )}
-                </div>
+                          <span className="text-[12px] font-mono w-10 text-right" style={{ color: "var(--text-primary)" }}>{count}</span>
+                        </div>
+                      );
+                    })}
+                    {Object.values(data?.severity_breakdown ?? {}).every(v => v === 0) && (
+                      <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No analysis data yet.</p>
+                    )}
+                  </>
+                )}
               </div>
 
-              {/* Right column */}
-              <div className="flex flex-col gap-4">
-                {/* Acquisition Summary */}
-                <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-                  <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-3.5">
-                    <HardDrive size={15} />
-                    Acquisition Summary
-                  </div>
-                  {loading ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center">
-                        <Sk h={12} w="50%" rounded="sm" />
-                        <Sk h={13} w={50} rounded="sm" />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <Sk h={12} w="40%" rounded="sm" />
-                        <Sk h={13} w={60} rounded="sm" />
-                      </div>
+              {/* Row 1, Col 2 — Acquisition Summary */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
+                <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-3.5">
+                  <HardDrive size={15} />
+                  Acquisition Summary
+                </div>
+                {loading ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <Sk h={12} w="50%" rounded="sm" />
+                      <Sk h={13} w={50} rounded="sm" />
                     </div>
-                  ) : (data?.total_artifacts ?? 0) > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Artifacts</span>
-                        <span className="font-mono text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data?.total_artifacts}</span>
+                    <div className="flex justify-between items-center">
+                      <Sk h={12} w="40%" rounded="sm" />
+                      <Sk h={13} w={60} rounded="sm" />
+                    </div>
+                  </div>
+                ) : (data?.total_artifacts ?? 0) > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Artifacts</span>
+                      <span className="font-mono text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data?.total_artifacts}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Data Size</span>
+                      <span className="font-mono text-[13px]" style={{ color: "var(--text-primary)" }}>{formatBytes(data?.acquisition_data_size ?? 0)}</span>
+                    </div>
+                    {(data?.recent_artifacts ?? []).length > 0 && (
+                      <div className="mt-1">
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>RECENT</span>
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          {(data?.recent_artifacts ?? []).slice(0, 3).map((art, i) => (
+                            <div key={i} className="flex items-center justify-between text-[12px]">
+                              <span className="truncate max-w-[140px]" title={art.filename} style={{ color: "var(--text-secondary)" }}>{art.filename}</span>
+                              <span className="font-mono shrink-0" style={{ color: "var(--text-muted)" }}>{formatBytes(art.size_bytes)}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Total Data Size</span>
-                        <span className="font-mono text-[13px]" style={{ color: "var(--text-primary)" }}>{formatBytes(data?.acquisition_data_size ?? 0)}</span>
-                      </div>
-                      {(data?.recent_artifacts ?? []).length > 0 && (
-                        <div className="mt-1">
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>RECENT</span>
-                          <div className="flex flex-col gap-1.5 mt-2">
-                            {(data?.recent_artifacts ?? []).slice(0, 3).map((art, i) => (
-                              <div key={i} className="flex items-center justify-between text-[12px]">
-                                <span className="truncate max-w-[140px]" title={art.filename} style={{ color: "var(--text-secondary)" }}>{art.filename}</span>
-                                <span className="font-mono shrink-0" style={{ color: "var(--text-muted)" }}>{formatBytes(art.size_bytes)}</span>
-                              </div>
-                            ))}
+                    )}
+                    <button onClick={() => router.push("/acquisition")}
+                      className="w-full mt-2 py-1.5 rounded-md text-[12px] font-medium cursor-pointer border-none transition-all"
+                      style={{ background: "var(--accent-bg)", color: "var(--accent)" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
+                    >
+                      View All Artifacts
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-3">
+                    <HardDrive size={24} style={{ color: "var(--text-muted)" }} />
+                    <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No artifacts acquired yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 2, Col 1 — Recent Analyses */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg" style={{ height: "100%" }}>
+                <div className="flex justify-between items-center px-5 py-4 border-b border-border-subtle">
+                  <span className="font-semibold text-[13px] text-text-primary">Recent Analysis Results</span>
+                  <button onClick={() => router.push("/analysis")}
+                    className="text-xs border-none bg-transparent cursor-pointer" style={{ color: "var(--text-secondary)" }}>
+                    View All
+                  </button>
+                </div>
+                {loading ? (
+                  <SkeletonTable rows={3} cols={5} colWidths={["18%","30%","14%","16%","16%"]} showHeader={false} />
+                ) : (data?.recent_analyses ?? []).length > 0 ? (
+                  <table>
+                    <colgroup>
+                      <col style={{ width: 100 }} />
+                      <col />
+                      <col style={{ width: 80 }} />
+                      <col style={{ width: 90 }} />
+                      <col style={{ width: 100 }} />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>Severity</th>
+                        <th>Filename</th>
+                        <th>Incidents</th>
+                        <th>Date</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(data?.recent_analyses ?? []).map((a) => (
+                        <tr key={a.upload_id} className="row-hover cursor-pointer" onClick={() => router.push(`/analysis?upload_id=${a.upload_id}`)}>
+                          <td>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+                              style={{ background: `${SEV_COLORS[a.severity] || "#8B92A9"}20`, color: SEV_COLORS[a.severity] || "#8B92A9" }}>
+                              {a.severity}
+                            </span>
+                          </td>
+                          <td className="truncate max-w-0">{a.filename}</td>
+                          <td className="font-mono">{a.total_incidents}</td>
+                          <td className="font-mono text-[12px]">{new Date(a.analyzed_at).toLocaleDateString("en-GB")}</td>
+                          <td>
+                            <button onClick={(e) => { e.stopPropagation(); router.push(`/analysis?upload_id=${a.upload_id}`); }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer border-none transition-all"
+                              style={{ background: "var(--accent)", color: "#fff" }}
+                              onMouseEnter={e => e.currentTarget.style.background = "var(--accent-hover)"}
+                              onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}
+                            >
+                              <Brain size={12} />
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="empty-state">
+                    <Brain size={28} />
+                    <span>No analyses performed yet.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 2, Col 2 — IoC Overview */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5" style={{ height: "100%" }}>
+                <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-3">
+                  <Globe size={15} />
+                  IoC Overview
+                </div>
+                {loading ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {[100,80,110,90,75,95].map((w,i) => (
+                      <Sk key={i} h={26} w={w} rounded="md" />
+                    ))}
+                  </div>
+                ) : (data?.recent_iocs ?? []).length > 0 ? (
+                  <>
+                    <div className="flex flex-col gap-2">
+                      {(data?.recent_iocs ?? []).slice(0, 10).map((ioc, i) => (
+                        <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between gap-3"
+                          style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="font-mono text-[12px]" style={{ color: "var(--text-primary)" }}>{ioc.ip}</span>
+                            <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }} title={ioc.filename}>{ioc.filename}</span>
+                            <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "1px 6px", letterSpacing: "0.04em" }}>{ioc.severity}</span>
                           </div>
+                          <button onClick={() => copyIoc(ioc.ip, i)}
+                            className="border-none bg-none cursor-pointer p-1 flex items-center shrink-0 rounded"
+                            style={{ color: "var(--text-muted)" }}
+                            title="Copy to clipboard">
+                            {copiedIocIdx === i ? <span style={{ color: "var(--severity-low)", fontSize: 12 }}>✓</span> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      ))}
+                      {(data?.recent_iocs ?? []).length > 10 && (
+                        <div className="self-center" style={{ position: "relative", display: "inline-block" }}
+                          onMouseEnter={handleMoreEnter}
+                          onMouseLeave={handleMoreLeave}
+                        >
+                          <span className="text-[11px] inline-block" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)", cursor: "pointer" }}>
+                            +{data!.recent_iocs.length - 10} more
+                          </span>
+                          {moreHover && (
+                            <div style={{
+                              position: "absolute",
+                              bottom: "calc(100% + 8px)",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              background: "var(--bg-elevated)",
+                              border: "1px solid var(--border-subtle)",
+                              borderRadius: 8,
+                              padding: "14px 16px",
+                              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                              zIndex: 50,
+                              minWidth: 380,
+                              maxHeight: 280,
+                              overflowY: "auto",
+                            }}>
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                  All IoCs ({data!.recent_iocs.length})
+                                </span>
+                                <button onClick={() => setMoreHover(false)}
+                                  className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
+                                  style={{ color: "var(--text-muted)" }}
+                                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
+                                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+                                  ✕
+                                </button>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                {data!.recent_iocs.map((ioc, i) => (
+                                  <div key={i} className="px-2 py-1.5 rounded flex items-center justify-between gap-2 transition-all"
+                                    style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="font-mono text-[12px]" onClick={() => copyIoc(ioc.ip, i)}>{ioc.ip}</span>
+                                      <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{ioc.filename}</span>
+                                      <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "0 5px" }}>{ioc.severity}</span>
+                                    </div>
+                                    {copiedIocIdx === i
+                                      ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓</span>
+                                      : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)" }} />
+                                    }
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
-                      <button onClick={() => router.push("/acquisition")}
-                        className="w-full mt-2 py-1.5 rounded-md text-[12px] font-medium cursor-pointer border-none transition-all"
-                        style={{ background: "var(--accent-bg)", color: "var(--accent)" }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#fff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-bg)"; e.currentTarget.style.color = "var(--accent)"; }}
-                      >
-                        View All Artifacts
-                      </button>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 py-3">
-                      <HardDrive size={24} style={{ color: "var(--text-muted)" }} />
-                      <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No artifacts acquired yet.</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* IoC Overview */}
-                <div className="bg-bg-elevated border border-border-subtle rounded-lg p-5">
-                  <div className="flex items-center gap-2 font-semibold text-[13px] text-text-primary mb-3">
-                    <Globe size={15} />
-                    IoC Overview
+                    <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
+                      {(data?.recent_iocs ?? []).length} indicators from recent analyses
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-3">
+                    <Globe size={24} style={{ color: "var(--text-muted)" }} />
+                    <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No IoCs identified yet.</p>
                   </div>
-                  {loading ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {[100,80,110,90,75,95].map((w,i) => (
-                        <Sk key={i} h={26} w={w} rounded="md" />
-                      ))}
-                    </div>
-                  ) : (data?.recent_iocs ?? []).length > 0 ? (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        {(data?.recent_iocs ?? []).slice(0, 10).map((ioc, i) => (
-                          <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between gap-3"
-                            style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className="font-mono text-[12px]" style={{ color: "var(--text-primary)" }}>{ioc.ip}</span>
-                              <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }} title={ioc.filename}>{ioc.filename}</span>
-                              <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "1px 6px", letterSpacing: "0.04em" }}>{ioc.severity}</span>
-                            </div>
-                            <button onClick={() => copyIoc(ioc.ip, i)}
-                              className="border-none bg-none cursor-pointer p-1 flex items-center shrink-0 rounded"
-                              style={{ color: "var(--text-muted)" }}
-                              title="Copy to clipboard">
-                              {copiedIocIdx === i ? <span style={{ color: "var(--severity-low)", fontSize: 12 }}>✓</span> : <Copy size={12} />}
-                            </button>
-                          </div>
-                        ))}
-                        {(data?.recent_iocs ?? []).length > 10 && (
-                          <div className="self-center" style={{ position: "relative", display: "inline-block" }}
-                            onMouseEnter={handleMoreEnter}
-                            onMouseLeave={handleMoreLeave}
-                          >
-                            <span className="text-[11px] inline-block" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)", cursor: "pointer" }}>
-                              +{data!.recent_iocs.length - 10} more
-                            </span>
-                            {moreHover && (
-                              <div style={{
-                                position: "absolute",
-                                bottom: "calc(100% + 8px)",
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                background: "var(--bg-elevated)",
-                                border: "1px solid var(--border-subtle)",
-                                borderRadius: 8,
-                                padding: "14px 16px",
-                                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-                                zIndex: 50,
-                                minWidth: 380,
-                                maxHeight: 280,
-                                overflowY: "auto",
-                              }}>
-                                <div className="flex items-center justify-between mb-2.5">
-                                  <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                    All IoCs ({data!.recent_iocs.length})
-                                  </span>
-                                  <button onClick={() => setMoreHover(false)}
-                                    className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
-                                    style={{ color: "var(--text-muted)" }}
-                                    onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
-                                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
-                                    ✕
-                                  </button>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                  {data!.recent_iocs.map((ioc, i) => (
-                                    <div key={i} className="px-2 py-1.5 rounded flex items-center justify-between gap-2 transition-all"
-                                      style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
-                                      onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        <span className="font-mono text-[12px]" onClick={() => copyIoc(ioc.ip, i)}>{ioc.ip}</span>
-                                        <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{ioc.filename}</span>
-                                        <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "0 5px" }}>{ioc.severity}</span>
-                                      </div>
-                                      {copiedIocIdx === i
-                                        ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓</span>
-                                        : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)" }} />
-                                      }
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
-                        {(data?.recent_iocs ?? []).length} indicators from recent analyses
-                      </p>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 py-3">
-                      <Globe size={24} style={{ color: "var(--text-muted)" }} />
-                      <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No IoCs identified yet.</p>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
 
