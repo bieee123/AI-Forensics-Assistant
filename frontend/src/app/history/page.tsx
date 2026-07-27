@@ -64,7 +64,7 @@ export default function HistoryPage() {
             className="pl-9"
             style={{
               fontFamily: "inherit", fontSize: 13, background: "var(--bg-base)", color: "var(--text-primary)",
-              border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "9px 12px", width: "100%", outline: "none",
+              border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "9px 12px 9px 36px", width: "100%", outline: "none",
             }}
           />
         </div>

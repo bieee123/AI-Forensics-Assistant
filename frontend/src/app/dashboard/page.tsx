@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, FileText, Activity, AlertCircle, RefreshCw, Zap, Brain, FileDown, Loader2, Database, Server,
-  AlertTriangle, BarChart3, Globe, Clock, HardDrive,
+  AlertTriangle, BarChart3, Globe, Clock, HardDrive, Copy,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [exportingId, setExportingId] = useState<number | null>(null);
   const [moreHover, setMoreHover] = useState(false);
+  const [copiedIocIdx, setCopiedIocIdx] = useState<number | null>(null);
   const moreTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const handleMoreEnter = () => {
     if (moreTimeout.current) clearTimeout(moreTimeout.current);
@@ -45,6 +46,11 @@ export default function DashboardPage() {
   };
   const handleMoreLeave = () => {
     moreTimeout.current = setTimeout(() => setMoreHover(false), 250);
+  };
+  const copyIoc = (ip: string, idx: number) => {
+    navigator.clipboard.writeText(ip);
+    setCopiedIocIdx(idx);
+    setTimeout(() => setCopiedIocIdx(null), 2000);
   };
 
   useEffect(() => { setLangState(getLang()); }, []);
@@ -442,10 +448,12 @@ export default function DashboardPage() {
                     <>
                       <div className="flex flex-wrap gap-1.5">
                         {(data?.recent_iocs ?? []).slice(0, 10).map((ip, i) => (
-                          <span key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md"
-                            style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
-                            {ip}
-                          </span>
+                          <div key={i} className="chip font-mono text-[11px] px-2 py-1 rounded-md inline-flex items-center gap-1.5"
+                            style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", cursor: "pointer" }}
+                            onClick={() => copyIoc(ip, i)}>
+                            <span>{ip}</span>
+                            {copiedIocIdx === i ? <span className="text-[10px]" style={{color:"var(--severity-low)"}}>✓</span> : <Copy size={11} style={{ opacity: 0.5 }} />}
+                          </div>
                         ))}
                         {(data?.recent_iocs ?? []).length > 10 && (
                           <div className="self-center" style={{ position: "relative", display: "inline-block" }}
@@ -486,12 +494,15 @@ export default function DashboardPage() {
                                 <div className="flex flex-col gap-0.5">
                                   {data!.recent_iocs.map((ip, i) => (
                                     <div key={i} className="font-mono text-[12px] px-2 py-1 rounded flex items-center justify-between transition-all"
-                                      onClick={() => navigator.clipboard.writeText(ip)}
+                                      onClick={() => copyIoc(ip, i)}
                                       style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
                                       onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
                                       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
                                       <span className="truncate mr-2">{ip}</span>
-                                      <span className="text-[10px] shrink-0" style={{ color: "var(--text-muted)", opacity: 0.5 }}>copy</span>
+                                      {copiedIocIdx === i
+                                        ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓ Copied</span>
+                                        : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                                      }
                                     </div>
                                   ))}
                                 </div>

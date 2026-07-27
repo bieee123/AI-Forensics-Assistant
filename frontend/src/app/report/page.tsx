@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { FileText, Loader2, Download } from "lucide-react";
+import { FileText, Loader2, Download, Copy } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { getLang, t, Lang } from "@/lib/i18n";
@@ -133,6 +133,13 @@ function ReportPreview({
       </div>
     )
   }
+
+  const [copiedIocIdx, setCopiedIocIdx] = useState<number | null>(null)
+  const copyIoc = (ip: string, idx: number) => {
+    navigator.clipboard.writeText(ip);
+    setCopiedIocIdx(idx);
+    setTimeout(() => setCopiedIocIdx(null), 2000);
+  };
 
   const severityLabel = (analysisData.severity_overall || "").split(/\s+/)[0] || "UNKNOWN"
   const severity = severityLabel.toUpperCase()
@@ -287,8 +294,13 @@ function ReportPreview({
               color: "var(--text-primary)",
               background: "var(--bg-hover)",
               border: "1px solid var(--border-subtle)",
-            }}>
+              cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4,
+            }} onClick={() => copyIoc(ip, i)}>
               {ip}
+              {copiedIocIdx === i
+                ? <span style={{ color: "var(--severity-low)", fontSize: 10 }}>✓</span>
+                : <Copy size={11} style={{ opacity: 0.4 }} />
+              }
             </span>
           ))}
           {(analysisData.ioc_summary || []).length === 0 && (
