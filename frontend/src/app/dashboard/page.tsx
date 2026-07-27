@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, FileText, Activity, AlertCircle, RefreshCw, Zap, Brain, FileDown, Loader2, Database, Server,
@@ -37,16 +37,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [exportingId, setExportingId] = useState<number | null>(null);
-  const [moreHover, setMoreHover] = useState(false);
   const [copiedIocIdx, setCopiedIocIdx] = useState<number | null>(null);
-  const moreTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const handleMoreEnter = () => {
-    if (moreTimeout.current) clearTimeout(moreTimeout.current);
-    setMoreHover(true);
-  };
-  const handleMoreLeave = () => {
-    moreTimeout.current = setTimeout(() => setMoreHover(false), 250);
-  };
   const copyIoc = (ip: string, idx: number) => {
     navigator.clipboard.writeText(ip);
     setCopiedIocIdx(idx);
@@ -441,8 +432,8 @@ export default function DashboardPage() {
                   </div>
                 ) : (data?.recent_iocs ?? []).length > 0 ? (
                   <>
-                    <div className="flex flex-col gap-2">
-                      {(data?.recent_iocs ?? []).slice(0, 10).map((ioc, i) => (
+                    <div className="flex flex-col gap-2" style={{ maxHeight: 300, overflowY: "auto" }}>
+                      {(data?.recent_iocs ?? []).slice(0, 6).map((ioc, i) => (
                         <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between gap-3"
                           style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
                           <div className="flex items-center gap-3 min-w-0">
@@ -458,64 +449,6 @@ export default function DashboardPage() {
                           </button>
                         </div>
                       ))}
-                      {(data?.recent_iocs ?? []).length > 10 && (
-                        <div className="self-center" style={{ position: "relative", display: "inline-block" }}
-                          onMouseEnter={handleMoreEnter}
-                          onMouseLeave={handleMoreLeave}
-                        >
-                          <span className="text-[11px] inline-block" style={{ color: "var(--text-muted)", borderBottom: "1px dashed var(--text-muted)", cursor: "pointer" }}>
-                            +{data!.recent_iocs.length - 10} more
-                          </span>
-                          {moreHover && (
-                            <div style={{
-                              position: "absolute",
-                              bottom: "calc(100% + 8px)",
-                              left: "50%",
-                              transform: "translateX(-50%)",
-                              background: "var(--bg-elevated)",
-                              border: "1px solid var(--border-subtle)",
-                              borderRadius: 8,
-                              padding: "14px 16px",
-                              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-                              zIndex: 50,
-                              minWidth: 380,
-                              maxHeight: 280,
-                              overflowY: "auto",
-                            }}>
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="font-semibold text-[11px]" style={{ color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                  All IoCs ({data!.recent_iocs.length})
-                                </span>
-                                <button onClick={() => setMoreHover(false)}
-                                  className="border-none bg-none cursor-pointer p-0 font-mono text-xs"
-                                  style={{ color: "var(--text-muted)" }}
-                                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
-                                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
-                                  ✕
-                                </button>
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                {data!.recent_iocs.map((ioc, i) => (
-                                  <div key={i} className="px-2 py-1.5 rounded flex items-center justify-between gap-2 transition-all"
-                                    style={{ color: "var(--text-secondary)", background: i % 2 === 0 ? "var(--bg-base)" : "transparent", cursor: "pointer" }}
-                                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "transparent"}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className="font-mono text-[12px]" onClick={() => copyIoc(ioc.ip, i)}>{ioc.ip}</span>
-                                      <span className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{ioc.filename}</span>
-                                      <span className={`badge badge-${ioc.severity.toLowerCase()}`} style={{ fontSize: 9, padding: "0 5px" }}>{ioc.severity}</span>
-                                    </div>
-                                    {copiedIocIdx === i
-                                      ? <span className="text-[10px] shrink-0" style={{ color: "var(--severity-low)" }}>✓</span>
-                                      : <Copy size={11} className="shrink-0" style={{ color: "var(--text-muted)" }} />
-                                    }
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                     <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
                       {(data?.recent_iocs ?? []).length} indicators from recent analyses
