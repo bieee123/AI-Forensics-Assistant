@@ -48,6 +48,25 @@ class AnalyzeResponse(BaseModel):
     severity_overall: str
 
 
+CRITICAL_EVENTS = {
+    "file_encryption", "ransomware_note", "shadow_copy_deletion",
+    "volume_shadow_copy_deletion", "credential_dumping", "data_exfiltration",
+    "rce_payload_download", "network_connection_reverse_shell",
+    "persistence_cron_entry", "privilege_escalation_success",
+    "file_access_sensitive", "alert_correlation",
+}
+
+HIGH_EVENTS = {
+    "process_injection", "dga_query", "lateral_movement",
+    "service_stop", "scheduled_task_creation", "mailbox_rule_creation",
+    "adt_persistence", "sql_injection_attempt", "xss_attempt",
+    "path_traversal_attempt", "ssrf_attempt", "file_upload_attempt",
+    "auth_bypass_attempt", "brute_force_login",
+    "ioc_detected", "network_alert", "persistence_cron",
+    "software_install", "privilege_escalation_attempt",
+}
+
+
 def classify_severity(entries: list) -> str:
     has_success = any(e.status == "Accepted" for e in entries)
     fail_count  = sum(1 for e in entries if e.status == "Failed")
@@ -59,6 +78,19 @@ def classify_severity(entries: list) -> str:
         return "MEDIUM"
     elif fail_count > 0:
         return "LOW"
+    return "INFO"
+
+
+def classify_telemetry_severity(entries: list) -> str:
+    event_types = [getattr(e, "event_type", "") or "" for e in entries]
+    for et in event_types:
+        if et in CRITICAL_EVENTS:
+            return "CRITICAL"
+    for et in event_types:
+        if et in HIGH_EVENTS:
+            return "HIGH"
+    if len(entries) > 5:
+        return "MEDIUM"
     return "INFO"
 
 
@@ -221,7 +253,7 @@ def _run_analysis_background(upload_id: int) -> None:
             except Exception:
                 ioc_list = []
 
-            severity = "MEDIUM" if len(telemetry_entries) > 5 else "INFO"
+            severity = classify_telemetry_severity(telemetry_entries)
 
             rag_query = "security telemetry analysis incident response runbook"
             rag_context = get_rag_context(rag_query)
