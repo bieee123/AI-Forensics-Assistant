@@ -135,7 +135,7 @@ export default function DashboardPage() {
     }
   }
 
-  const maxSeverity = data ? Math.max(...Object.values(data.severity_breakdown), 1) : 1;
+  const maxSeverity = data?.severity_breakdown ? Math.max(...Object.values(data.severity_breakdown), 1) : 1;
 
 
   return (

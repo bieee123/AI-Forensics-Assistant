@@ -446,7 +446,7 @@ function AnalysisPageContent() {
         )}
 
         {/* Result */}
-        {result && severityLabel === "ERROR" ? (
+        {result && severityLabel.toUpperCase() === "ERROR" ? (
           <div className="bg-bg-elevated border border-border-subtle rounded-lg p-6 flex flex-col items-center gap-3"
             style={{ borderLeft: "3px solid var(--severity-critical)" }}>
             <AlertCircle size={32} style={{ color: "var(--severity-critical)" }} />
@@ -578,7 +578,7 @@ function AnalysisPageContent() {
                             <td><span className={eventBadgeClass(entry.event_type)}>{formatEventType(entry.event_type)}</span></td>
                             <td className="font-mono">{entry.source_ip || "—"}</td>
                             <td className="font-mono">{entry.user || "—"}</td>
-                            <td className="font-mono">{"—"}</td>
+                            <td className="font-mono">{entry.auth_method || "—"}</td>
                             <td>{entry.status || "—"}</td>
                           </tr>
                           {expandedRows.has(idx) && (
@@ -591,6 +591,7 @@ function AnalysisPageContent() {
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Host: </span>{entry.host || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Source IP: </span>{entry.source_ip || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>User: </span>{entry.user || "—"}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Auth Method: </span>{entry.auth_method || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Status: </span>{entry.status || "—"}</div>
                                   {entry.raw_message && (
                                     <div className="pt-2 mt-2 border-t" style={{ borderColor: "var(--border-subtle)" }}>

@@ -35,7 +35,7 @@ function TimelinePageContent() {
   // Fetch recent uploads unconditionally on mount
   useEffect(() => {
     setUploadsLoading(true);
-    api.getUploads().then(setUploads).catch(() => {}).finally(() => setUploadsLoading(false));
+    api.getUploads().then(data => setUploads(data ?? [])).catch(() => {}).finally(() => setUploadsLoading(false));
   }, []);
 
   // Fetch entries when activeUploadId changes
@@ -45,7 +45,7 @@ function TimelinePageContent() {
       setLoading(true);
       setError("");
       api.getEntries(activeUploadId)
-        .then(data => setEntries(data))
+        .then(data => setEntries(data ?? []))
         .catch(() => setError("Failed to load timeline"))
         .finally(() => setLoading(false));
     }
@@ -182,9 +182,9 @@ function TimelinePageContent() {
                   </div>
                   <p className="text-[13px] m-0" style={{ color: "var(--text-secondary)" }}>
                     {entry.source_ip ? (
-                      <>User <span className="font-mono">&apos;{entry.user || "—"}&apos;</span> via {entry.auth_method || "—"} from {entry.source_ip}</>
+                      <>User <span className="font-mono">&apos;{entry.user || "—"}&apos;</span> via {entry.auth_method || "—"} from {entry.source_ip}{entry.status ? <> · <span style={{ color: entry.status === "Failed" ? "var(--severity-high)" : "var(--severity-low)" }}>{entry.status}</span></> : ""}</>
                     ) : (
-                      <>Source: <span className="font-mono">{entry.source || "—"}</span></>
+                      <>Source: <span className="font-mono">{entry.source || "—"}</span>{entry.status ? <> · {entry.status}</> : ""}</>
                     )}
                   </p>
                   <button
@@ -201,7 +201,10 @@ function TimelinePageContent() {
                     {expandedIds.has(entry.id) ? tr.timeline.hideRaw : tr.timeline.showRaw}
                   </button>
                   {expandedIds.has(entry.id) && (
-                    <div className="raw-log-box mt-3">{entry.raw_message}</div>
+                    <div className="raw-log-box mt-3">
+                      {entry.source_ip && <div className="text-xs" style={{ color: "var(--text-muted)" }}>IP: {entry.source_ip} · User: {entry.user || "—"} · Method: {entry.auth_method || "—"} · Status: {entry.status || "—"}</div>}
+                      <div className="mt-1.5">{entry.raw_message}</div>
+                    </div>
                   )}
                 </div>
               </div>
