@@ -154,6 +154,27 @@ def parse_llm_output(text: str) -> dict:
     return result
 
 
+def _save_error_result(upload_id: int, error_message: str, start_time: float) -> None:
+    """Save an error analysis result so the frontend can detect failure immediately."""
+    db_save: Session = SessionLocal()
+    try:
+        duration = int(time.time() - start_time)
+        upload = db_save.query(LogUploadDB).filter(LogUploadDB.id == upload_id).first()
+        filename = upload.filename if upload else f"upload_{upload_id}"
+        result_dict = {
+            "severity_overall": "ERROR",
+            "total_incidents": 0,
+            "narrative_report": f"Analysis failed: {error_message}",
+            "ioc_summary": [],
+            "attack_timeline": [],
+        }
+        save_analysis_result(db_save, upload_id, filename, result_dict, duration)
+    except Exception as e:
+        logger.warning("Failed to save error result for upload_id %s: %s", upload_id, e)
+    finally:
+        db_save.close()
+
+
 def _run_analysis_background(upload_id: int) -> None:
     start_time = time.time()
     db: Session = SessionLocal()
@@ -172,6 +193,7 @@ def _run_analysis_background(upload_id: int) -> None:
 
     if not has_auth and not has_telemetry:
         logger.warning("Background analysis: no log entries found for upload_id %s", upload_id)
+        _save_error_result(upload_id, "No log entries found for analysis", start_time)
         return
 
     is_telemetry = has_telemetry and not has_auth
@@ -330,6 +352,7 @@ def _run_analysis_background(upload_id: int) -> None:
 
     except Exception as e:
         logger.error("Background analysis failed for upload_id %s: %s", upload_id, e)
+        _save_error_result(upload_id, str(e), start_time)
 
 
 @router.post("/", response_model=AcceptedResponse, status_code=202)

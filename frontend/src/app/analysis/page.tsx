@@ -232,7 +232,7 @@ function AnalysisPageContent() {
   let displayNarrative = narrativeText
   const recIndex = narrativeText.toLowerCase().indexOf("recommendation:")
   if (recIndex !== -1) {
-    const recLabel = narrativeText.slice(recIndex, recIndex + 14)
+    const recLabel = narrativeText.slice(recIndex, recIndex + 15)
     const idx = narrativeText.indexOf(recLabel, recIndex)
     if (idx !== -1) {
       recommendationText = narrativeText.slice(idx + recLabel.length).trim()
@@ -329,7 +329,7 @@ function AnalysisPageContent() {
                         · {new Date(item.analyzed_at).toLocaleString()}
                       </p>
                     </div>
-                    <span className={`badge badge-${item.severity.toLowerCase()}`}>{item.severity}</span>
+                    <span className={`badge ${severityBadgeClass(item.severity)}`}>{item.severity}</span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => router.push(`/analysis?upload_id=${item.upload_id}`)}
@@ -446,7 +446,30 @@ function AnalysisPageContent() {
         )}
 
         {/* Result */}
-        {result && (
+        {result && severityLabel === "ERROR" ? (
+          <div className="bg-bg-elevated border border-border-subtle rounded-lg p-6 flex flex-col items-center gap-3"
+            style={{ borderLeft: "3px solid var(--severity-critical)" }}>
+            <AlertCircle size={32} style={{ color: "var(--severity-critical)" }} />
+            <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Analysis Failed</span>
+            <p className="text-[13px] text-center m-0" style={{ color: "var(--text-secondary)" }}>
+              {result.narrative_report || "An unknown error occurred during analysis."}
+            </p>
+            <button onClick={runAnalysis}
+              className="inline-flex items-center gap-1.5 py-[7px] px-3.5 rounded-md text-[13px] font-semibold cursor-pointer border-none mt-2 transition-all"
+              style={{ background: "var(--accent)", color: "#fff" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-hover)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,180,216,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.boxShadow = "none"; }}
+            >
+              <RefreshCw size={14} />
+              Retry Analysis
+            </button>
+            {cachedAt && (
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                Failed at {new Date(cachedAt).toLocaleString()}
+              </span>
+            )}
+          </div>
+        ) : result && (
           <>
             {/* Severity header */}
             <div
@@ -564,7 +587,7 @@ function AnalysisPageContent() {
                                 <div className="m-3 p-3 rounded text-xs space-y-1.5"
                                   style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }}>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Time: </span>{entry.timestamp}</div>
-                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Event: </span>{entry.event_type}</div>
+                                  <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Event: </span>{entry.event_type || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Host: </span>{entry.host || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>Source IP: </span>{entry.source_ip || "—"}</div>
                                   <div><span className="font-semibold" style={{ color: "var(--text-secondary)" }}>User: </span>{entry.user || "—"}</div>
